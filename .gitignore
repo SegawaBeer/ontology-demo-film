@@ -11,3 +11,6 @@ recordings/
 references/
 sources/
 .chrome*/
+
+__pycache__/
+*.pyc
