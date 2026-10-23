@@ -158,6 +158,8 @@ def classify(p):
 
     # Combustor.
     if -0.12 <= x < 0.29:
+        if p.get('bolts'):
+            return 'core-casing', 'core-casing.bolts'
         if tris >= 1000 and 0.36 <= r <= 0.63:
             return 'combustor', 'combustor.cans'
         if tris <= 600 and r > 0.50:
@@ -189,7 +191,7 @@ def parts_from_pieces(pieces):
     # Bolts: the two bolt rings are made of several blocks each. Group them by
     # angle so one bolt is one part.
     for p in parts:
-        if 0.12 <= p['cx'] <= 0.22 and 0.50 <= p['r'] <= 0.56 and p['tris'] <= 120:
+        if 0.10 <= p['cx'] <= 0.25 and 0.48 <= p['r'] <= 0.60 and p['tris'] <= 400:
             p['bolts'] = True
     return parts
 

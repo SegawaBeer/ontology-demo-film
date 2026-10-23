@@ -43,7 +43,7 @@
     "combustor.casing",
     "combustor.injectors"
    ],
-   "partCount": 194
+   "partCount": 130
   },
   {
    "id": "turbine",
@@ -81,10 +81,11 @@
    "id": "core-casing",
    "name": "核心机机匣",
    "components": [
+    "core-casing.bolts",
     "core-casing.drum",
     "core-casing.tiles"
    ],
-   "partCount": 187
+   "partCount": 251
   },
   {
    "id": "nacelle",
@@ -1796,7 +1797,7 @@
    "id": "combustor.injectors",
    "name": "燃烧室喷嘴",
    "module": "combustor",
-   "partCount": 147,
+   "partCount": 83,
    "order": 6,
    "parts": [
     "combustor.injectors.001",
@@ -1881,71 +1882,80 @@
     "combustor.injectors.080",
     "combustor.injectors.081",
     "combustor.injectors.082",
-    "combustor.injectors.083",
-    "combustor.injectors.084",
-    "combustor.injectors.085",
-    "combustor.injectors.086",
-    "combustor.injectors.087",
-    "combustor.injectors.088",
-    "combustor.injectors.089",
-    "combustor.injectors.090",
-    "combustor.injectors.091",
-    "combustor.injectors.092",
-    "combustor.injectors.093",
-    "combustor.injectors.094",
-    "combustor.injectors.095",
-    "combustor.injectors.096",
-    "combustor.injectors.097",
-    "combustor.injectors.098",
-    "combustor.injectors.099",
-    "combustor.injectors.100",
-    "combustor.injectors.101",
-    "combustor.injectors.102",
-    "combustor.injectors.103",
-    "combustor.injectors.104",
-    "combustor.injectors.105",
-    "combustor.injectors.106",
-    "combustor.injectors.107",
-    "combustor.injectors.108",
-    "combustor.injectors.109",
-    "combustor.injectors.110",
-    "combustor.injectors.111",
-    "combustor.injectors.112",
-    "combustor.injectors.113",
-    "combustor.injectors.114",
-    "combustor.injectors.115",
-    "combustor.injectors.116",
-    "combustor.injectors.117",
-    "combustor.injectors.118",
-    "combustor.injectors.119",
-    "combustor.injectors.120",
-    "combustor.injectors.121",
-    "combustor.injectors.122",
-    "combustor.injectors.123",
-    "combustor.injectors.124",
-    "combustor.injectors.125",
-    "combustor.injectors.126",
-    "combustor.injectors.127",
-    "combustor.injectors.128",
-    "combustor.injectors.129",
-    "combustor.injectors.130",
-    "combustor.injectors.131",
-    "combustor.injectors.132",
-    "combustor.injectors.133",
-    "combustor.injectors.134",
-    "combustor.injectors.135",
-    "combustor.injectors.136",
-    "combustor.injectors.137",
-    "combustor.injectors.138",
-    "combustor.injectors.139",
-    "combustor.injectors.140",
-    "combustor.injectors.141",
-    "combustor.injectors.142",
-    "combustor.injectors.143",
-    "combustor.injectors.144",
-    "combustor.injectors.145",
-    "combustor.injectors.146",
-    "combustor.injectors.147"
+    "combustor.injectors.083"
+   ]
+  },
+  {
+   "id": "core-casing.bolts",
+   "name": "核心机机匣螺栓",
+   "module": "core-casing",
+   "partCount": 64,
+   "order": 7,
+   "parts": [
+    "core-casing.bolts.001",
+    "core-casing.bolts.002",
+    "core-casing.bolts.003",
+    "core-casing.bolts.004",
+    "core-casing.bolts.005",
+    "core-casing.bolts.006",
+    "core-casing.bolts.007",
+    "core-casing.bolts.008",
+    "core-casing.bolts.009",
+    "core-casing.bolts.010",
+    "core-casing.bolts.011",
+    "core-casing.bolts.012",
+    "core-casing.bolts.013",
+    "core-casing.bolts.014",
+    "core-casing.bolts.015",
+    "core-casing.bolts.016",
+    "core-casing.bolts.017",
+    "core-casing.bolts.018",
+    "core-casing.bolts.019",
+    "core-casing.bolts.020",
+    "core-casing.bolts.021",
+    "core-casing.bolts.022",
+    "core-casing.bolts.023",
+    "core-casing.bolts.024",
+    "core-casing.bolts.025",
+    "core-casing.bolts.026",
+    "core-casing.bolts.027",
+    "core-casing.bolts.028",
+    "core-casing.bolts.029",
+    "core-casing.bolts.030",
+    "core-casing.bolts.031",
+    "core-casing.bolts.032",
+    "core-casing.bolts.033",
+    "core-casing.bolts.034",
+    "core-casing.bolts.035",
+    "core-casing.bolts.036",
+    "core-casing.bolts.037",
+    "core-casing.bolts.038",
+    "core-casing.bolts.039",
+    "core-casing.bolts.040",
+    "core-casing.bolts.041",
+    "core-casing.bolts.042",
+    "core-casing.bolts.043",
+    "core-casing.bolts.044",
+    "core-casing.bolts.045",
+    "core-casing.bolts.046",
+    "core-casing.bolts.047",
+    "core-casing.bolts.048",
+    "core-casing.bolts.049",
+    "core-casing.bolts.050",
+    "core-casing.bolts.051",
+    "core-casing.bolts.052",
+    "core-casing.bolts.053",
+    "core-casing.bolts.054",
+    "core-casing.bolts.055",
+    "core-casing.bolts.056",
+    "core-casing.bolts.057",
+    "core-casing.bolts.058",
+    "core-casing.bolts.059",
+    "core-casing.bolts.060",
+    "core-casing.bolts.061",
+    "core-casing.bolts.062",
+    "core-casing.bolts.063",
+    "core-casing.bolts.064"
    ]
   },
   {
@@ -3658,167 +3668,6 @@
    "component": "combustor.injectors",
    "module": "combustor",
    "center": [
-    0.1682,
-    0.5306,
-    0.0523
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.006",
-   "name": "燃烧室喷嘴 006",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5229,
-    0.104
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.007",
-   "name": "燃烧室喷嘴 007",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5102,
-    0.1548
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.008",
-   "name": "燃烧室喷嘴 008",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4926,
-    0.204
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.009",
-   "name": "燃烧室喷嘴 009",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4702,
-    0.2513
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.010",
-   "name": "燃烧室喷嘴 010",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4433,
-    0.2962
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.011",
-   "name": "燃烧室喷嘴 011",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4121,
-    0.3382
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.012",
-   "name": "燃烧室喷嘴 012",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
     -0.0206,
     0.4371,
     0.3813
@@ -3836,8 +3685,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.013",
-   "name": "燃烧室喷嘴 013",
+   "id": "combustor.injectors.006",
+   "name": "燃烧室喷嘴 006",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3859,8 +3708,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.014",
-   "name": "燃烧室喷嘴 014",
+   "id": "combustor.injectors.007",
+   "name": "燃烧室喷嘴 007",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3882,8 +3731,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.015",
-   "name": "燃烧室喷嘴 015",
+   "id": "combustor.injectors.008",
+   "name": "燃烧室喷嘴 008",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3905,8 +3754,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.016",
-   "name": "燃烧室喷嘴 016",
+   "id": "combustor.injectors.009",
+   "name": "燃烧室喷嘴 009",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3928,8 +3777,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.017",
-   "name": "燃烧室喷嘴 017",
+   "id": "combustor.injectors.010",
+   "name": "燃烧室喷嘴 010",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3951,31 +3800,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.018",
-   "name": "燃烧室喷嘴 018",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.377,
-    0.377
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.019",
-   "name": "燃烧室喷嘴 019",
+   "id": "combustor.injectors.011",
+   "name": "燃烧室喷嘴 011",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -3997,8 +3823,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.020",
-   "name": "燃烧室喷嘴 020",
+   "id": "combustor.injectors.012",
+   "name": "燃烧室喷嘴 012",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4020,8 +3846,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.021",
-   "name": "燃烧室喷嘴 021",
+   "id": "combustor.injectors.013",
+   "name": "燃烧室喷嘴 013",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4043,8 +3869,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.022",
-   "name": "燃烧室喷嘴 022",
+   "id": "combustor.injectors.014",
+   "name": "燃烧室喷嘴 014",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4066,8 +3892,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.023",
-   "name": "燃烧室喷嘴 023",
+   "id": "combustor.injectors.015",
+   "name": "燃烧室喷嘴 015",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4089,169 +3915,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.024",
-   "name": "燃烧室喷嘴 024",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.3382,
-    0.4121
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.025",
-   "name": "燃烧室喷嘴 025",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.2962,
-    0.4433
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.026",
-   "name": "燃烧室喷嘴 026",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.2513,
-    0.4702
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.027",
-   "name": "燃烧室喷嘴 027",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.204,
-    0.4926
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.028",
-   "name": "燃烧室喷嘴 028",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.1548,
-    0.5102
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.029",
-   "name": "燃烧室喷嘴 029",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.104,
-    0.5229
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.030",
-   "name": "燃烧室喷嘴 030",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.0523,
-    0.5306
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.031",
-   "name": "燃烧室喷嘴 031",
+   "id": "combustor.injectors.016",
+   "name": "燃烧室喷嘴 016",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4273,8 +3938,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.032",
-   "name": "燃烧室喷嘴 032",
+   "id": "combustor.injectors.017",
+   "name": "燃烧室喷嘴 017",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4296,8 +3961,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.033",
-   "name": "燃烧室喷嘴 033",
+   "id": "combustor.injectors.018",
+   "name": "燃烧室喷嘴 018",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4319,8 +3984,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.034",
-   "name": "燃烧室喷嘴 034",
+   "id": "combustor.injectors.019",
+   "name": "燃烧室喷嘴 019",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4342,8 +4007,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.035",
-   "name": "燃烧室喷嘴 035",
+   "id": "combustor.injectors.020",
+   "name": "燃烧室喷嘴 020",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4365,31 +4030,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.036",
-   "name": "燃烧室喷嘴 036",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.0,
-    0.5332
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.037",
-   "name": "燃烧室喷嘴 037",
+   "id": "combustor.injectors.021",
+   "name": "燃烧室喷嘴 021",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4411,8 +4053,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.038",
-   "name": "燃烧室喷嘴 038",
+   "id": "combustor.injectors.022",
+   "name": "燃烧室喷嘴 022",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4434,8 +4076,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.039",
-   "name": "燃烧室喷嘴 039",
+   "id": "combustor.injectors.023",
+   "name": "燃烧室喷嘴 023",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4457,8 +4099,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.040",
-   "name": "燃烧室喷嘴 040",
+   "id": "combustor.injectors.024",
+   "name": "燃烧室喷嘴 024",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4480,8 +4122,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.041",
-   "name": "燃烧室喷嘴 041",
+   "id": "combustor.injectors.025",
+   "name": "燃烧室喷嘴 025",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4503,169 +4145,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.042",
-   "name": "燃烧室喷嘴 042",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.0523,
-    0.5306
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.043",
-   "name": "燃烧室喷嘴 043",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.104,
-    0.5229
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.044",
-   "name": "燃烧室喷嘴 044",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.1548,
-    0.5102
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.045",
-   "name": "燃烧室喷嘴 045",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.204,
-    0.4926
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.046",
-   "name": "燃烧室喷嘴 046",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.2513,
-    0.4702
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.047",
-   "name": "燃烧室喷嘴 047",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.2962,
-    0.4433
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.048",
-   "name": "燃烧室喷嘴 048",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.3382,
-    0.4121
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.049",
-   "name": "燃烧室喷嘴 049",
+   "id": "combustor.injectors.026",
+   "name": "燃烧室喷嘴 026",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4687,8 +4168,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.050",
-   "name": "燃烧室喷嘴 050",
+   "id": "combustor.injectors.027",
+   "name": "燃烧室喷嘴 027",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4710,8 +4191,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.051",
-   "name": "燃烧室喷嘴 051",
+   "id": "combustor.injectors.028",
+   "name": "燃烧室喷嘴 028",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4733,8 +4214,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.052",
-   "name": "燃烧室喷嘴 052",
+   "id": "combustor.injectors.029",
+   "name": "燃烧室喷嘴 029",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4756,8 +4237,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.053",
-   "name": "燃烧室喷嘴 053",
+   "id": "combustor.injectors.030",
+   "name": "燃烧室喷嘴 030",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4779,31 +4260,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.054",
-   "name": "燃烧室喷嘴 054",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.377,
-    0.377
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.055",
-   "name": "燃烧室喷嘴 055",
+   "id": "combustor.injectors.031",
+   "name": "燃烧室喷嘴 031",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4825,8 +4283,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.056",
-   "name": "燃烧室喷嘴 056",
+   "id": "combustor.injectors.032",
+   "name": "燃烧室喷嘴 032",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4848,8 +4306,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.057",
-   "name": "燃烧室喷嘴 057",
+   "id": "combustor.injectors.033",
+   "name": "燃烧室喷嘴 033",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4871,8 +4329,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.058",
-   "name": "燃烧室喷嘴 058",
+   "id": "combustor.injectors.034",
+   "name": "燃烧室喷嘴 034",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4894,8 +4352,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.059",
-   "name": "燃烧室喷嘴 059",
+   "id": "combustor.injectors.035",
+   "name": "燃烧室喷嘴 035",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4917,8 +4375,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.060",
-   "name": "燃烧室喷嘴 060",
+   "id": "combustor.injectors.036",
+   "name": "燃烧室喷嘴 036",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -4940,169 +4398,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.061",
-   "name": "燃烧室喷嘴 061",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4121,
-    0.3382
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.062",
-   "name": "燃烧室喷嘴 062",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4433,
-    0.2962
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.063",
-   "name": "燃烧室喷嘴 063",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4702,
-    0.2513
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.064",
-   "name": "燃烧室喷嘴 064",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4926,
-    0.204
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.065",
-   "name": "燃烧室喷嘴 065",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5102,
-    0.1548
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.066",
-   "name": "燃烧室喷嘴 066",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5229,
-    0.104
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.067",
-   "name": "燃烧室喷嘴 067",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5306,
-    0.0523
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.068",
-   "name": "燃烧室喷嘴 068",
+   "id": "combustor.injectors.037",
+   "name": "燃烧室喷嘴 037",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5124,8 +4421,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.069",
-   "name": "燃烧室喷嘴 069",
+   "id": "combustor.injectors.038",
+   "name": "燃烧室喷嘴 038",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5147,8 +4444,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.070",
-   "name": "燃烧室喷嘴 070",
+   "id": "combustor.injectors.039",
+   "name": "燃烧室喷嘴 039",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5170,8 +4467,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.071",
-   "name": "燃烧室喷嘴 071",
+   "id": "combustor.injectors.040",
+   "name": "燃烧室喷嘴 040",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5193,31 +4490,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.072",
-   "name": "燃烧室喷嘴 072",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5332,
-    0.0
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.073",
-   "name": "燃烧室喷嘴 073",
+   "id": "combustor.injectors.041",
+   "name": "燃烧室喷嘴 041",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5239,8 +4513,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.074",
-   "name": "燃烧室喷嘴 074",
+   "id": "combustor.injectors.042",
+   "name": "燃烧室喷嘴 042",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5262,8 +4536,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.075",
-   "name": "燃烧室喷嘴 075",
+   "id": "combustor.injectors.043",
+   "name": "燃烧室喷嘴 043",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5285,8 +4559,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.076",
-   "name": "燃烧室喷嘴 076",
+   "id": "combustor.injectors.044",
+   "name": "燃烧室喷嘴 044",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5308,8 +4582,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.077",
-   "name": "燃烧室喷嘴 077",
+   "id": "combustor.injectors.045",
+   "name": "燃烧室喷嘴 045",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5331,169 +4605,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.078",
-   "name": "燃烧室喷嘴 078",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5306,
-    -0.0523
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.079",
-   "name": "燃烧室喷嘴 079",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5229,
-    -0.104
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.080",
-   "name": "燃烧室喷嘴 080",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.5102,
-    -0.1548
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.081",
-   "name": "燃烧室喷嘴 081",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4926,
-    -0.204
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.082",
-   "name": "燃烧室喷嘴 082",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4702,
-    -0.2513
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.083",
-   "name": "燃烧室喷嘴 083",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4433,
-    -0.2962
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.084",
-   "name": "燃烧室喷嘴 084",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.4121,
-    -0.3382
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.085",
-   "name": "燃烧室喷嘴 085",
+   "id": "combustor.injectors.046",
+   "name": "燃烧室喷嘴 046",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5515,8 +4628,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.086",
-   "name": "燃烧室喷嘴 086",
+   "id": "combustor.injectors.047",
+   "name": "燃烧室喷嘴 047",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5538,8 +4651,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.087",
-   "name": "燃烧室喷嘴 087",
+   "id": "combustor.injectors.048",
+   "name": "燃烧室喷嘴 048",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5561,8 +4674,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.088",
-   "name": "燃烧室喷嘴 088",
+   "id": "combustor.injectors.049",
+   "name": "燃烧室喷嘴 049",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5584,8 +4697,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.089",
-   "name": "燃烧室喷嘴 089",
+   "id": "combustor.injectors.050",
+   "name": "燃烧室喷嘴 050",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5607,31 +4720,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.090",
-   "name": "燃烧室喷嘴 090",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.377,
-    -0.377
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.091",
-   "name": "燃烧室喷嘴 091",
+   "id": "combustor.injectors.051",
+   "name": "燃烧室喷嘴 051",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5653,8 +4743,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.092",
-   "name": "燃烧室喷嘴 092",
+   "id": "combustor.injectors.052",
+   "name": "燃烧室喷嘴 052",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5676,8 +4766,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.093",
-   "name": "燃烧室喷嘴 093",
+   "id": "combustor.injectors.053",
+   "name": "燃烧室喷嘴 053",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5699,8 +4789,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.094",
-   "name": "燃烧室喷嘴 094",
+   "id": "combustor.injectors.054",
+   "name": "燃烧室喷嘴 054",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5722,8 +4812,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.095",
-   "name": "燃烧室喷嘴 095",
+   "id": "combustor.injectors.055",
+   "name": "燃烧室喷嘴 055",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5745,8 +4835,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.096",
-   "name": "燃烧室喷嘴 096",
+   "id": "combustor.injectors.056",
+   "name": "燃烧室喷嘴 056",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5768,169 +4858,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.097",
-   "name": "燃烧室喷嘴 097",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.3382,
-    -0.4121
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.098",
-   "name": "燃烧室喷嘴 098",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.2962,
-    -0.4433
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.099",
-   "name": "燃烧室喷嘴 099",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.2513,
-    -0.4702
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.100",
-   "name": "燃烧室喷嘴 100",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.204,
-    -0.4926
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.101",
-   "name": "燃烧室喷嘴 101",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.1548,
-    -0.5102
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.102",
-   "name": "燃烧室喷嘴 102",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.104,
-    -0.5229
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.103",
-   "name": "燃烧室喷嘴 103",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    -0.0523,
-    -0.5306
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.104",
-   "name": "燃烧室喷嘴 104",
+   "id": "combustor.injectors.057",
+   "name": "燃烧室喷嘴 057",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5952,8 +4881,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.105",
-   "name": "燃烧室喷嘴 105",
+   "id": "combustor.injectors.058",
+   "name": "燃烧室喷嘴 058",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5975,8 +4904,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.106",
-   "name": "燃烧室喷嘴 106",
+   "id": "combustor.injectors.059",
+   "name": "燃烧室喷嘴 059",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -5998,8 +4927,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.107",
-   "name": "燃烧室喷嘴 107",
+   "id": "combustor.injectors.060",
+   "name": "燃烧室喷嘴 060",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6021,8 +4950,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.108",
-   "name": "燃烧室喷嘴 108",
+   "id": "combustor.injectors.061",
+   "name": "燃烧室喷嘴 061",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6044,31 +4973,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.109",
-   "name": "燃烧室喷嘴 109",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.0,
-    -0.5332
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.110",
-   "name": "燃烧室喷嘴 110",
+   "id": "combustor.injectors.062",
+   "name": "燃烧室喷嘴 062",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6090,8 +4996,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.111",
-   "name": "燃烧室喷嘴 111",
+   "id": "combustor.injectors.063",
+   "name": "燃烧室喷嘴 063",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6113,8 +5019,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.112",
-   "name": "燃烧室喷嘴 112",
+   "id": "combustor.injectors.064",
+   "name": "燃烧室喷嘴 064",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6136,8 +5042,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.113",
-   "name": "燃烧室喷嘴 113",
+   "id": "combustor.injectors.065",
+   "name": "燃烧室喷嘴 065",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6159,8 +5065,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.114",
-   "name": "燃烧室喷嘴 114",
+   "id": "combustor.injectors.066",
+   "name": "燃烧室喷嘴 066",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6182,169 +5088,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.115",
-   "name": "燃烧室喷嘴 115",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.0523,
-    -0.5306
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.116",
-   "name": "燃烧室喷嘴 116",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.104,
-    -0.5229
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.117",
-   "name": "燃烧室喷嘴 117",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.1548,
-    -0.5102
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.118",
-   "name": "燃烧室喷嘴 118",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.204,
-    -0.4926
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.119",
-   "name": "燃烧室喷嘴 119",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.2513,
-    -0.4702
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.120",
-   "name": "燃烧室喷嘴 120",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.2962,
-    -0.4433
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.121",
-   "name": "燃烧室喷嘴 121",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.3382,
-    -0.4121
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.122",
-   "name": "燃烧室喷嘴 122",
+   "id": "combustor.injectors.067",
+   "name": "燃烧室喷嘴 067",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6366,8 +5111,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.123",
-   "name": "燃烧室喷嘴 123",
+   "id": "combustor.injectors.068",
+   "name": "燃烧室喷嘴 068",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6389,8 +5134,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.124",
-   "name": "燃烧室喷嘴 124",
+   "id": "combustor.injectors.069",
+   "name": "燃烧室喷嘴 069",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6412,8 +5157,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.125",
-   "name": "燃烧室喷嘴 125",
+   "id": "combustor.injectors.070",
+   "name": "燃烧室喷嘴 070",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6435,8 +5180,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.126",
-   "name": "燃烧室喷嘴 126",
+   "id": "combustor.injectors.071",
+   "name": "燃烧室喷嘴 071",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6458,31 +5203,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.127",
-   "name": "燃烧室喷嘴 127",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.377,
-    -0.377
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.128",
-   "name": "燃烧室喷嘴 128",
+   "id": "combustor.injectors.072",
+   "name": "燃烧室喷嘴 072",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6504,8 +5226,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.129",
-   "name": "燃烧室喷嘴 129",
+   "id": "combustor.injectors.073",
+   "name": "燃烧室喷嘴 073",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6527,8 +5249,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.130",
-   "name": "燃烧室喷嘴 130",
+   "id": "combustor.injectors.074",
+   "name": "燃烧室喷嘴 074",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6550,8 +5272,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.131",
-   "name": "燃烧室喷嘴 131",
+   "id": "combustor.injectors.075",
+   "name": "燃烧室喷嘴 075",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6573,8 +5295,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.132",
-   "name": "燃烧室喷嘴 132",
+   "id": "combustor.injectors.076",
+   "name": "燃烧室喷嘴 076",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6596,8 +5318,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.133",
-   "name": "燃烧室喷嘴 133",
+   "id": "combustor.injectors.077",
+   "name": "燃烧室喷嘴 077",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6619,169 +5341,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.134",
-   "name": "燃烧室喷嘴 134",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4121,
-    -0.3382
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.135",
-   "name": "燃烧室喷嘴 135",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4433,
-    -0.2962
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.136",
-   "name": "燃烧室喷嘴 136",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4702,
-    -0.2513
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.137",
-   "name": "燃烧室喷嘴 137",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.4926,
-    -0.204
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.138",
-   "name": "燃烧室喷嘴 138",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5102,
-    -0.1548
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.139",
-   "name": "燃烧室喷嘴 139",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5229,
-    -0.104
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.140",
-   "name": "燃烧室喷嘴 140",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5306,
-    -0.0523
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.141",
-   "name": "燃烧室喷嘴 141",
+   "id": "combustor.injectors.078",
+   "name": "燃烧室喷嘴 078",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6803,8 +5364,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.142",
-   "name": "燃烧室喷嘴 142",
+   "id": "combustor.injectors.079",
+   "name": "燃烧室喷嘴 079",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6826,8 +5387,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.143",
-   "name": "燃烧室喷嘴 143",
+   "id": "combustor.injectors.080",
+   "name": "燃烧室喷嘴 080",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6849,8 +5410,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.144",
-   "name": "燃烧室喷嘴 144",
+   "id": "combustor.injectors.081",
+   "name": "燃烧室喷嘴 081",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6872,8 +5433,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.145",
-   "name": "燃烧室喷嘴 145",
+   "id": "combustor.injectors.082",
+   "name": "燃烧室喷嘴 082",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6895,8 +5456,8 @@
    "generated": false
   },
   {
-   "id": "combustor.injectors.146",
-   "name": "燃烧室喷嘴 146",
+   "id": "combustor.injectors.083",
+   "name": "燃烧室喷嘴 083",
    "type": "component",
    "component": "combustor.injectors",
    "module": "combustor",
@@ -6915,29 +5476,6 @@
    ],
    "rotor": false,
    "pieceCount": 1,
-   "generated": false
-  },
-  {
-   "id": "combustor.injectors.147",
-   "name": "燃烧室喷嘴 147",
-   "type": "component",
-   "component": "combustor.injectors",
-   "module": "combustor",
-   "center": [
-    0.1682,
-    0.5332,
-    -0.0
-   ],
-   "axial": [
-    0.1309,
-    0.2056
-   ],
-   "radius": [
-    0.5166,
-    0.5497
-   ],
-   "rotor": false,
-   "pieceCount": 5,
    "generated": false
   },
   {
@@ -18875,6 +17413,1478 @@
    ],
    "rotor": false,
    "pieceCount": 1,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.001",
+   "name": "核心机机匣螺栓 001",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5306,
+    0.0523
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.002",
+   "name": "核心机机匣螺栓 002",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5229,
+    0.104
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.003",
+   "name": "核心机机匣螺栓 003",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5102,
+    0.1548
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.004",
+   "name": "核心机机匣螺栓 004",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4926,
+    0.204
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.005",
+   "name": "核心机机匣螺栓 005",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4702,
+    0.2513
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.006",
+   "name": "核心机机匣螺栓 006",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4433,
+    0.2962
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.007",
+   "name": "核心机机匣螺栓 007",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4121,
+    0.3382
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.008",
+   "name": "核心机机匣螺栓 008",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.377,
+    0.377
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.009",
+   "name": "核心机机匣螺栓 009",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.3382,
+    0.4121
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.010",
+   "name": "核心机机匣螺栓 010",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.2962,
+    0.4433
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.011",
+   "name": "核心机机匣螺栓 011",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.2513,
+    0.4702
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.012",
+   "name": "核心机机匣螺栓 012",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.204,
+    0.4926
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.013",
+   "name": "核心机机匣螺栓 013",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.1548,
+    0.5102
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.014",
+   "name": "核心机机匣螺栓 014",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.104,
+    0.5229
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.015",
+   "name": "核心机机匣螺栓 015",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.0523,
+    0.5306
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.016",
+   "name": "核心机机匣螺栓 016",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.0,
+    0.5332
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.017",
+   "name": "核心机机匣螺栓 017",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.0523,
+    0.5306
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.018",
+   "name": "核心机机匣螺栓 018",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.104,
+    0.5229
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.019",
+   "name": "核心机机匣螺栓 019",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.1548,
+    0.5102
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.020",
+   "name": "核心机机匣螺栓 020",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.204,
+    0.4926
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.021",
+   "name": "核心机机匣螺栓 021",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.2513,
+    0.4702
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.022",
+   "name": "核心机机匣螺栓 022",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.2962,
+    0.4433
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.023",
+   "name": "核心机机匣螺栓 023",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.3382,
+    0.4121
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.024",
+   "name": "核心机机匣螺栓 024",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.377,
+    0.377
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.025",
+   "name": "核心机机匣螺栓 025",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4121,
+    0.3382
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.026",
+   "name": "核心机机匣螺栓 026",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4433,
+    0.2962
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.027",
+   "name": "核心机机匣螺栓 027",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4702,
+    0.2513
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.028",
+   "name": "核心机机匣螺栓 028",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4926,
+    0.204
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.029",
+   "name": "核心机机匣螺栓 029",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5102,
+    0.1548
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.030",
+   "name": "核心机机匣螺栓 030",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5229,
+    0.104
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.031",
+   "name": "核心机机匣螺栓 031",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5306,
+    0.0523
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.032",
+   "name": "核心机机匣螺栓 032",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5332,
+    0.0
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.033",
+   "name": "核心机机匣螺栓 033",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5306,
+    -0.0523
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.034",
+   "name": "核心机机匣螺栓 034",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5229,
+    -0.104
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.035",
+   "name": "核心机机匣螺栓 035",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.5102,
+    -0.1548
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.036",
+   "name": "核心机机匣螺栓 036",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4926,
+    -0.204
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.037",
+   "name": "核心机机匣螺栓 037",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4702,
+    -0.2513
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.038",
+   "name": "核心机机匣螺栓 038",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4433,
+    -0.2962
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.039",
+   "name": "核心机机匣螺栓 039",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.4121,
+    -0.3382
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.040",
+   "name": "核心机机匣螺栓 040",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.377,
+    -0.377
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.041",
+   "name": "核心机机匣螺栓 041",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.3382,
+    -0.4121
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.042",
+   "name": "核心机机匣螺栓 042",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.2962,
+    -0.4433
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.043",
+   "name": "核心机机匣螺栓 043",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.2513,
+    -0.4702
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.044",
+   "name": "核心机机匣螺栓 044",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.204,
+    -0.4926
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.045",
+   "name": "核心机机匣螺栓 045",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.1548,
+    -0.5102
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.046",
+   "name": "核心机机匣螺栓 046",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.104,
+    -0.5229
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.047",
+   "name": "核心机机匣螺栓 047",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    -0.0523,
+    -0.5306
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.048",
+   "name": "核心机机匣螺栓 048",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.0,
+    -0.5332
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.049",
+   "name": "核心机机匣螺栓 049",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.0523,
+    -0.5306
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.050",
+   "name": "核心机机匣螺栓 050",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.104,
+    -0.5229
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.051",
+   "name": "核心机机匣螺栓 051",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.1548,
+    -0.5102
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.052",
+   "name": "核心机机匣螺栓 052",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.204,
+    -0.4926
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.053",
+   "name": "核心机机匣螺栓 053",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.2513,
+    -0.4702
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.054",
+   "name": "核心机机匣螺栓 054",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.2962,
+    -0.4433
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.055",
+   "name": "核心机机匣螺栓 055",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.3382,
+    -0.4121
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.056",
+   "name": "核心机机匣螺栓 056",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.377,
+    -0.377
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.057",
+   "name": "核心机机匣螺栓 057",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4121,
+    -0.3382
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.058",
+   "name": "核心机机匣螺栓 058",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4433,
+    -0.2962
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.059",
+   "name": "核心机机匣螺栓 059",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4702,
+    -0.2513
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.060",
+   "name": "核心机机匣螺栓 060",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.4926,
+    -0.204
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.061",
+   "name": "核心机机匣螺栓 061",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5102,
+    -0.1548
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.062",
+   "name": "核心机机匣螺栓 062",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5229,
+    -0.104
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.063",
+   "name": "核心机机匣螺栓 063",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5306,
+    -0.0523
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
+   "generated": false
+  },
+  {
+   "id": "core-casing.bolts.064",
+   "name": "核心机机匣螺栓 064",
+   "type": "component",
+   "component": "core-casing.bolts",
+   "module": "core-casing",
+   "center": [
+    0.1682,
+    0.5332,
+    -0.0
+   ],
+   "axial": [
+    0.1309,
+    0.2056
+   ],
+   "radius": [
+    0.5166,
+    0.5497
+   ],
+   "rotor": false,
+   "pieceCount": 5,
    "generated": false
   },
   {
@@ -48990,6 +49000,7 @@
   "combustor.cans",
   "combustor.casing",
   "combustor.injectors",
+  "core-casing.bolts",
   "core-casing.drum",
   "core-casing.tiles",
   "fan.blade-tips",

@@ -28,7 +28,7 @@ and module, and writes both the GLB and `turbofan-parts.json`.
 | nacelle | 14 | 18,416 |
 | shaft | 1 | 1,920 |
 
-Totals: 2,021 parts, 39 components, 260,778 triangles. The difference from the source count is
+Totals: 2,021 parts, 40 components, 260,778 triangles. The difference from the source count is
 the first turbine stage: 100 flat two-triangle plates (200 triangles) were replaced by 100
 generated blades (25,200 triangles).
 
