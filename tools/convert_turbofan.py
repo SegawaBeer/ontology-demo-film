@@ -39,6 +39,7 @@ COMPONENTS = {
     'compressor.struts': ('压气机支板', 5),
     'compressor.drum': ('压气机鼓筒', 5),
     'compressor.casing': ('压气机机匣', 5),
+    'compressor.stators': ('压气机静子环', 5),
     'combustor.cans': ('燃烧室火焰筒', 6),
     'combustor.injectors': ('燃烧室喷嘴', 6),
     'combustor.casing': ('燃烧室机匣', 6),
@@ -135,17 +136,25 @@ def classify(p):
     if 0.29 <= x < 1.35 and r >= 0.62:
         return 'nacelle', 'nacelle.duct'
 
-    # Compressor.
+    # Compressor: one component per blade ring, plus stator rings and struts.
     if 0.29 <= x < 1.35:
         if p.get('bolts'):
             return 'core-casing', 'core-casing.bolts'
-        if r < 0.30:
-            return 'compressor', 'compressor.drum'
-        if r >= 0.50:
+        if r >= 0.60:
             return 'compressor', 'compressor.casing'
-        if r < 0.36:
-            return 'compressor', 'compressor.drum'
-        return 'compressor', 'compressor.stage-%d' % compressor_stage(x)
+        if 0.66 <= x <= 0.76 and 0.45 <= r < 0.60:
+            return 'compressor', 'compressor.struts'
+        if 0.99 <= x <= 1.13 and r >= 0.44:
+            return 'compressor', 'compressor.stage-1'
+        if 0.79 <= x <= 0.93 and r >= 0.34:
+            return 'compressor', 'compressor.stage-2'
+        if 0.52 <= x <= 0.64 and r >= 0.34:
+            return 'compressor', 'compressor.stage-3'
+        if 0.41 <= x <= 0.51 and r >= 0.34:
+            return 'compressor', 'compressor.stage-4'
+        if 0.22 <= r <= 0.34:
+            return 'compressor', 'compressor.stators'
+        return 'compressor', 'compressor.drum'
 
     # Combustor.
     if -0.12 <= x < 0.29:

@@ -11,13 +11,13 @@ This is an independent study, not manufacturer CAD and not a specific engine typ
 
 ## Hierarchy
 
-`engine > module > component > part`, with 9 modules, 38 components and 2,021 parts:
+`engine > module > component > part`, with 9 modules, 39 components and 2,021 parts:
 
 | Module | Parts | Components |
 | --- | --- | --- |
 | fan 风扇 | 121 | 风扇叶片, 风扇叶尖封严块, 风扇轮毂, 整流锥 |
 | fan-cowl 进气罩 | 32 | 进气唇口, 进气罩壳体, 进气罩后段 |
-| compressor 压气机 | 519 | 四级叶环, 静子环, 支板, 鼓筒, 机匣 |
+| compressor 压气机 | 519 | 四级叶环, 静子环, 支板, 鼓筒 |
 | combustor 燃烧室 | 194 | 火焰筒, 喷嘴, 机匣 |
 | turbine 涡轮 | 887 | 五级叶片/外环叶栅/轮盘, 外环带 |
 | exhaust 尾喷管 | 66 | 尾喷口, 尾喷口螺栓, 尾锥 |
