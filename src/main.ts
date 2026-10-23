@@ -1,17 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { loadTurbofan, sectionOf, type SectionId, type TurbofanModel } from './model';
+import { loadEngineAssets, Engine, type EngineAssets } from './model';
 import { createEffects, type Effects } from './effects';
 import { EngineAudio } from './audio';
-import { createBackdrop, appendBackdropControl } from './backdrop';
+import { createBackdrop, appendBackdropControl, setBackdrop } from './backdrop';
 import { renderPixelRatio, onRenderQuality, getRenderQuality, setRenderQuality, type RenderQuality } from './render-quality';
 import { languageControl, setLanguage, t, onLanguage } from './i18n';
 import './style.css';
 
 type View = 'assembly' | 'cutaway' | 'explode';
 
-const DESCRIPTIONS: Record<SectionId, string> = {
+const DESCRIPTIONS: Record<string, string> = {
   fan: '风扇吸入空气，一部分进入外涵道直接产生推力，其余进入核心机。',
   'fan-cowl': '进气罩包住风扇，把气流平顺地导入。剖开它就能看到风扇叶片。',
   compressor: '压气机由多级转子和静子交替组成，逐级提高空气压力。',
@@ -23,19 +23,17 @@ const DESCRIPTIONS: Record<SectionId, string> = {
   shaft: '主轴把涡轮的功率传给压气机和风扇。',
 };
 
-const EXPLODE: Record<SectionId, THREE.Vector3Tuple> = {
-  fan: [2.35, 0, 0],
-  'fan-cowl': [3.15, 1.05, 0],
-  compressor: [1.15, 0, 0],
+const EXPLODE: Record<string, THREE.Vector3Tuple> = {
+  fan: [1.55, 0, 0],
+  'fan-cowl': [2.25, 1.05, 0],
+  compressor: [0.72, 0, 0],
   combustor: [0, 0, 0],
-  turbine: [-1.15, 0, 0],
-  exhaust: [-2.35, 0, 0],
-  nacelle: [0, 1.95, 0],
-  'core-casing': [0, -1.95, 0],
-  shaft: [-0.3, 0, 0],
+  turbine: [-0.62, 0, 0],
+  exhaust: [-1.45, 0, 0],
+  'core-casing': [0, -1.35, 0],
+  nacelle: [0, 1.55, 0],
+  shaft: [-0.25, 0, 0],
 };
-
-const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -55,12 +53,11 @@ const controls = new OrbitControls(camera, canvas);
 controls.target.set(0.15, 0, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.minDistance = 0.8;
-controls.maxDistance = 16;
+controls.minDistance = 0.06;
+controls.maxDistance = 26;
 controls.maxPolarAngle = Math.PI * 0.94;
 
 scene.add(new THREE.HemisphereLight('#dfeaf2', '#0a1418', 0.5));
-
 const key = new THREE.DirectionalLight('#fff4e2', 2.6);
 key.position.set(4.2, 6.5, 5.5);
 key.castShadow = true;
@@ -70,11 +67,9 @@ key.shadow.camera.top = 5; key.shadow.camera.bottom = -5;
 key.shadow.camera.near = 0.5; key.shadow.camera.far = 22;
 key.shadow.bias = -0.0006;
 scene.add(key);
-
 const fill = new THREE.DirectionalLight('#bcd7ea', 0.75);
 fill.position.set(-5, 2.5, -4);
 scene.add(fill);
-
 const rim = new THREE.DirectionalLight('#8fc6de', 0.55);
 rim.position.set(0, -4.5, 3);
 scene.add(rim);
@@ -88,18 +83,19 @@ new RGBELoader().load('/environment/poly_haven_studio_1k.hdr', texture => {
 });
 
 const audio = new EngineAudio();
-let model: TurbofanModel | null = null;
+let assets: EngineAssets | null = null;
+let engine: Engine | null = null;
+let secondary: Engine | null = null;
 let effects: Effects | null = null;
-const sectionMaterials = new Map<SectionId, THREE.MeshStandardMaterial[]>();
 
 let view: View = 'assembly';
 let running = false;
 let explode = 0;
 let explodeTarget = 0;
-let selected: SectionId | null = null;
+let selected: string | null = null;
 let isolate = false;
-let rotorAngle = 0;
 
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const cameraGoal = { position: camera.position.clone(), target: controls.target.clone() };
 let cameraAnimating = false;
 
@@ -116,38 +112,42 @@ const soundButton = document.querySelector<HTMLButtonElement>('#sound')!;
 const qualitySelect = document.querySelector<HTMLSelectElement>('#quality')!;
 const isolateButton = document.querySelector<HTMLButtonElement>('#isolate')!;
 const clearButton = document.querySelector<HTMLButtonElement>('#clear')!;
+const partButtons = new Map<string, HTMLButtonElement>();
 
-const partButtons = new Map<SectionId, HTMLButtonElement>();
-
-function buildPartsList(current: TurbofanModel) {
-  for (const section of current.sections) {
+function buildPartsList() {
+  if (!engine) return;
+  for (const moduleRuntime of engine.modules) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.dataset.part = section.id;
+    button.dataset.part = moduleRuntime.meta.id;
     button.setAttribute('aria-pressed', 'false');
-    button.innerHTML = `<span>${section.name}</span><small>${section.english}</small>`;
-    button.onclick = () => select(section.id);
+    button.innerHTML = `<span>${moduleRuntime.meta.name}</span><small>${moduleRuntime.meta.partCount}</small>`;
+    button.onclick = () => select(moduleRuntime.meta.id);
     partsList.append(button);
-    partButtons.set(section.id, button);
+    partButtons.set(moduleRuntime.meta.id, button);
   }
+}
+
+function moduleIds(): string[] {
+  return engine ? engine.modules.map(m => m.meta.id) : [];
 }
 
 function setExplode(value: number) {
   explode = value;
   explodeInput.value = String(Math.round(value * 100));
-  if (!model) return;
-  for (const section of model.sections) {
-    const offset = EXPLODE[section.id];
-    section.object.position.set(offset[0] * value, offset[1] * value, offset[2] * value);
+  if (!engine) return;
+  for (const moduleRuntime of engine.modules) {
+    const offset = EXPLODE[moduleRuntime.meta.id] ?? [0, 0, 0];
+    moduleRuntime.group.position.set(offset[0] * value, offset[1] * value, offset[2] * value);
   }
   applyVisibility();
 }
 
 function applyVisibility() {
-  if (!model) return;
-  for (const section of model.sections) {
-    section.object.visible = isolate ? section.id === selected : true;
-    if (section.shell) section.shell.visible = isolate ? section.id === selected : true;
+  if (!engine) return;
+  for (const moduleRuntime of engine.modules) {
+    const hide = isolate && moduleRuntime.meta.id !== selected;
+    engine.setVisible(moduleRuntime.meta.id, !hide);
   }
   applyCutawayClipping(view === 'cutaway' && !isolate);
   if (effects) effects.group.visible = !isolate && explode < 0.4;
@@ -171,91 +171,87 @@ function applyView(next: View) {
     else button.removeAttribute('aria-current');
   });
   explodeField.classList.toggle('visible', next === 'explode');
-  if (!model) return;
-  if (next !== 'explode') {
-    explodeTarget = 0;
-  } else {
-    explodeTarget = Number(explodeInput.value) / 100 || 1;
-    explodeInput.value = String(Math.round(explodeTarget * 100));
-  }
+  if (!engine) return;
+  explodeTarget = next === 'explode' ? (Number(explodeInput.value) / 100 || 1) : 0;
+  if (next === 'explode') explodeInput.value = String(Math.round(explodeTarget * 100));
   applyVisibility();
   fitCamera(next === 'explode' ? explodeTarget : 0);
 }
 
 function highlight() {
-  const dim = new THREE.Color('#0b1a22');
-  for (const [id, materials] of sectionMaterials) {
-    const active = selected === id && !isolate;
-    for (const material of materials) {
-      const base = material.userData.baseColor as THREE.Color | undefined;
-      if (base) material.color.copy(base);
-      if (!selected) {
-        material.emissive.set('#000000');
-        material.emissiveIntensity = 0;
-        material.envMapIntensity = 1.15;
-      } else if (active) {
-        material.emissive.set('#2aa6c6');
-        material.emissiveIntensity = 0.38;
-        material.envMapIntensity = 1.7;
-      } else {
-        if (base) material.color.lerp(dim, 0.62);
-        material.emissive.set('#000000');
-        material.emissiveIntensity = 0;
-        material.envMapIntensity = 0.3;
-      }
-    }
+  if (!engine) return;
+  for (const moduleRuntime of engine.modules) {
+    if (!selected) engine.setColor(moduleRuntime.meta.id, null);
+    else if (moduleRuntime.meta.id === selected) engine.setColor(moduleRuntime.meta.id, null);
+    else engine.setDim(moduleRuntime.meta.id, 0.2);
   }
-  for (const [id, button] of partButtons) {
-    button.setAttribute('aria-pressed', String(selected === id));
-  }
+  for (const [id, button] of partButtons) button.setAttribute('aria-pressed', String(selected === id));
 }
 
-function select(id: SectionId | null, focus = true) {
+function select(id: string | null, focus = true) {
   selected = id;
   if (!id) isolate = false;
   updateIsolateButton();
   highlight();
   applyVisibility();
-  if (!id || !model) {
+  if (!id || !engine) {
     info.hidden = true;
     if (focus) focusOn(null);
     return;
   }
-  const section = model.byId.get(id);
-  if (!section) return;
+  const moduleRuntime = engine.modules.find(m => m.meta.id === id);
+  if (!moduleRuntime) return;
   info.hidden = false;
-  infoTitle.textContent = t(section.name);
-  infoBody.textContent = t(DESCRIPTIONS[id]);
-  if (focus) focusOn(section.object);
+  infoTitle.textContent = t(moduleRuntime.meta.name);
+  const componentNames = moduleRuntime.components.slice(0, 3).map(c => t(c.meta.name)).join('、');
+  infoBody.textContent = `${t(DESCRIPTIONS[id] ?? '')} ${componentNames}等 ${moduleRuntime.meta.components.length} 个组件，共 ${moduleRuntime.meta.partCount} 个零件。`;
+  if (focus) focusOn(moduleRuntime.group);
+}
+
+function selectPart(partId: string) {
+  if (!engine) return;
+  const meta = engine.getPart(partId);
+  if (!meta) return;
+  selected = meta.module;
+  isolate = false;
+  updateIsolateButton();
+  highlight();
+  applyVisibility();
+  info.hidden = false;
+  const moduleMeta = engine.modules.find(m => m.meta.id === meta.module)?.meta;
+  infoTitle.textContent = `${t(moduleMeta?.name ?? meta.module)} · ${meta.name}`;
+  infoBody.textContent = t(DESCRIPTIONS[meta.module] ?? '');
+  focusOn(engine.root);
 }
 
 function fitCamera(spread = 0) {
-  if (!model) return;
-  const halfWidth = Math.hypot(model.size.x / 2 + spread * 2.6, model.size.z / 2 + spread * 1.55);
-  const halfHeight = model.size.y / 2 + spread * 2.15;
+  if (!engine) return;
+  const box = new THREE.Box3().setFromObject(engine.root);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const halfWidth = Math.hypot(size.x / 2 + spread * 2.6, size.z / 2 + spread * 1.55);
+  const halfHeight = size.y / 2 + spread * 2.15;
   const vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
   const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
   const distance = Math.max(halfHeight / Math.tan(vertical), halfWidth / Math.tan(horizontal)) * 1.12;
   controls.maxDistance = Math.max(16, distance * 1.3);
   const direction = new THREE.Vector3(0.78, 0.36, 0.92).normalize();
-  cameraGoal.target.set(model.center.x, model.center.y, model.center.z);
-  cameraGoal.position.copy(model.center).addScaledVector(direction, distance);
+  cameraGoal.target.copy(center);
+  cameraGoal.position.copy(center).addScaledVector(direction, distance);
   cameraAnimating = true;
 }
 
 function focusOn(object: THREE.Object3D | null) {
-  if (!model) return;
-  if (!object) {
-    fitCamera();
-    return;
-  }
+  if (!engine) return;
+  if (!object) { fitCamera(); return; }
   const box = new THREE.Box3().setFromObject(object);
+  if (box.isEmpty()) { fitCamera(); return; }
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  const radius = size.length() / 2;
+  const radius = Math.max(0.05, size.length() / 2);
   const vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
   const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
-  const distance = Math.max(0.6, radius / Math.sin(Math.min(vertical, horizontal)) * 1.15);
+  const distance = Math.max(0.12, radius / Math.sin(Math.min(vertical, horizontal)) * 1.15);
   const direction = camera.position.clone().sub(controls.target).normalize();
   cameraGoal.target.copy(center);
   cameraGoal.position.copy(center).addScaledVector(direction, distance);
@@ -279,9 +275,11 @@ isolateButton.addEventListener('click', () => {
   if (!selected) return;
   isolate = !isolate;
   updateIsolateButton();
-  highlight();
   applyVisibility();
-  if (isolate) focusOn(model?.byId.get(selected)?.object ?? null);
+  if (isolate && engine) {
+    const moduleRuntime = engine.modules.find(m => m.meta.id === selected);
+    if (moduleRuntime) focusOn(moduleRuntime.group);
+  }
 });
 clearButton.addEventListener('click', () => select(null));
 
@@ -291,53 +289,35 @@ onRenderQuality(() => {
   qualitySelect.value = getRenderQuality();
   renderer.setPixelRatio(renderPixelRatio(innerWidth, innerHeight));
 });
-
 onLanguage(() => {
   runButton.textContent = running ? t('停止') : t('运行');
   soundButton.textContent = audio.isOn ? t('声音已开') : t('声音');
   updateIsolateButton();
-  if (selected && model) {
-    const section = model.byId.get(selected);
-    if (section) {
-      infoTitle.textContent = t(section.name);
-      infoBody.textContent = t(DESCRIPTIONS[selected]);
-    }
+  if (selected && engine) {
+    const moduleRuntime = engine.modules.find(m => m.meta.id === selected);
+    if (moduleRuntime) infoTitle.textContent = t(moduleRuntime.meta.name);
   }
 });
 
 document.querySelector('#language-host')!.append(languageControl());
 appendBackdropControl(document.querySelector('#backdrop-host')!);
-
 document.querySelectorAll<HTMLButtonElement>('#views button').forEach(button => {
   button.onclick = () => applyView(button.dataset.view as View);
 });
-
-explodeInput.oninput = () => {
-  explodeTarget = Number(explodeInput.value) / 100;
-};
-explodeInput.onchange = () => {
-  if (view !== 'explode') applyView('explode');
-};
+explodeInput.oninput = () => { explodeTarget = Number(explodeInput.value) / 100; };
+explodeInput.onchange = () => { if (view !== 'explode') applyView('explode'); };
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let downX = 0, downY = 0;
-
 canvas.addEventListener('pointerdown', event => { downX = event.clientX; downY = event.clientY; });
 canvas.addEventListener('pointerup', event => {
-  if (Math.hypot(event.clientX - downX, event.clientY - downY) > 6 || !model) return;
+  if (Math.hypot(event.clientX - downX, event.clientY - downY) > 6 || !engine) return;
   const rect = canvas.getBoundingClientRect();
   pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObject(model.root, true);
-  const visible = hits.find(hit => {
-    let node: THREE.Object3D | null = hit.object;
-    while (node) { if (!node.visible) return false; node = node.parent; }
-    return true;
-  });
-  if (!visible) { select(null); return; }
-  const id = sectionOf(visible.object);
-  if (id) select(id);
+  const id = engine.pick(raycaster);
+  if (id) selectPart(id); else select(null);
 });
 
 function resize() {
@@ -349,43 +329,115 @@ function resize() {
 }
 addEventListener('resize', resize);
 
+function applyDebug(params: URLSearchParams) {
+  if (!engine) return;
+  const mode = params.get('debug');
+  if (!mode) return;
+  const blades = engine.listParts('turbine.stage-1-blades');
+  if (mode === 'single-blade') {
+    for (const moduleRuntime of engine.modules) engine.setVisible(moduleRuntime.meta.id, false);
+    engine.setVisible(blades[0], true);
+    engine.setTransform(blades[0], { position: [0, 0, 0], rotation: [0, 0, 0] });
+    if (effects) effects.setVisible(false);
+    setBackdrop('white');
+    const state = engine.parts.get(blades[0]);
+    if (state?.promoted) {
+      const m = state.matrix.clone();
+      m.setPosition(0, 0, 0);
+      state.promoted.matrixAutoUpdate = false;
+      state.promoted.matrix.copy(m);
+      state.promoted.matrixWorldNeedsUpdate = true;
+    }
+    cameraGoal.target.set(0, 0.07, 0);
+    cameraGoal.position.set(0.1, 0.09, 0.42);
+    cameraAnimating = true;
+    const meta = engine.getPart(blades[0]);
+    if (meta) {
+      info.hidden = false;
+      infoTitle.textContent = meta.name;
+      infoBody.textContent = '第一级涡轮叶片，单独取出。';
+    }
+  } else if (mode === 'red-16') {
+    engine.setColor(blades.slice(0, 16), '#e03b2f');
+    for (const moduleRuntime of engine.modules) engine.setVisible(moduleRuntime.meta.id, moduleRuntime.meta.id === 'turbine');
+    const turbine = engine.modules.find(m => m.meta.id === 'turbine');
+    if (turbine) {
+      focusOn(turbine.group);
+      cameraAnimating = false;
+      camera.position.copy(cameraGoal.position);
+      controls.target.copy(cameraGoal.target);
+    }
+  } else if (mode === 'extract-16') {
+    engine.setColor(blades.slice(0, 16), '#e03b2f');
+    engine.setTransform(blades.slice(0, 16), { position: [0.9, 0.75, 0.55], rotation: [0, 0, 0] });
+    applyView('assembly');
+    fitCamera();
+  } else if (mode === 'dim') {
+    for (const moduleRuntime of engine.modules) engine.setDim(moduleRuntime.meta.id, 0.2);
+    engine.setColor('turbine.stage-1-blades', null);
+    explodeTarget = 0.55;
+    fitCamera(0.55);
+  } else if (mode === 'transparent') {
+    engine.setOpacity('combustor', 0.28);
+    applyView('cutaway');
+    cameraGoal.target.set(-0.1, 0, 0);
+    cameraGoal.position.set(1.0, 1.35, 2.9);
+    cameraAnimating = true;
+  } else if (mode === 'twin') {
+    if (!assets) return;
+    secondary = new Engine(assets);
+    secondary.root.scale.setScalar(0.5);
+    secondary.root.position.set(1.5, -0.9, 1.2);
+    secondary.root.rotation.y = Math.PI;
+    scene.add(secondary.root);
+    for (const id of ['nacelle', 'core-casing', 'fan-cowl']) secondary.setOpacity(id, 0.12);
+    const secondTurbine = secondary.modules.find(m => m.meta.id === 'turbine');
+    if (secondTurbine) {
+      for (const component of secondTurbine.components) {
+        if (component.meta.id !== 'turbine.stage-1-blades') secondary.setOpacity(component.meta.id, 0.14);
+      }
+    }
+    secondary.setColor(secondary.listParts('turbine.stage-1-blades').slice(0, 30), '#e03b2f');
+    const box = new THREE.Box3().setFromObject(engine.root).union(new THREE.Box3().setFromObject(secondary.root));
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
+    const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
+    const distance = Math.max(size.y / 2 / Math.tan(vertical), Math.hypot(size.x, size.z) / 2 / Math.tan(horizontal)) * 1.1;
+    cameraGoal.target.copy(center);
+    cameraGoal.position.copy(center).addScaledVector(new THREE.Vector3(0.7, 0.35, 0.85).normalize(), distance);
+    cameraAnimating = true;
+  } else if (mode === 'assemble') {
+    const step = params.get('step');
+    const limit = step === 'full' ? 99 : Number(step ?? 1);
+    for (const component of assets?.manifest.components ?? []) {
+      if (component.order > limit) engine.setVisible(component.id, false);
+    }
+  }
+}
+
 (async () => {
   try {
-    const params = new URLSearchParams(location.search);
-    const loaded = await loadTurbofan('/models/turbofan.glb', ratio => {
+    assets = await loadEngineAssets('/models/turbofan.glb', '/models/turbofan-parts.json', ratio => {
       loaderText.textContent = `${t('加载中')} ${Math.round(ratio * 100)}%`;
     });
-    model = loaded;
-    scene.add(model.root);
-    for (const section of model.sections) {
-      const materials: THREE.MeshStandardMaterial[] = [];
-      section.object.traverse(object => {
-        const mesh = object as THREE.Mesh;
-        if (!mesh.isMesh) return;
-        const material = mesh.material as THREE.MeshStandardMaterial;
-        if (!material || Array.isArray(material)) return;
-        const clone = material.clone();
-        clone.userData.baseColor = clone.color.clone();
-        mesh.material = clone;
-        materials.push(clone);
-      });
-      sectionMaterials.set(section.id, materials);
-    }
-    buildPartsList(model);
-    effects = createEffects(model);
-    scene.add(effects.group);
+    engine = new Engine(assets);
+    scene.add(engine.root);
+    effects = createEffects(engine);
+    buildPartsList();
     resize();
     fitCamera();
     camera.position.copy(cameraGoal.position);
     controls.target.copy(cameraGoal.target);
     cameraAnimating = false;
 
+    const params = new URLSearchParams(location.search);
     const requestedView = params.get('view');
     applyView(requestedView === 'cutaway' || requestedView === 'explode' ? requestedView : 'assembly');
     setExplode(explodeTarget);
-    const requestedSection = params.get('section') as SectionId | null;
-    if (requestedSection && model.byId.has(requestedSection)) select(requestedSection, false);
+    applyDebug(params);
     loader.classList.add('done');
+    performance.mark('engine-ready');
     setTimeout(() => loader.remove(), 600);
   } catch (error) {
     console.error(error);
@@ -394,22 +446,19 @@ addEventListener('resize', resize);
 })();
 
 let last = performance.now();
+let frames = 0, statsStart = performance.now();
 function frame(now: number) {
   const delta = Math.min(0.05, (now - last) / 1000);
   last = now;
 
-  if (model) {
+  if (engine) {
     explode += (explodeTarget - explode) * Math.min(1, delta * 5.5);
     if (Math.abs(explodeTarget - explode) > 0.0005) setExplode(explode);
-
-    if (running) {
-      rotorAngle += delta * 9.5;
-      for (const rotor of model.rotors) rotor.rotation.x = -rotorAngle;
-    }
+    engine.update(delta, running);
+    if (secondary) secondary.update(delta, running);
   }
 
   if (view === 'cutaway' && !isolate) {
-    // Keep the cut facing the viewer so orbiting never removes a whole section.
     const dy = camera.position.y - controls.target.y;
     const dz = camera.position.z - controls.target.z;
     const length = Math.hypot(dy, dz) || 1;
@@ -430,10 +479,37 @@ function frame(now: number) {
 
   controls.update();
   renderer.render(scene, camera);
+
+  frames++;
+  if (now - statsStart > 1000) {
+    const stats = { fps: Math.round(frames * 1000 / (now - statsStart)), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
+    (window as unknown as Record<string, unknown>).__stats = stats;
+    document.body.dataset.stats = JSON.stringify(stats);
+    frames = 0; statsStart = now;
+  }
   requestAnimationFrame(frame);
 }
 
 resize();
 requestAnimationFrame(frame);
-
 setLanguage(new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'zh');
+
+function applyState(mode: string, extra: Record<string, string> = {}) {
+  if (!engine) return;
+  engine.reset();
+  if (secondary) { scene.remove(secondary.root); secondary = null; }
+  explode = 0; explodeTarget = 0;
+  setExplode(0);
+  applyView('assembly');
+  if (effects) effects.setVisible(true);
+  applyDebug(new URLSearchParams({ debug: mode, ...extra }));
+}
+
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__app = {
+    get engine() { return engine; },
+    get secondary() { return secondary; },
+    camera, controls, renderer, scene,
+    setRunning, applyView, setExplode, select, selectPart, applyState,
+  };
+}
