@@ -57,17 +57,17 @@ a:hover{text-decoration:underline}
 html[lang=en] .parts button small{display:none}
 .parts .hint{margin:10px 4px 0;font-size:10px;line-height:1.6;color:#7b8f9b}
 
-.info{position:absolute;left:252px;bottom:104px;width:min(330px,calc(100vw - 60px));
-  border:1px solid #78d7f04d;border-left:3px solid var(--accent);border-radius:12px;
-  background:#0b1a22f2;backdrop-filter:blur(16px);box-shadow:0 24px 60px #00000066;padding:14px 16px 12px}
-.info .eyebrow{font-size:9px;letter-spacing:.2em;color:#7fc6dc;margin-bottom:4px}
-.info h2{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-weight:400;font-size:20px;letter-spacing:-.01em;color:#fff}
-.info p{margin:0 0 12px;font-size:12px;line-height:1.75;color:#b3c4ce}
-.info-actions{display:flex;gap:8px}
-.info-actions button{border:1px solid #ffffff26;background:#ffffff0a;border-radius:8px;padding:7px 12px;
-  font-size:11px;cursor:pointer;color:#cfe1ea;transition:background .18s,border-color .18s,color .18s}
-.info-actions button:hover{border-color:#78d7f080;color:#fff}
-.info-actions button[aria-pressed=true]{background:#78d7f02e;border-color:#78d7f0a0;color:#eaffff}
+.info{position:absolute;right:30px;top:50%;transform:translateY(-50%);width:min(300px,calc(100vw - 60px));
+  border:1px solid var(--line);border-radius:14px;background:var(--panel);backdrop-filter:blur(16px);
+  box-shadow:var(--shadow);padding:14px}
+.info .eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8fb0c0;font-weight:500}
+.info h2{margin:8px 0 8px;font-family:'Space Grotesk',sans-serif;font-weight:400;font-size:19px;letter-spacing:-.01em;color:#fff}
+.info p{margin:0 0 12px;font-size:12px;line-height:1.75;color:#a9bcc7}
+.info-actions{display:flex;gap:6px}
+.info-actions button{border:1px solid #ffffff1f;background:#ffffff08;border-radius:8px;padding:7px 10px;
+  font-size:11px;cursor:pointer;color:#c6d5de;transition:background .18s,border-color .18s,color .18s}
+.info-actions button:hover{background:#ffffff12;border-color:#ffffff38;color:#fff}
+.info-actions button[aria-pressed=true]{background:#78d7f01c;border-color:#78d7f066;color:#e6fbff}
 
 .dock{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;
   padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);
@@ -85,7 +85,7 @@ html[lang=en] .parts button small{display:none}
 .dock .primary:hover{background:#78d7f033}
 .dock .primary[aria-pressed=true]{background:var(--accent);color:#06222b;border-color:transparent}
 
-.credit{position:absolute;right:30px;bottom:22px;margin:0;max-width:340px;text-align:right;
+.credit{position:absolute;left:30px;bottom:22px;margin:0;max-width:330px;text-align:left;
   font-size:9.5px;line-height:1.7;color:#7f939f}
 
 .loader{position:absolute;inset:0;display:grid;place-content:center;gap:14px;justify-items:center;
@@ -106,9 +106,9 @@ html[data-backdrop-tone=light] .icon-button,html[data-backdrop-tone=light] .lang
 html[data-backdrop-tone=light] .dock nav{background:#1d42520c}
 html[data-backdrop-tone=light] .dock nav button[aria-current=page]{background:#1d425214;color:#0f2b38}
 html[data-backdrop-tone=light] .parts button{color:#2c4a58}
-html[data-backdrop-tone=light] .info{background:#ffffffee;border-color:#1d425233;border-left-color:#0f8caa}
+html[data-backdrop-tone=light] .info{background:#ffffffd9;border-color:#1d425226}
 html[data-backdrop-tone=light] .info h2{color:#0f2b38}
-html[data-backdrop-tone=light] .info .eyebrow{color:#2f7183}
+html[data-backdrop-tone=light] .info .eyebrow{color:#3d6c7d}
 html[data-backdrop-tone=light] .info p{color:#33505e}
 html[data-backdrop-tone=light] .info-actions button{background:#0f8caa10;border-color:#0f8caa40;color:#0d5364}
 html[data-backdrop-tone=light] .info-actions button[aria-pressed=true]{background:#0f8caa22;border-color:#0f8caa90;color:#083f4c}
@@ -131,7 +131,7 @@ html[data-backdrop-tone=light] .loader{background:#f4f8f9;color:#4a6c7d}
   .parts ol{flex-direction:row;flex-wrap:wrap}
   .parts button{width:auto;padding:7px 10px;font-size:11px}
   .parts .hint{display:none}
-  .info{left:16px;right:16px;bottom:150px;width:auto}
+  .info{left:16px;right:16px;top:auto;bottom:150px;width:auto;transform:none}
   .parts:has(+ .info:not([hidden])){opacity:0;pointer-events:none;transform:translateY(8px)}
   .dock{left:12px;right:12px;transform:none;justify-content:space-between;bottom:14px;gap:6px;padding:6px}
   .dock nav button{padding:7px 9px;font-size:11px}

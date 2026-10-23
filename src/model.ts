@@ -79,7 +79,10 @@ export async function loadTurbofan(url: string, onProgress?: (ratio: number) => 
     for (const material of materials as THREE.MeshStandardMaterial[]) {
       if (!material) continue;
       material.envMapIntensity = 1.15;
-      material.side = THREE.FrontSide;
+      // Parts of the source mesh are open shells with inconsistent winding;
+      // single-sided rendering drops them from some view angles.
+      material.side = THREE.DoubleSide;
+      material.shadowSide = THREE.DoubleSide;
     }
   });
 

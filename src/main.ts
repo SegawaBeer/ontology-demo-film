@@ -35,7 +35,7 @@ const EXPLODE: Record<SectionId, THREE.Vector3Tuple> = {
   shaft: [-0.3, 0, 0],
 };
 
-const CUTAWAY_HIDDEN: SectionId[] = ['fan-cowl', 'nacelle', 'core-casing'];
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -146,11 +146,15 @@ function setExplode(value: number) {
 function applyVisibility() {
   if (!model) return;
   for (const section of model.sections) {
-    const cutawayHidden = view === 'cutaway' && CUTAWAY_HIDDEN.includes(section.id);
-    section.object.visible = isolate ? section.id === selected : !cutawayHidden;
-    if (section.shell) section.shell.visible = isolate ? section.id === selected : view !== 'cutaway';
+    section.object.visible = isolate ? section.id === selected : true;
+    if (section.shell) section.shell.visible = isolate ? section.id === selected : true;
   }
+  applyCutawayClipping(view === 'cutaway' && !isolate);
   if (effects) effects.group.visible = !isolate && explode < 0.4;
+}
+
+function applyCutawayClipping(on: boolean) {
+  renderer.clippingPlanes = on ? [clipPlane] : [];
 }
 
 function updateIsolateButton() {
@@ -181,7 +185,7 @@ function applyView(next: View) {
 function highlight() {
   const dim = new THREE.Color('#0b1a22');
   for (const [id, materials] of sectionMaterials) {
-    const active = selected === id;
+    const active = selected === id && !isolate;
     for (const material of materials) {
       const base = material.userData.baseColor as THREE.Color | undefined;
       if (base) material.color.copy(base);
@@ -275,6 +279,7 @@ isolateButton.addEventListener('click', () => {
   if (!selected) return;
   isolate = !isolate;
   updateIsolateButton();
+  highlight();
   applyVisibility();
   if (isolate) focusOn(model?.byId.get(selected)?.object ?? null);
 });
@@ -401,6 +406,15 @@ function frame(now: number) {
       rotorAngle += delta * 9.5;
       for (const rotor of model.rotors) rotor.rotation.x = -rotorAngle;
     }
+  }
+
+  if (view === 'cutaway' && !isolate) {
+    // Keep the cut facing the viewer so orbiting never removes a whole section.
+    const dy = camera.position.y - controls.target.y;
+    const dz = camera.position.z - controls.target.z;
+    const length = Math.hypot(dy, dz) || 1;
+    clipPlane.normal.set(0, -dy / length, -dz / length);
+    clipPlane.constant = 0;
   }
 
   if (effects) {

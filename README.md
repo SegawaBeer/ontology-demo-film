@@ -11,7 +11,7 @@ specific engine type.
 
 ## Features
 
-- Three views: assembled, cutaway (outer cowls and casings hidden) and exploded separation.
+- Three views: assembled, cutaway (clipped half-section) and exploded separation.
 - A separation slider from 0 to 100 percent.
 - Section list and click-to-select on the model, with camera focus and a short explanation.
 - "Show only this" isolates the selected section; "Back to engine" restores the whole model.

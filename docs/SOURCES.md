@@ -29,8 +29,9 @@ connected components and regrouped into nine sections by axial and radial positi
 ## Limits
 
 - Section boundaries are approximations derived from geometry, not from engineering drawings.
-- The model has no detailed internal blade passages. The cutaway removes outer cowls and casing
-  shells; it does not show a sectioned compressor or turbine.
+- The model has no detailed internal blade passages. The cutaway clips the near half of the whole
+  assembly, so the cut faces show casing shells and ring surfaces rather than a sectioned
+  compressor or turbine.
 - Rotor and stator are separated by a radius rule, so only the fan blades and the compressor hub
   rotate. Combustor and turbine pieces are shown static.
 - Rotation speed, airflow particles, combustion glow and the exhaust plume are illustrative.
