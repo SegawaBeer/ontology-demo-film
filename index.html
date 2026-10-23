@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08100d" />
+    <title>涡轮风扇发动机 | 交互模型</title>
+    <meta name="description" content="涡轮风扇发动机交互模型：拆开外罩，查看风扇、压气机、燃烧室与涡轮。示意模型，非制造级 CAD。" />
+    <meta name="author" content="Interactive study" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="涡轮风扇发动机 | 交互模型" />
+    <meta property="og:description" content="拆开外罩，看清风扇、压气机、燃烧室与涡轮。" />
+    <meta name="twitter:card" content="summary" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="三维模型，可拖动旋转与滚轮缩放"></canvas>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="eyebrow">交互模型 / 航空发动机</span>
+          <h1>涡轮风扇发动机</h1>
+          <p>拆开外罩，看清风扇、压气机、燃烧室与涡轮。</p>
+        </div>
+        <div class="top-actions">
+          <div class="settings">
+            <label class="field"><span>画质</span>
+              <select id="quality" aria-label="画质">
+                <option value="balanced">流畅</option>
+                <option value="high">精细 · 2×</option>
+                <option value="ultra">演示 · 最高 3×</option>
+              </select>
+            </label>
+            <div id="backdrop-host"></div>
+          </div>
+          <button id="sound" class="icon-button" type="button" aria-pressed="false">声音</button>
+          <div id="language-host"></div>
+        </div>
+      </header>
+
+      <aside class="parts" aria-label="部件">
+        <h2>部件</h2>
+        <ol id="part-list"></ol>
+        <p class="hint">点击部件查看说明</p>
+      </aside>
+
+      <section class="info" id="info" hidden>
+        <span class="eyebrow">当前部件</span>
+        <h2 id="info-title"></h2>
+        <p id="info-body"></p>
+        <div class="info-actions">
+          <button id="isolate" type="button" aria-pressed="false">单独显示</button>
+          <button id="clear" type="button">返回整机</button>
+        </div>
+      </section>
+
+      <footer class="dock">
+        <nav id="views" aria-label="视图">
+          <button type="button" data-view="assembly">完整外观</button>
+          <button type="button" data-view="cutaway">剖面</button>
+          <button type="button" data-view="explode">爆炸拆解</button>
+        </nav>
+        <label class="explode" id="explode-field"><span>拆开程度</span>
+          <input id="explode" type="range" min="0" max="100" value="0" aria-label="拆开程度" />
+        </label>
+        <button id="run" class="primary" type="button" aria-pressed="false">运行</button>
+      </footer>
+
+      <p class="credit">
+        <span>模型：</span><a href="https://sketchfab.com/3d-models/turbine-turbofan-engine-jet-engine-74c6aceed86b4a41aaad3b93afc3e262" target="_blank" rel="noopener">Turbine | Turbofan Engine | Jet Engine</a><span>，作者 blenderbirb，CC BY 4.0。</span>
+        <span>界面与场景改编自 Turbine Explorer（MIT 许可）。</span>
+      </p>
+
+      <div class="loader" id="loader"><span>加载中</span><i></i></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "turbofan-explorer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node scripts/verify-model.mjs",
+    "build:labs": "tsc && vite build --base=/gas-turbine/ --outDir dist-labs/gas-turbine"
+  },
+  "dependencies": {
+    "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.179.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
+  },
+  "description": "Interactive turbofan engine study in Three.js, adapted from Turbine Explorer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}
