@@ -1,92 +1,102 @@
-"""Generate one turbine blade as a closed, twisted airfoil with a root platform.
+"""Generate one first-stage turbine blade.
 
-Local frame: +Y is radial outward from the root centre, +X is axial, +Z is
-tangential. The blade occupies y = 0 .. 0.146 so it fits the original plate ring
-(r 0.304 .. 0.450) without touching the disc or the casing.
+Local frame: origin at the centre of the fir-tree root, +Y radial outward,
++X axial, +Z tangential. Overall height 0.176: root -0.030..0.008,
+platform 0.008..0.020, aerofoil 0.020..0.146. The root sits inside the hub.
 """
 import math
 
-SPAN = 0.146
-ROOT_R = 0.304
+ROOT_R = 0.304          # radius of the root centre in the engine
+SPAN = 0.146            # aerofoil tip radius, local y
+PITCH = 2 * math.pi * ROOT_R / 100   # tangential pitch at the root, ~0.0191
+CHORD = 0.050
+STAGGER = math.radians(35)
 
 
-def airfoil(chord, thickness, camber, n=12):
-    """NACA-4 style cambered section in (x, z); x along chord, z thickness."""
+def section(chord, thick, camber, twist, n=16):
+    """Cambered section, returned as (x, z) around the outline."""
     upper, lower = [], []
     for i in range(n + 1):
         t = i / n
         x = 0.5 * (1 - math.cos(math.pi * t))
-        yt = 5 * thickness * (0.2969 * math.sqrt(x) - 0.126 * x - 0.3516 * x * x
-                             + 0.2843 * x ** 3 - 0.1015 * x ** 4)
+        yt = 5 * thick * (0.2969 * math.sqrt(x) - 0.126 * x - 0.3516 * x * x
+                          + 0.2843 * x ** 3 - 0.1015 * x ** 4)
         yc = camber * chord * math.sin(math.pi * x)
         upper.append((x * chord, yc + yt * chord))
         lower.append((x * chord, yc - yt * chord))
-    return upper, lower
+    outline = upper + list(reversed(lower[1:-1]))
+    cs, sn = math.cos(twist), math.sin(twist)
+    return [((x - chord / 2) * cs - z * sn, (x - chord / 2) * sn + z * cs) for (x, z) in outline]
 
 
-def blade_geometry(sections=6, profile=10):
-    """Return (vertices, normals, indices) for one blade."""
-    verts, normals, indices = [], [], []
+def add_box(verts, faces, cx, cy, cz, sx, sy, sz, twist=0.0):
+    base = len(verts) // 3
+    cs, sn = math.cos(twist), math.sin(twist)
+    for iy in (-1, 1):
+        for ix in (-1, 1):
+            for iz in (-1, 1):
+                x, z = ix * sx / 2, iz * sz / 2
+                verts.extend((cx + x * cs - z * sn, cy + iy * sy / 2, cz + x * sn + z * cs))
+    # index order: (iy,ix,iz) -> 0..7
+    quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    for a, b, c, d in quads:
+        faces.extend((base + a, base + b, base + c, base + a, base + c, base + d))
 
-    def add_loop(points, y):
-        base = len(verts) // 3
-        for (x, z) in points:
-            verts.extend((x, y, z))
-        return base
+
+def blade_geometry(sections=6, profile=16):
+    verts, faces = [], []
 
     loops = []
     for s in range(sections):
         t = s / (sections - 1)
-        y = 0.012 + t * (SPAN - 0.012)
-        chord = 0.038 - 0.012 * t
-        thick = 0.30 - 0.14 * t          # thickness / chord
-        camber = 0.18 - 0.10 * t          # camber / chord
-        twist = math.radians(42 - 24 * t)
-        upper, lower = airfoil(chord, thick, camber, profile)
-        loop = []
-        cs, sn = math.cos(twist), math.sin(twist)
-        for (x, z) in upper + list(reversed(lower[1:-1])):
-            x0 = x - chord / 2
-            loop.append((x0 * cs - z * sn, x0 * sn + z * cs))
-        loops.append((loop, y, add_loop(loop, y)))
+        y = 0.020 + t * (SPAN - 0.020)
+        chord = CHORD - 0.014 * t
+        thick = 0.26 - 0.14 * t
+        camber = 0.20 - 0.11 * t
+        twist = STAGGER - math.radians(14) * t
+        outline = section(chord, thick, camber, twist, profile)
+        base = len(verts) // 3
+        for (x, z) in outline:
+            verts.extend((x, y, z))
+        loops.append((outline, base))
 
     n = len(loops[0][0])
     for a in range(len(loops) - 1):
-        l0, _, b0 = loops[a]
-        l1, _, b1 = loops[a + 1]
+        b0 = loops[a][1]
+        b1 = loops[a + 1][1]
         for i in range(n):
             j = (i + 1) % n
-            indices.extend((b0 + i, b0 + j, b1 + j, b0 + i, b1 + j, b1 + i))
+            faces.extend((b0 + i, b0 + j, b1 + j, b0 + i, b1 + j, b1 + i))
 
-    # Caps: tip and root.
-    tip_loop, tip_y, tip_base = loops[-1]
-    root_loop, root_y, root_base = loops[0]
-    tip_center = (sum(p[0] for p in tip_loop) / n, tip_y, sum(p[1] for p in tip_loop) / n)
-    root_center = (sum(p[0] for p in root_loop) / n, root_y, sum(p[1] for p in root_loop) / n)
-    verts.extend(tip_center); tip_c = len(verts) // 3 - 1
-    verts.extend(root_center); root_c = len(verts) // 3 - 1
-    for i in range(n):
-        j = (i + 1) % n
-        indices.extend((tip_base + i, tip_base + j, tip_c))
-        indices.extend((root_base + j, root_base + i, root_c))
+    for loop_index, (outline, base) in enumerate((loops[0], loops[-1])):
+        cy = 0.020 if loop_index == 0 else SPAN
+        cx = sum(p[0] for p in outline) / n
+        cz = sum(p[1] for p in outline) / n
+        verts.extend((cx, cy, cz))
+        centre = len(verts) // 3 - 1
+        for i in range(n):
+            j = (i + 1) % n
+            if loop_index == 0:
+                faces.extend((base + j, base + i, centre))
+            else:
+                faces.extend((base + i, base + j, centre))
 
-    # Root platform and dovetail, a shallow block under the airfoil.
-    px, pz = 0.026, 0.015
-    py0, py1 = 0.0, 0.012
-    box = [(px, py1, pz), (-px, py1, pz), (-px, py1, -pz), (px, py1, -pz),
-           (px, py0, pz), (-px, py0, pz), (-px, py0, -pz), (px, py0, -pz)]
-    box_base = len(verts) // 3
-    for v in box:
-        verts.extend(v)
-    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1),
-             (1, 5, 6), (1, 6, 2), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
-    for f in faces:
-        indices.extend((box_base + f[0], box_base + f[1], box_base + f[2]))
+    # Platform: parallelogram across the pitch, aligned with the stagger.
+    axial = CHORD * math.cos(STAGGER) + 0.020
+    add_box(verts, faces, 0, 0.014, 0, axial, 0.012, PITCH, STAGGER)
 
-    # Smooth normals: accumulate face normals per vertex.
+    # Fir-tree root: three lobes, each narrower than the one above.
+    y = 0.008
+    for lobe, (width, height) in enumerate(((PITCH * 0.92, 0.010),
+                                            (PITCH * 0.74, 0.010),
+                                            (PITCH * 0.56, 0.010))):
+        add_box(verts, faces, 0, y - height / 2, 0, axial * 0.72, height, width, STAGGER)
+        y -= height
+    add_box(verts, faces, 0, y - 0.002, 0, axial * 0.4, 0.004, PITCH * 0.36, STAGGER)
+
     normals = [0.0] * len(verts)
-    for i in range(0, len(indices), 3):
-        a, b, c = indices[i] * 3, indices[i + 1] * 3, indices[i + 2] * 3
+    for i in range(0, len(faces), 3):
+        a, b, c = faces[i] * 3, faces[i + 1] * 3, faces[i + 2] * 3
         ux, uy, uz = verts[b] - verts[a], verts[b + 1] - verts[a + 1], verts[b + 2] - verts[a + 2]
         vx, vy, vz = verts[c] - verts[a], verts[c + 1] - verts[a + 1], verts[c + 2] - verts[a + 2]
         nx, ny, nz = uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx
@@ -96,11 +106,12 @@ def blade_geometry(sections=6, profile=10):
         length = math.sqrt(normals[i] ** 2 + normals[i + 1] ** 2 + normals[i + 2] ** 2) or 1.0
         normals[i] /= length; normals[i + 1] /= length; normals[i + 2] /= length
 
-    return verts, normals, indices
+    return verts, normals, faces
 
 
 if __name__ == '__main__':
-    v, n, i = blade_geometry()
-    print('vertices', len(v) // 3, 'triangles', len(i) // 3)
-    ys = v[1::3]
-    print('y range', round(min(ys), 3), round(max(ys), 3))
+    v, n, f = blade_geometry()
+    xs, ys, zs = v[0::3], v[1::3], v[2::3]
+    print('vertices', len(v) // 3, 'triangles', len(f) // 3)
+    print('x %.3f..%.3f  y %.3f..%.3f  z %.3f..%.3f' % (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)))
+    print('pitch %.4f  chord %.3f  axial width %.4f' % (PITCH, CHORD, CHORD * math.cos(STAGGER)))
