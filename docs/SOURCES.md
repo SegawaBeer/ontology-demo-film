@@ -28,7 +28,7 @@ and module, and writes both the GLB and `turbofan-parts.json`.
 | nacelle | 14 | 18,416 |
 | shaft | 1 | 1,920 |
 
-Totals: 2,027 parts, 51 components, 282,410 triangles. The source mesh is 235,778 triangles;
+Totals: 2,049 parts, 52 components, 282,410 triangles plus a 20,450-triangle close-up blade. The source mesh is 235,778 triangles;
 100 flat two-triangle plates were removed and replaced by 100 generated blades (44,400
 triangles), a rotor disc was added (1,152), and cutting the long shell at four planes added
 about 1,280 triangles.
@@ -42,6 +42,15 @@ radius. The aerofoil spans r = 0.304 to 0.450 at x = −1.355 and its axial proj
 envelope of the original plates; neighbouring aerofoils clear each other by 0.002. A simple rotor
 disc (`tools/rotor_disk.py`, rim 0.302, bore 0.170) sits under the roots. Both generators are
 deterministic.
+
+## The close-up blade
+
+`tools/hero_blade.py` builds one detailed blade for close shots: chord 0.105, aerofoil height
+0.126 (height/chord 1.2), stagger 35° with 18° of twist, a tip rim with a recessed pocket, a
+platform, a neck and a three-lobe fir-tree root. Three serpentine passages with ribs and a
+pin-fin bank sit inside; seven film-hole rows and one row of trailing-edge slots are separate
+objects; four coating layers form a sample beside the blade. It is hidden by default and not
+part of the assembly order.
 
 ## Limits
 

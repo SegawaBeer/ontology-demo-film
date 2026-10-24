@@ -434,6 +434,53 @@ function applyDebug(params: URLSearchParams) {
     cameraGoal.target.copy(center);
     cameraGoal.position.copy(center).addScaledVector(new THREE.Vector3(0.7, 0.35, 0.85).normalize(), distance);
     cameraAnimating = true;
+  } else if (mode === 'hero') {
+    const cut = Number(params.get('cut') ?? 0);
+    const coat = Number(params.get('coat') ?? 0);
+    const rows = params.get('rows');
+    const zoom = Number(params.get('zoom') ?? 1);
+    const pose = params.get('pose');
+    const heroRows = ['film-le-1', 'film-le-2', 'film-le-3', 'film-le-4',
+      'film-ps-1', 'film-ps-2', 'film-ss-1', 'slot-te']
+      .map(id => `turbine.hero-blade.${id}`);
+    if (pose) {
+      engine.hero.show(true);
+      engine.hero.setCutaway(cut);
+      engine.hero.setCoatings(coat);
+      const poseResult = engine.hero.poseFor(bladeIdFor(pose));
+      engine.setVisible(bladeIdFor(pose), false);
+      if (poseResult) {
+        engine.setVisible('nacelle', false);
+        engine.setVisible('core-casing', false);
+        engine.setVisible('compressor', false);
+        engine.setVisible('turbine.band', false);
+        engine.setVisible('turbine.inner-cone', false);
+        const target = new THREE.Vector3(...poseResult.position);
+        cameraGoal.target.copy(target);
+        cameraGoal.position.copy(target)
+          .add(new THREE.Vector3(-0.45, 0.55, 0.7).normalize().multiplyScalar(0.85 * zoom));
+        cameraAnimating = true;
+      }
+    } else {
+      for (const moduleRuntime of engine.modules) {
+        for (const component of moduleRuntime.components) {
+          engine.setVisible(component.meta.id, component.meta.id === 'turbine.hero-blade');
+        }
+      }
+      engine.hero.show(true);
+      engine.hero.setCutaway(cut);
+      engine.hero.setCoatings(coat);
+      const angle = params.get('angle') ?? 'face';
+      cameraGoal.target.set(0, 0.075, 0.02);
+      const offset = angle === 'leading' ? new THREE.Vector3(0.37, 0.06, 0.26)
+        : angle === 'oblique' ? new THREE.Vector3(-0.14, 0.3, 0.3)
+        : new THREE.Vector3(0.24, 0.08, -0.34);
+      cameraGoal.position.copy(cameraGoal.target).addScaledVector(offset, zoom * 1.45);
+      cameraAnimating = true;
+    }
+    if (rows === 'all') engine.setColor(heroRows, '#39d0ff');
+    else if (rows === 'le') engine.setColor(heroRows.slice(0, 4), '#39d0ff');
+    if (params.get('ceramic') === '1') engine.setColor('turbine.hero-blade.coat-ysz', '#e03b2f');
   } else if (mode === 'assemble') {
     const step = params.get('step');
     const limit = step === 'full' ? 99 : Number(step ?? 1);
@@ -545,6 +592,10 @@ function frame(now: number) {
 resize();
 requestAnimationFrame(frame);
 setLanguage(new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'zh');
+
+function bladeIdFor(value: string): string {
+  return value.includes('.') ? value : `turbine.stage-1-blades.${value.padStart(3, '0')}`;
+}
 
 function applyState(mode: string, extra: Record<string, string> = {}) {
   if (!engine) return;

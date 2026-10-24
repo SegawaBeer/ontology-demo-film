@@ -53,6 +53,7 @@
    "name": "涡轮",
    "components": [
     "turbine.band",
+    "turbine.hero-blade",
     "turbine.inner-cone",
     "turbine.stage-1-blades",
     "turbine.stage-1-disk",
@@ -74,7 +75,7 @@
     "turbine.stage-5-outer",
     "turbine.stage-5-tip-ring"
    ],
-   "partCount": 889
+   "partCount": 911
   },
   {
    "id": "exhaust",
@@ -223,7 +224,8 @@
     "turbine.stage-1-blades.098",
     "turbine.stage-1-blades.099",
     "turbine.stage-1-blades.100"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-1-disk",
@@ -233,7 +235,8 @@
    "order": 2,
    "parts": [
     "turbine.stage-1-disk.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-1-outer",
@@ -317,7 +320,8 @@
     "turbine.stage-1-outer.073",
     "turbine.stage-1-outer.074",
     "turbine.stage-1-outer.075"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-1-tip-ring",
@@ -327,7 +331,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-1-tip-ring.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-2-blades",
@@ -436,7 +441,8 @@
     "turbine.stage-2-blades.098",
     "turbine.stage-2-blades.099",
     "turbine.stage-2-blades.100"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-2-hub",
@@ -446,7 +452,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-2-hub.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-2-outer",
@@ -530,7 +537,8 @@
     "turbine.stage-2-outer.073",
     "turbine.stage-2-outer.074",
     "turbine.stage-2-outer.075"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-2-tip-ring",
@@ -540,7 +548,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-2-tip-ring.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-3-blades",
@@ -649,7 +658,8 @@
     "turbine.stage-3-blades.098",
     "turbine.stage-3-blades.099",
     "turbine.stage-3-blades.100"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-3-hub",
@@ -660,7 +670,8 @@
    "parts": [
     "turbine.stage-3-hub.001",
     "turbine.stage-3-hub.002"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-3-outer",
@@ -744,7 +755,8 @@
     "turbine.stage-3-outer.073",
     "turbine.stage-3-outer.074",
     "turbine.stage-3-outer.075"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-3-tip-ring",
@@ -754,7 +766,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-3-tip-ring.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-4-blades",
@@ -863,7 +876,8 @@
     "turbine.stage-4-blades.098",
     "turbine.stage-4-blades.099",
     "turbine.stage-4-blades.100"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-4-outer",
@@ -947,7 +961,8 @@
     "turbine.stage-4-outer.073",
     "turbine.stage-4-outer.074",
     "turbine.stage-4-outer.075"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-4-tip-ring",
@@ -957,7 +972,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-4-tip-ring.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-5-blades",
@@ -1066,7 +1082,8 @@
     "turbine.stage-5-blades.098",
     "turbine.stage-5-blades.099",
     "turbine.stage-5-blades.100"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-5-hub",
@@ -1076,7 +1093,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-5-hub.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-5-outer",
@@ -1160,7 +1178,8 @@
     "turbine.stage-5-outer.073",
     "turbine.stage-5-outer.074",
     "turbine.stage-5-outer.075"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.stage-5-tip-ring",
@@ -1170,7 +1189,8 @@
    "order": 3,
    "parts": [
     "turbine.stage-5-tip-ring.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "shaft.main",
@@ -1180,7 +1200,8 @@
    "order": 4,
    "parts": [
     "shaft.main.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.drum",
@@ -1202,7 +1223,8 @@
     "compressor.drum.011",
     "compressor.drum.012",
     "compressor.drum.013"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.inlet-bell",
@@ -1212,7 +1234,8 @@
    "order": 5,
    "parts": [
     "compressor.inlet-bell.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.stage-1",
@@ -1351,7 +1374,8 @@
     "compressor.stage-1.128",
     "compressor.stage-1.129",
     "compressor.stage-1.130"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.stage-2",
@@ -1428,7 +1452,8 @@
     "compressor.stage-2.066",
     "compressor.stage-2.067",
     "compressor.stage-2.068"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.stage-3",
@@ -1503,7 +1528,8 @@
     "compressor.stage-3.064",
     "compressor.stage-3.065",
     "compressor.stage-3.066"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.stage-4",
@@ -1578,7 +1604,8 @@
     "compressor.stage-4.064",
     "compressor.stage-4.065",
     "compressor.stage-4.066"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.stators",
@@ -1737,7 +1764,8 @@
     "compressor.stators.148",
     "compressor.stators.149",
     "compressor.stators.150"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "compressor.struts",
@@ -1772,7 +1800,8 @@
     "compressor.struts.024",
     "compressor.struts.025",
     "compressor.struts.026"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "combustor.cans",
@@ -1791,7 +1820,8 @@
     "combustor.cans.008",
     "combustor.cans.009",
     "combustor.cans.010"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "combustor.casing",
@@ -1836,7 +1866,8 @@
     "combustor.casing.034",
     "combustor.casing.035",
     "combustor.casing.036"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "combustor.injectors",
@@ -1928,7 +1959,8 @@
     "combustor.injectors.081",
     "combustor.injectors.082",
     "combustor.injectors.083"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "combustor.inner-shell",
@@ -1938,7 +1970,8 @@
    "order": 6,
    "parts": [
     "combustor.inner-shell.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "core-casing.bolts",
@@ -2011,7 +2044,8 @@
     "core-casing.bolts.062",
     "core-casing.bolts.063",
     "core-casing.bolts.064"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "core-casing.drum",
@@ -2023,7 +2057,8 @@
     "core-casing.drum.001",
     "core-casing.drum.002",
     "core-casing.drum.003"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "core-casing.inner-wall",
@@ -2033,7 +2068,8 @@
    "order": 7,
    "parts": [
     "core-casing.inner-wall.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "core-casing.tiles",
@@ -2226,7 +2262,8 @@
     "core-casing.tiles.182",
     "core-casing.tiles.183",
     "core-casing.tiles.184"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.band",
@@ -2238,7 +2275,8 @@
     "turbine.band.001",
     "turbine.band.002",
     "turbine.band.003"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "turbine.inner-cone",
@@ -2248,7 +2286,8 @@
    "order": 7,
    "parts": [
     "turbine.inner-cone.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan.blade-tips",
@@ -2273,7 +2312,8 @@
     "fan.blade-tips.014",
     "fan.blade-tips.015",
     "fan.blade-tips.016"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan.blades",
@@ -2298,7 +2338,8 @@
     "fan.blades.014",
     "fan.blades.015",
     "fan.blades.016"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan.hub",
@@ -2391,7 +2432,8 @@
     "fan.hub.082",
     "fan.hub.083",
     "fan.hub.084"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan.inner-shroud",
@@ -2401,7 +2443,8 @@
    "order": 8,
    "parts": [
     "fan.inner-shroud.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan-cowl.aft",
@@ -2419,7 +2462,8 @@
     "fan-cowl.aft.007",
     "fan-cowl.aft.008",
     "fan-cowl.aft.009"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan-cowl.lip",
@@ -2433,7 +2477,8 @@
     "fan-cowl.lip.003",
     "fan-cowl.lip.004",
     "fan-cowl.lip.005"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan-cowl.shell",
@@ -2460,7 +2505,8 @@
     "fan-cowl.shell.016",
     "fan-cowl.shell.017",
     "fan-cowl.shell.018"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "nacelle.duct",
@@ -2483,7 +2529,8 @@
     "nacelle.duct.012",
     "nacelle.duct.013",
     "nacelle.duct.014"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "exhaust.bolts",
@@ -2556,7 +2603,8 @@
     "exhaust.bolts.062",
     "exhaust.bolts.063",
     "exhaust.bolts.064"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "exhaust.fittings",
@@ -2566,7 +2614,8 @@
    "order": 10,
    "parts": [
     "exhaust.fittings.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "exhaust.nozzle",
@@ -2576,7 +2625,8 @@
    "order": 10,
    "parts": [
     "exhaust.nozzle.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "exhaust.tail-cone",
@@ -2586,7 +2636,8 @@
    "order": 10,
    "parts": [
     "exhaust.tail-cone.001"
-   ]
+   ],
+   "hero": false
   },
   {
    "id": "fan.spinner",
@@ -2600,7 +2651,40 @@
     "fan.spinner.003",
     "fan.spinner.004",
     "fan.spinner.005"
-   ]
+   ],
+   "hero": false
+  },
+  {
+   "id": "turbine.hero-blade",
+   "name": "精细叶片",
+   "module": "turbine",
+   "partCount": 22,
+   "order": 99,
+   "parts": [
+    "turbine.hero-blade.skin-suction",
+    "turbine.hero-blade.skin-pressure",
+    "turbine.hero-blade.film-le-1",
+    "turbine.hero-blade.film-le-2",
+    "turbine.hero-blade.film-le-3",
+    "turbine.hero-blade.film-le-4",
+    "turbine.hero-blade.film-ps-1",
+    "turbine.hero-blade.film-ps-2",
+    "turbine.hero-blade.film-ss-1",
+    "turbine.hero-blade.slot-te",
+    "turbine.hero-blade.tip",
+    "turbine.hero-blade.platform",
+    "turbine.hero-blade.neck",
+    "turbine.hero-blade.root",
+    "turbine.hero-blade.passage-1",
+    "turbine.hero-blade.passage-2",
+    "turbine.hero-blade.passage-3",
+    "turbine.hero-blade.pin-fin",
+    "turbine.hero-blade.coat-base",
+    "turbine.hero-blade.coat-bond",
+    "turbine.hero-blade.coat-tgo",
+    "turbine.hero-blade.coat-ysz"
+   ],
+   "hero": true
   }
  ],
  "parts": [
@@ -53130,6 +53214,622 @@
    "generated": true
   },
   {
+   "id": "turbine.hero-blade.skin-suction",
+   "name": "叶身吸力面",
+   "type": "blade-wall",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0,
+    0.082,
+    0.0
+   ],
+   "axial": [
+    -0.0502,
+    0.0502
+   ],
+   "radius": [
+    0.018,
+    0.1469
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 5912,
+   "area": 0.013804,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.skin-pressure",
+   "name": "叶身压力面",
+   "type": "blade-wall",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.082,
+    -0.0002
+   ],
+   "axial": [
+    -0.0502,
+    0.0502
+   ],
+   "radius": [
+    0.018,
+    0.1468
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 5842,
+   "area": 0.013023,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-le-1",
+   "name": "前缘喷淋孔 1",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0464,
+    0.066,
+    -0.0167
+   ],
+   "axial": [
+    -0.0514,
+    -0.0414
+   ],
+   "radius": [
+    0.038,
+    0.1003
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 752,
+   "area": 0.000761,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-le-2",
+   "name": "前缘喷淋孔 2",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0441,
+    0.075,
+    -0.012
+   ],
+   "axial": [
+    -0.0489,
+    -0.0394
+   ],
+   "radius": [
+    0.0443,
+    0.1086
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 752,
+   "area": 0.000761,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-le-3",
+   "name": "前缘喷淋孔 3",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0399,
+    0.0698,
+    -0.024
+   ],
+   "axial": [
+    -0.0464,
+    -0.0335
+   ],
+   "radius": [
+    0.0448,
+    0.1046
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 752,
+   "area": 0.000761,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-le-4",
+   "name": "前缘喷淋孔 4",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0374,
+    0.0788,
+    -0.0205
+   ],
+   "axial": [
+    -0.0437,
+    -0.0312
+   ],
+   "radius": [
+    0.0508,
+    0.1129
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 752,
+   "area": 0.000761,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-ps-1",
+   "name": "压力面气膜孔 1",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0147,
+    0.0743,
+    -0.0034
+   ],
+   "axial": [
+    -0.02,
+    -0.0094
+   ],
+   "radius": [
+    0.0395,
+    0.1093
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 940,
+   "area": 0.000951,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-ps-2",
+   "name": "压力面气膜孔 2",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0047,
+    0.0769,
+    0.0075
+   ],
+   "axial": [
+    0.0003,
+    0.0091
+   ],
+   "radius": [
+    0.0428,
+    0.1124
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 940,
+   "area": 0.000951,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.film-ss-1",
+   "name": "吸力面气膜孔 1",
+   "type": "film-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0075,
+    0.0769,
+    0.0166
+   ],
+   "axial": [
+    -0.0134,
+    -0.0015
+   ],
+   "radius": [
+    0.0442,
+    0.1128
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 940,
+   "area": 0.000951,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.slot-te",
+   "name": "尾缘劈缝",
+   "type": "slot-row",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0426,
+    0.083,
+    0.0225
+   ],
+   "axial": [
+    0.0372,
+    0.048
+   ],
+   "radius": [
+    0.041,
+    0.1342
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 96,
+   "area": 0.0011,
+   "generated": true,
+   "hero": true,
+   "cut": "pressure",
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.tip",
+   "name": "叶尖围边与凹槽",
+   "type": "blade-tip",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0008,
+    0.142,
+    0.0005
+   ],
+   "axial": [
+    -0.0502,
+    0.0485
+   ],
+   "radius": [
+    0.138,
+    0.1469
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 384,
+   "area": 0.0025,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.platform",
+   "name": "缘板",
+   "type": "platform",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.012,
+    0.0
+   ],
+   "axial": [
+    -0.0493,
+    0.0493
+   ],
+   "radius": [
+    0.0162,
+    0.045
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 12,
+   "area": 0.009393,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.neck",
+   "name": "叶根颈部",
+   "type": "neck",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.002,
+    0.0
+   ],
+   "axial": [
+    -0.0257,
+    0.0257
+   ],
+   "radius": [
+    0.0055,
+    0.0236
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 12,
+   "area": 0.003468,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.root",
+   "name": "枞树形叶根",
+   "type": "root",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    -0.018,
+    0.0
+   ],
+   "axial": [
+    -0.0212,
+    0.0212
+   ],
+   "radius": [
+    0.001,
+    0.0372
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 48,
+   "area": 0.008234,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.passage-1",
+   "name": "冷却通道 1",
+   "type": "passage",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0317,
+    0.082,
+    -0.0084
+   ],
+   "axial": [
+    -0.0419,
+    -0.0216
+   ],
+   "radius": [
+    0.03,
+    0.1345
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 116,
+   "area": 0.006463,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.passage-2",
+   "name": "冷却通道 2",
+   "type": "passage",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    -0.0099,
+    0.082,
+    0.0055
+   ],
+   "axial": [
+    -0.023,
+    0.0031
+   ],
+   "radius": [
+    0.03,
+    0.1348
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 116,
+   "area": 0.00745,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.passage-3",
+   "name": "冷却通道 3",
+   "type": "passage",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0175,
+    0.082,
+    0.0179
+   ],
+   "axial": [
+    -0.0001,
+    0.0351
+   ],
+   "radius": [
+    0.0322,
+    0.1353
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 116,
+   "area": 0.008704,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.pin-fin",
+   "name": "尾缘针肋",
+   "type": "pin-fin",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0368,
+    0.0833,
+    0.0
+   ],
+   "axial": [
+    0.0295,
+    0.044
+   ],
+   "radius": [
+    0.0357,
+    0.1317
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 432,
+   "area": 0.005092,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": null
+  },
+  {
+   "id": "turbine.hero-blade.coat-base",
+   "name": "镍基高温合金基体",
+   "type": "coating",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.078,
+    0.082
+   ],
+   "axial": [
+    -0.024,
+    0.024
+   ],
+   "radius": [
+    0.096,
+    0.1309
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 384,
+   "area": 0.050354,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": 0
+  },
+  {
+   "id": "turbine.hero-blade.coat-bond",
+   "name": "金属粘结层",
+   "type": "coating",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.078,
+    0.0835
+   ],
+   "axial": [
+    -0.024,
+    0.024
+   ],
+   "radius": [
+    0.1006,
+    0.1291
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 384,
+   "area": 0.007801,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": 1
+  },
+  {
+   "id": "turbine.hero-blade.coat-tgo",
+   "name": "热生长氧化层",
+   "type": "coating",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.078,
+    0.0843
+   ],
+   "axial": [
+    -0.024,
+    0.024
+   ],
+   "radius": [
+    0.1015,
+    0.1294
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 384,
+   "area": 0.004546,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": 2
+  },
+  {
+   "id": "turbine.hero-blade.coat-ysz",
+   "name": "陶瓷热障层",
+   "type": "coating",
+   "component": "turbine.hero-blade",
+   "module": "turbine",
+   "center": [
+    0.0,
+    0.078,
+    0.0903
+   ],
+   "axial": [
+    -0.024,
+    0.024
+   ],
+   "radius": [
+    0.1043,
+    0.1353
+   ],
+   "rotor": false,
+   "pieceCount": 0,
+   "triangles": 384,
+   "area": 0.030247,
+   "generated": true,
+   "hero": true,
+   "cut": null,
+   "coat": 3
+  },
+  {
    "id": "exhaust.tail-cone.001",
    "name": "尾锥 001",
    "type": "tail-cone",
@@ -53340,8 +54040,8 @@
   "sourceArea": 66.6153,
   "replacedArea": 0.3105,
   "assignedArea": 66.3047,
-  "generatedArea": 3.0503,
-  "parts": 2027,
+  "generatedArea": 3.2284,
+  "parts": 2049,
   "generatedBlades": 100
  }
 }

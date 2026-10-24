@@ -15,6 +15,7 @@ from glb_pieces import load, pieces_of
 from parts import make_parts
 import blade as blade_mod
 import rotor_disk
+import hero_blade
 
 MODULES = [
     ('fan', '风扇'), ('fan-cowl', '进气罩'), ('compressor', '压气机'),
@@ -68,6 +69,7 @@ COMPONENTS = {
     'turbine.stage-4-outer': ('第四级涡轮外环叶栅', 3),
     'turbine.stage-5-outer': ('第五级涡轮外环叶栅', 3),
     'turbine.inner-cone': ('涡轮内锥壳', 7),
+    'turbine.hero-blade': ('精细叶片', 99),
     'exhaust.nozzle': ('尾喷口', 10),
     'exhaust.bolts': ('尾喷口螺栓', 10),
     'exhaust.fittings': ('尾喷口附件', 10),
@@ -424,7 +426,7 @@ def main():
         return (v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c)
 
     def add_part(pid, name, ptype, component, module, center, axial, radius, rotor, geom,
-                 placement=None, piece_count=0, generated=False):
+                 placement=None, piece_count=0, generated=False, extra=None):
         if placement is None:
             sig = signature(geom)
             c = centroid(geom)
@@ -459,6 +461,8 @@ def main():
             'area': round(triangle_area(geom), 6),
             'generated': generated,
         }
+        if extra:
+            entry.update(extra)
         manifest_parts.append(entry)
         component_parts[component].append(entry)
         return entry
@@ -503,6 +507,26 @@ def main():
              {'mesh': disk_shape, 't': [x_stage, 0, 0], 'r': [0, 0, 0, 1]},
              piece_count=0, generated=True)
 
+    # Detailed blade for close-up shots: hidden by default, outside the assembly order.
+    for hp in hero_blade.build():
+        hv = hp['verts']
+        hvx, hvy, hvz = hv[0::3], hv[1::3], hv[2::3]
+        off = hp['offset']
+        radii = [math.hypot(y + off[1], z + off[2]) for y, z in zip(hvy, hvz)]
+        geom = {'verts': hv, 'normals': hp['normals'], 'indices': hp['indices'],
+                'mat': 1, 'tris': hp['tris']}
+        shapes.append(geom)
+        mesh_index = len(shapes) - 1
+        add_part('turbine.hero-blade.%s' % hp['id'], hp['name'], hp['type'],
+                 'turbine.hero-blade', 'turbine',
+                 ((min(hvx) + max(hvx)) / 2 + off[0], (min(hvy) + max(hvy)) / 2 + off[1],
+                  (min(hvz) + max(hvz)) / 2 + off[2]),
+                 (min(hvx) + off[0], max(hvx) + off[0]), (min(radii), max(radii)),
+                 False, geom,
+                 {'mesh': mesh_index, 't': off, 'r': [0, 0, 0, 1]},
+                 piece_count=0, generated=True,
+                 extra={'hero': True, 'cut': hp.get('cut'), 'coat': hp.get('coat')})
+
     # The long black shell is cut into one part per module.
     for part in shell_parts:
         verts, normals, tris = flatten(part)
@@ -533,8 +557,10 @@ def main():
                                'partCount': len(component_parts[cid]), 'order': order,
                                'parts': [p['id'] for p in component_parts[cid]]})
     components.sort(key=lambda c: (c['order'], c['id']))
+    for c in components:
+        c['hero'] = c['id'] == 'turbine.hero-blade'
     manifest = {'modules': modules, 'components': components, 'parts': manifest_parts,
-                'assembly': [c['id'] for c in components],
+                'assembly': [c['id'] for c in components if c['id'] != 'turbine.hero-blade'],
                 'audit': {
                     'sourcePieces': len(pieces),
                     'sourceTriangles': sum(p['tris'] for p in parts),

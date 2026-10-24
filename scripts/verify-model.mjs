@@ -43,8 +43,8 @@ for (const node of partNodes) {
 }
 const componentIds = new Set(manifest.components.map(c => c.id));
 for (const node of partNodes) {
-  const component = node.name.replace(/\.\d+$/, '');
-  if (!componentIds.has(component)) fail(`part ${node.name} has no component in the manifest`);
+  const meta = byId.get(node.name);
+  if (!meta || !componentIds.has(meta.component)) fail(`part ${node.name} has no component in the manifest`);
 }
 
 // Generated and source parts.
@@ -66,7 +66,27 @@ if (Math.abs(audit.assignedArea + audit.replacedArea - audit.sourceArea) > 0.01)
   fail(`surface not conserved: ${audit.sourceArea} source, ${audit.assignedArea} assigned, ${audit.replacedArea} replaced`);
 }
 const generated = manifest.parts.filter(p => p.generated);
-if (generated.length !== 101) fail(`expected 101 generated parts (100 blades + disc), found ${generated.length}`);
+const generatedBlades = generated.filter(p => p.component === 'turbine.stage-1-blades');
+const generatedDisc = generated.filter(p => p.component === 'turbine.stage-1-disk');
+if (generatedBlades.length !== 100) fail(`expected 100 generated blades, found ${generatedBlades.length}`);
+if (generatedDisc.length !== 1) fail(`expected one generated disc, found ${generatedDisc.length}`);
+for (const part of generated) {
+  if (part.component !== 'turbine.stage-1-blades' && part.component !== 'turbine.stage-1-disk'
+    && part.component !== 'turbine.hero-blade') fail(`unexpected generated part ${part.id}`);
+}
+
+// Detailed close-up blade: present, complete and outside the assembly order.
+const hero = manifest.components.find(c => c.id === 'turbine.hero-blade');
+if (!hero) fail('hero blade component missing');
+if (manifest.assembly.includes('turbine.hero-blade')) fail('hero blade is part of the assembly order');
+const heroParts = new Set(manifest.parts.filter(p => p.component === 'turbine.hero-blade').map(p => p.id));
+const requiredHero = ['skin-suction', 'skin-pressure', 'tip', 'platform', 'neck', 'root',
+  'film-le-1', 'film-le-2', 'film-le-3', 'film-le-4', 'film-ps-1', 'film-ps-2', 'film-ss-1',
+  'slot-te', 'passage-1', 'passage-2', 'passage-3', 'pin-fin',
+  'coat-base', 'coat-bond', 'coat-tgo', 'coat-ysz'];
+for (const suffix of requiredHero) {
+  if (!heroParts.has(`turbine.hero-blade.${suffix}`)) fail(`hero blade part missing: ${suffix}`);
+}
 
 // The combustor must stay in its axial band after the shell split.
 for (const part of manifest.parts.filter(p => p.module === 'combustor')) {

@@ -124,6 +124,7 @@ export class Engine {
   parts = new Map<string, PartState>();
   pickables: THREE.Object3D[] = [];
   extracted = new THREE.Group();
+  hero: HeroBlade;
   private assets: EngineAssets;
   private order = 0;
 
@@ -133,6 +134,8 @@ export class Engine {
     this.extracted.name = 'extracted';
     this.root.add(this.extracted);
     this.build();
+    this.setVisible('turbine.hero-blade', false);
+    this.hero = new HeroBlade(this);
   }
 
   private build() {
@@ -441,6 +444,7 @@ export class Engine {
       }
     }
     this.refreshEnvironment();
+    this.setVisible('turbine.hero-blade', false);
   }
 
   private refreshEnvironment() {
@@ -497,5 +501,101 @@ export class Engine {
 
   cloneEngine(): Engine {
     return new Engine(this.assets);
+  }
+
+  /** Offset one part from its assembled matrix (used by the hero blade). */
+  translatePart(id: string, dx: number, dy: number, dz: number): void {
+    const state = this.parts.get(id);
+    if (!state || state.promoted) return;
+    const mesh = state.group.mesh as THREE.Mesh;
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.copy(state.matrix).multiply(new THREE.Matrix4().makeTranslation(dx, dy, dz));
+    mesh.matrixWorldNeedsUpdate = true;
+  }
+
+  /** World matrix of one part, including its instance transform. */
+  partWorldMatrix(id: string): THREE.Matrix4 | null {
+    const state = this.parts.get(id);
+    if (!state) return null;
+    const mesh = state.group.mesh as THREE.Mesh;
+    mesh.updateWorldMatrix(true, false);
+    const matrix = new THREE.Matrix4();
+    if (state.index >= 0) {
+      (mesh as THREE.InstancedMesh).getMatrixAt(state.index, matrix);
+      matrix.premultiply(mesh.matrixWorld);
+    } else {
+      matrix.copy(mesh.matrixWorld);
+    }
+    return matrix;
+  }
+}
+
+
+export type HeroPose = {
+  position: [number, number, number];
+  quaternion: [number, number, number, number];
+  scale: number;
+  matrix: THREE.Matrix4;
+};
+
+/**
+ * The detailed blade used for close-ups. Its parts live in their own component,
+ * hidden by default, and are driven by two continuous parameters.
+ */
+export class HeroBlade {
+  private readonly componentId = 'turbine.hero-blade';
+  private cutParts: string[] = [];
+  private coatParts: { id: string; index: number }[] = [];
+  private spread = [0, 0.014, 0.026, 0.04];
+
+  constructor(private engine: Engine) {
+    for (const [id, state] of engine.parts) {
+      if (state.meta.component !== this.componentId) continue;
+      const meta = state.meta as PartMeta & { cut?: string | null; coat?: number | null };
+      if (meta.cut === 'pressure') this.cutParts.push(id);
+      if (typeof meta.coat === 'number') this.coatParts.push({ id, index: meta.coat });
+    }
+  }
+
+  show(visible = true): void {
+    this.engine.setVisible(this.componentId, visible);
+  }
+
+  /** 0 = closed blade, 1 = the pressure wall moved aside. */
+  setCutaway(value: number): void {
+    const t = Math.max(0, Math.min(1, value));
+    for (const id of this.cutParts) this.engine.translatePart(id, 0, 0, -0.075 * t);
+  }
+
+  /** 0 = four layers bonded, 1 = separated along the surface normal. */
+  setCoatings(value: number): void {
+    const t = Math.max(0, Math.min(1, value));
+    for (const part of this.coatParts) {
+      this.engine.translatePart(part.id, 0, 0, this.spread[part.index] * t);
+    }
+  }
+
+  /** Place the hero blade where a ring blade sits, and return the pose. */
+  poseFor(ringPartId: string): HeroPose | null {
+    const world = this.engine.partWorldMatrix(ringPartId);
+    if (!world) return null;
+    const heroPart = this.engine.parts.get('turbine.hero-blade.root');
+    const heroMesh = heroPart?.group.mesh;
+    if (!heroMesh) return null;
+    const component = heroMesh.parent!;
+    const local = new THREE.Matrix4().copy(component.parent!.matrixWorld).invert().multiply(world);
+    component.matrixAutoUpdate = false;
+    component.matrix.copy(local);
+    component.matrixWorldNeedsUpdate = true;
+
+    const position = new THREE.Vector3().setFromMatrixPosition(world);
+    const quaternion = new THREE.Quaternion().setFromRotationMatrix(world);
+    const scale = new THREE.Vector3().setFromMatrixScale(world);
+    return {
+      position: [position.x, position.y, position.z],
+      quaternion: [quaternion.x, quaternion.y, quaternion.z, quaternion.w],
+      scale: (scale.x + scale.y + scale.z) / 3,
+      matrix: world.clone(),
+    };
   }
 }
