@@ -236,28 +236,6 @@
    ]
   },
   {
-   "id": "turbine.band",
-   "name": "涡轮外环带",
-   "module": "turbine",
-   "partCount": 3,
-   "order": 3,
-   "parts": [
-    "turbine.band.001",
-    "turbine.band.002",
-    "turbine.band.003"
-   ]
-  },
-  {
-   "id": "turbine.inner-cone",
-   "name": "涡轮内锥壳",
-   "module": "turbine",
-   "partCount": 1,
-   "order": 3,
-   "parts": [
-    "turbine.inner-cone.001"
-   ]
-  },
-  {
    "id": "turbine.stage-1-outer",
    "name": "第一级涡轮外环叶栅",
    "module": "turbine",
@@ -2248,6 +2226,28 @@
     "core-casing.tiles.182",
     "core-casing.tiles.183",
     "core-casing.tiles.184"
+   ]
+  },
+  {
+   "id": "turbine.band",
+   "name": "涡轮外环带",
+   "module": "turbine",
+   "partCount": 3,
+   "order": 7,
+   "parts": [
+    "turbine.band.001",
+    "turbine.band.002",
+    "turbine.band.003"
+   ]
+  },
+  {
+   "id": "turbine.inner-cone",
+   "name": "涡轮内锥壳",
+   "module": "turbine",
+   "partCount": 1,
+   "order": 7,
+   "parts": [
+    "turbine.inner-cone.001"
    ]
   },
   {
@@ -53283,8 +53283,6 @@
  "assembly": [
   "turbine.stage-1-blades",
   "turbine.stage-1-disk",
-  "turbine.band",
-  "turbine.inner-cone",
   "turbine.stage-1-outer",
   "turbine.stage-1-tip-ring",
   "turbine.stage-2-blades",
@@ -53319,6 +53317,8 @@
   "core-casing.drum",
   "core-casing.inner-wall",
   "core-casing.tiles",
+  "turbine.band",
+  "turbine.inner-cone",
   "fan.blade-tips",
   "fan.blades",
   "fan.hub",

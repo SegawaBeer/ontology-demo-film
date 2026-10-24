@@ -440,8 +440,13 @@ function applyDebug(params: URLSearchParams) {
     for (const component of assets?.manifest.components ?? []) {
       if (component.order > limit) engine.setVisible(component.id, false);
     }
-    cameraGoal.target.set(-1.55, 0, 0);
-    cameraGoal.position.set(-3.5, 0.7, 1.7);
+    if (limit <= 3) {
+      cameraGoal.target.set(-1.55, 0, 0);
+      cameraGoal.position.set(-0.3, 1.7, 2.5);
+    } else {
+      fitCamera();
+      cameraGoal.position.sub(cameraGoal.target).multiplyScalar(0.9).add(cameraGoal.target);
+    }
     cameraAnimating = true;
   }
   const warm = Number(params.get('warm') ?? 0);

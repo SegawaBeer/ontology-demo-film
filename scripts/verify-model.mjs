@@ -80,6 +80,14 @@ const first = manifest.components.filter(c => c.order === 1);
 if (first.length !== 1 || first[0].id !== 'turbine.stage-1-blades') fail('assembly step 1 is not the blade ring alone');
 const sixth = manifest.components.filter(c => c.order === 6);
 if (sixth.some(c => c.module !== 'combustor')) fail('assembly step 6 contains a non-combustor component');
+const third = manifest.components.filter(c => c.order === 3).map(c => c.id);
+if (third.includes('turbine.band') || third.includes('turbine.inner-cone')) {
+  fail('assembly step 3 still contains the turbine band or inner cone');
+}
+const seventh = manifest.components.filter(c => c.order === 7).map(c => c.id);
+for (const id of ['turbine.band', 'turbine.inner-cone']) {
+  if (!seventh.includes(id)) fail(`${id} is not in assembly step 7`);
+}
 const splitParts = ['exhaust.tail-cone', 'turbine.inner-cone', 'core-casing.inner-wall',
   'combustor.inner-shell', 'compressor.inlet-bell', 'fan.inner-shroud'];
 for (const id of splitParts) {
