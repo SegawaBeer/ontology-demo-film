@@ -18,26 +18,30 @@ and module, and writes both the GLB and `turbofan-parts.json`.
 
 | Module | Parts | Triangles |
 | --- | --- | --- |
-| fan | 121 | 17,024 |
+| fan | 122 | 17,536 |
 | fan-cowl | 32 | 20,992 |
-| compressor | 519 | 61,780 |
-| combustor | 194 | 61,168 |
-| turbine | 887 | 32,702 |
-| exhaust | 66 | 19,984 |
-| core-casing | 187 | 26,792 |
+| compressor | 520 | 62,100 |
+| combustor | 130 | 42,064 |
+| turbine | 889 | 53,438 |
+| exhaust | 67 | 20,528 |
+| core-casing | 252 | 45,416 |
 | nacelle | 14 | 18,416 |
 | shaft | 1 | 1,920 |
 
-Totals: 2,021 parts, 40 components, 260,778 triangles. The difference from the source count is
-the first turbine stage: 100 flat two-triangle plates (200 triangles) were replaced by 100
-generated blades (25,200 triangles).
+Totals: 2,027 parts, 51 components, 282,410 triangles. The source mesh is 235,778 triangles;
+100 flat two-triangle plates were removed and replaced by 100 generated blades (44,400
+triangles), a rotor disc was added (1,152), and cutting the long shell at four planes added
+about 1,280 triangles.
 
 ## The first-stage blades
 
-`tools/blade.py` builds a cambered, twisted airfoil from five sections with a root platform, local
-+Y along the radius, so one blade can be rotated or pulled out along its own radius. The blade
-spans r = 0.304 to 0.450 at x = −1.355, the volume the original plates occupied. The generator is
-deterministic; the same code produces the same 100 blades in every build.
+`tools/blade.py` builds a cambered, twisted airfoil from six sections (chord 0.050, stagger 35°,
+thickness 26% at the root) on a parallelogram platform and a three-lobe fir-tree root. Local +Y is
+the radius and the root centre is the origin, so a blade can be turned or pulled out along its own
+radius. The aerofoil spans r = 0.304 to 0.450 at x = −1.355 and its axial projection is 0.041, the
+envelope of the original plates; neighbouring aerofoils clear each other by 0.002. A simple rotor
+disc (`tools/rotor_disk.py`, rim 0.302, bore 0.170) sits under the roots. Both generators are
+deterministic.
 
 ## Limits
 

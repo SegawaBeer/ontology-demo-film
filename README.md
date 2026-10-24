@@ -6,24 +6,30 @@ output, no backend, no API key, no database.
 
 The engine model is [Turbine | Turbofan Engine | Jet Engine](https://sketchfab.com/3d-models/turbine-turbofan-engine-jet-engine-74c6aceed86b4a41aaad3b93afc3e262)
 by [blenderbirb](https://sketchfab.com/blenderbirb), CC BY 4.0, split into modules, components
-and parts by `tools/convert_turbofan.py`. The first-stage turbine blades are generated in code.
+and parts by `tools/convert_turbofan.py`. The first-stage turbine blades, its rotor disc and the inner cone are generated in code.
 This is an independent study, not manufacturer CAD and not a specific engine type.
 
 ## Hierarchy
 
-`engine > module > component > part`, with 9 modules, 40 components and 2,021 parts:
+`engine > module > component > part`, with 9 modules, 51 components and 2,027 parts:
 
 | Module | Parts | Components |
 | --- | --- | --- |
-| fan 风扇 | 121 | 风扇叶片, 风扇叶尖封严块, 风扇轮毂, 整流锥 |
+| fan 风扇 | 122 | 风扇叶片, 风扇叶尖封严块, 风扇轮毂, 整流锥, 风扇内整流罩 |
 | fan-cowl 进气罩 | 32 | 进气唇口, 进气罩壳体, 进气罩后段 |
-| compressor 压气机 | 519 | 四级叶环, 静子环, 支板, 鼓筒 |
-| combustor 燃烧室 | 130 | 火焰筒, 喷嘴, 机匣 |
-| turbine 涡轮 | 887 | 五级叶片/外环叶栅/轮盘, 外环带 |
-| exhaust 尾喷管 | 66 | 尾喷口, 尾喷口螺栓 |
-| core-casing 核心机机匣 | 251 | 过渡段机匣, 机匣瓦块, 机匣螺栓 |
+| compressor 压气机 | 520 | 四级叶环, 静子环, 支板, 鼓筒, 前喇叭口 |
+| combustor 燃烧室 | 130 | 火焰筒, 喷嘴, 机匣, 内壳 |
+| turbine 涡轮 | 889 | 五级叶片、轮毂、叶尖环、外环叶栅, 第一级轮盘, 内锥壳, 外环带 |
+| exhaust 尾喷管 | 67 | 尾喷口, 尾喷口螺栓, 附件, 尾锥 |
+| core-casing 核心机机匣 | 252 | 过渡段机匣, 机匣瓦块, 机匣螺栓, 内壁 |
 | nacelle 外涵道机匣 | 14 | 外涵道机匣 |
 | shaft 主轴 | 1 | 主轴 |
+
+Assembly order runs blades → first-stage disc → first-stage tip ring and outer cascade
+(second to fifth stages follow) → shaft → compressor → combustor → core casing → fan →
+nacelle and cowl → exhaust and spinner. The first-stage blade, its rotor disc and the
+inner cone are generated in code; the long black shell that used to run the length of the
+engine is cut at four axial planes and distributed to the modules it passes through.
 
 Ids are `module.component.part`, for example `turbine.stage-1-blades.001`. Ring-shaped
 components are numbered from the smallest `atan2(z, y)` angle upward. The full list, including
@@ -66,8 +72,9 @@ second.setColor(second.listParts('turbine.stage-1-blades').slice(0, 30), '#e03b2
 ```
 
 Parts are packed into `InstancedMesh` objects per component and shared geometry, so the whole
-engine draws in about 170 calls. A part that is transformed or individually made transparent is
-promoted to its own mesh, which also stops it following the rotor.
+engine draws in about 170 calls. A part made individually transparent is promoted to its own
+mesh but stays under its component, so it keeps turning with the rotor; a part that is moved
+goes to the extracted group and no longer turns with the rotor.
 
 ## Features
 

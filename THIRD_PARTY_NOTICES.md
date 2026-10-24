@@ -8,10 +8,12 @@ maps and libraries carry their own licenses, listed below.
 - **Turbine | Turbofan Engine | Jet Engine**, by **blenderbirb**.
   Source: https://sketchfab.com/3d-models/turbine-turbofan-engine-jet-engine-74c6aceed86b4a41aaad3b93afc3e262
   License: **Creative Commons Attribution 4.0 International (CC BY 4.0)**, https://creativecommons.org/licenses/by/4.0/
-  Changes: the downloaded GLB was split into 3,542 connected components, grouped into 2,021
-  parts under 40 components and 9 modules, re-indexed and re-materialized without textures.
-  The 100 inner flat plates of the first turbine stage were replaced by blades generated in
-  `tools/blade.py` (original code, no third-party geometry). See `tools/convert_turbofan.py`.
+  Changes: the downloaded GLB was split into 3,542 connected components, grouped into 2,027
+  parts under 51 components and 9 modules, re-indexed and re-materialized without textures.
+  The long inner shell was cut at four axial planes and distributed to the modules it passes
+  through. The 100 inner flat plates of the first turbine stage were replaced by blades
+  generated in `tools/blade.py`, and a rotor disc was added from `tools/rotor_disk.py`
+  (original code, no third-party geometry). See `tools/convert_turbofan.py`.
 
 ## Bundled runtime assets
 

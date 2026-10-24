@@ -16,22 +16,38 @@ const moduleIds = ['fan', 'fan-cowl', 'compressor', 'combustor', 'turbine', 'exh
 for (const id of moduleIds) if (!nodesByName.has(id)) fail(`module node missing: ${id}`);
 if (manifest.modules.length !== 9) fail(`expected 9 modules, found ${manifest.modules.length}`);
 
-// Component and part nodes must mirror the manifest.
+const meshTriangles = meshIndex => {
+  const mesh = gltf.meshes[meshIndex];
+  return mesh.primitives.reduce((sum, primitive) => {
+    const accessor = primitive.indices !== undefined
+      ? gltf.accessors[primitive.indices]
+      : gltf.accessors[primitive.attributes.POSITION];
+    return sum + accessor.count / 3;
+  }, 0);
+};
+
+// Every part node has a manifest entry and the same triangle count.
 const partNodes = gltf.nodes.filter(node => node.mesh !== undefined);
+const manifestIds = new Set(manifest.parts.map(p => p.id));
+if (manifestIds.size !== manifest.parts.length) fail('duplicate part ids in the manifest');
+if (partNodes.length !== manifest.parts.length) {
+  fail(`GLB has ${partNodes.length} part nodes, manifest lists ${manifest.parts.length}`);
+}
+const byId = new Map(manifest.parts.map(p => [p.id, p]));
+for (const node of partNodes) {
+  const part = byId.get(node.name);
+  if (!part) fail(`GLB part ${node.name} missing from the manifest`);
+  if (Math.round(meshTriangles(node.mesh)) !== part.triangles) {
+    fail(`${node.name}: GLB has ${Math.round(meshTriangles(node.mesh))} triangles, manifest ${part.triangles}`);
+  }
+}
 const componentIds = new Set(manifest.components.map(c => c.id));
 for (const node of partNodes) {
   const component = node.name.replace(/\.\d+$/, '');
   if (!componentIds.has(component)) fail(`part ${node.name} has no component in the manifest`);
 }
 
-const manifestIds = new Set(manifest.parts.map(p => p.id));
-if (manifestIds.size !== manifest.parts.length) fail('duplicate part ids in the manifest');
-if (partNodes.length !== manifest.parts.length) {
-  fail(`GLB has ${partNodes.length} part nodes, manifest lists ${manifest.parts.length}`);
-}
-for (const node of partNodes) if (!manifestIds.has(node.name)) fail(`GLB part ${node.name} missing from the manifest`);
-
-// Named components.
+// Generated and source parts.
 const blades = manifest.parts.filter(p => p.component === 'turbine.stage-1-blades');
 if (blades.length !== 100) fail(`expected 100 stage-1 turbine blades, found ${blades.length}`);
 if (new Set(blades.map(b => b.id)).size !== 100) fail('stage-1 blade ids are not unique');
@@ -39,22 +55,41 @@ for (const blade of blades) if (blade.type !== 'blade') fail(`${blade.id} is not
 const fanBlades = manifest.parts.filter(p => p.component === 'fan.blades');
 if (fanBlades.length !== 16) fail(`expected 16 fan blades, found ${fanBlades.length}`);
 
-// Every connected component of the source mesh is accounted for.
+// Surface audit: every source triangle is covered exactly once.
 const audit = manifest.audit;
 if (!audit) fail('manifest has no audit block');
-const assigned = manifest.parts.reduce((sum, part) => sum + (part.pieceCount ?? 0), 0);
-if (assigned !== audit.assignedPieces) fail(`piece counts sum to ${assigned}, audit says ${audit.assignedPieces}`);
-if (audit.assignedPieces + audit.replacedPieces !== audit.sourcePieces) {
-  fail(`unassigned pieces: ${audit.sourcePieces} source, ${audit.assignedPieces} assigned, ${audit.replacedPieces} replaced`);
+const assignedArea = manifest.parts.filter(p => !p.generated).reduce((sum, p) => sum + p.area, 0);
+if (Math.abs(assignedArea - audit.assignedArea) > 0.01) {
+  fail(`part areas sum to ${assignedArea.toFixed(4)}, audit says ${audit.assignedArea}`);
 }
-const generated = manifest.parts.filter(part => part.generated);
-if (generated.length !== 100) fail(`expected 100 generated blades, found ${generated.length}`);
-if (manifest.parts.some(part => !part.generated && !part.pieceCount)) fail('a source part has no pieces');
+if (Math.abs(audit.assignedArea + audit.replacedArea - audit.sourceArea) > 0.01) {
+  fail(`surface not conserved: ${audit.sourceArea} source, ${audit.assignedArea} assigned, ${audit.replacedArea} replaced`);
+}
+const generated = manifest.parts.filter(p => p.generated);
+if (generated.length !== 101) fail(`expected 101 generated parts (100 blades + disc), found ${generated.length}`);
 
-// Assembly order must reference real components and cover the ten steps.
+// The combustor must stay in its axial band after the shell split.
+for (const part of manifest.parts.filter(p => p.module === 'combustor')) {
+  if (part.axial[0] < -0.6 || part.axial[1] > 0.6) fail(`combustor part ${part.id} spans ${part.axial}`);
+}
+
+// Assembly order: steps 1 to 11, step 1 is the blade ring alone.
 const orders = new Set(manifest.components.map(c => c.order));
-for (const step of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) if (!orders.has(step)) fail(`assembly step ${step} is empty`);
+for (let step = 1; step <= 10; step++) if (!orders.has(step)) fail(`assembly step ${step} is empty`);
+const first = manifest.components.filter(c => c.order === 1);
+if (first.length !== 1 || first[0].id !== 'turbine.stage-1-blades') fail('assembly step 1 is not the blade ring alone');
+const sixth = manifest.components.filter(c => c.order === 6);
+if (sixth.some(c => c.module !== 'combustor')) fail('assembly step 6 contains a non-combustor component');
+const splitParts = ['exhaust.tail-cone', 'turbine.inner-cone', 'core-casing.inner-wall',
+  'combustor.inner-shell', 'compressor.inlet-bell', 'fan.inner-shroud'];
+for (const id of splitParts) {
+  if (!manifest.parts.some(p => p.component === id)) fail(`split shell part missing: ${id}`);
+}
 for (const id of manifest.assembly) if (!componentIds.has(id)) fail(`assembly references unknown component ${id}`);
+
+// The exhaust bolt ring holds 64 bolts.
+const bolts = manifest.components.find(c => c.id === 'exhaust.bolts');
+if (!bolts || bolts.partCount !== 64) fail(`exhaust bolt ring has ${bolts ? bolts.partCount : 0} parts`);
 
 // Module and component counts agree with the parts list.
 for (const module of manifest.modules) {
@@ -86,5 +121,5 @@ for (const mesh of gltf.meshes) {
 const moduleSummary = manifest.modules.map(m => `${m.id}:${m.partCount}`).join(' ');
 console.log(`modules ${manifest.modules.length}, components ${manifest.components.length}, parts ${manifest.parts.length}`);
 console.log(moduleSummary);
-console.log(`pieces ${audit.sourcePieces} = assigned ${audit.assignedPieces} + replaced ${audit.replacedPieces}`);
-console.log(`PASS: hierarchy, blade counts, manifest/GLB agreement, index bounds, ${(data.length / 1e6).toFixed(1)} MB`);
+console.log(`surface ${audit.sourceArea} = assigned ${audit.assignedArea} + replaced ${audit.replacedArea}`);
+console.log(`PASS: hierarchy, blades, surface audit, combustor band, assembly steps, bolt ring, index bounds, ${(data.length / 1e6).toFixed(1)} MB`);
