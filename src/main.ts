@@ -348,9 +348,13 @@ function applyDebug(params: URLSearchParams) {
       state.promoted.matrix.copy(m);
       state.promoted.matrixWorldNeedsUpdate = true;
     }
-    cameraGoal.target.set(0, 0.07, 0);
-    cameraGoal.position.set(0.1, 0.09, 0.42);
+    const angle = params.get('angle') ?? 'face';
+    cameraGoal.target.set(0, 0.06, 0);
+    if (angle === 'leading') cameraGoal.position.set(0.37, 0.10, 0.26);
+    else if (angle === 'oblique') cameraGoal.position.set(-0.12, 0.30, 0.30);
+    else cameraGoal.position.set(0.26, 0.10, -0.36);
     cameraAnimating = true;
+    setRunning(false);
     const meta = engine.getPart(blades[0]);
     if (meta) {
       info.hidden = false;
@@ -369,9 +373,32 @@ function applyDebug(params: URLSearchParams) {
     }
   } else if (mode === 'extract-16') {
     engine.setColor(blades.slice(0, 16), '#e03b2f');
+    engine.setColor(blades.slice(40, 48), '#1f9fd0');
     engine.setTransform(blades.slice(0, 16), { position: [0.9, 0.75, 0.55], rotation: [0, 0, 0] });
     applyView('assembly');
     fitCamera();
+    running = true;
+    audio.setRunning(true);
+  } else if (mode === 'ring-closeup') {
+    for (const moduleRuntime of engine.modules) engine.setVisible(moduleRuntime.meta.id, moduleRuntime.meta.id === 'turbine');
+    engine.setVisible('turbine.inner-cone', false);
+    engine.setVisible('turbine.band', false);
+    const turbine = engine.modules.find(m => m.meta.id === 'turbine');
+    if (turbine) {
+      cameraGoal.target.set(-1.36, 0, 0);
+      cameraGoal.position.set(-0.15, 0.65, 1.35);
+      cameraAnimating = true;
+    }
+  } else if (mode === 'alpha-16') {
+    engine.setOpacity(blades.slice(0, 16), 0.3);
+    engine.setColor(blades.slice(40, 48), '#e03b2f');
+    for (const moduleRuntime of engine.modules) engine.setVisible(moduleRuntime.meta.id, moduleRuntime.meta.id === 'turbine');
+    engine.setVisible('turbine.inner-cone', false);
+    cameraGoal.target.set(-1.36, 0, 0);
+    cameraGoal.position.set(-0.55, 0.5, 0.85);
+    cameraAnimating = true;
+    running = true;
+    audio.setRunning(true);
   } else if (mode === 'dim') {
     for (const moduleRuntime of engine.modules) engine.setDim(moduleRuntime.meta.id, 0.2);
     engine.setColor('turbine.stage-1-blades', null);
@@ -379,10 +406,10 @@ function applyDebug(params: URLSearchParams) {
     fitCamera(0.55);
   } else if (mode === 'transparent') {
     engine.setOpacity('combustor', 0.28);
-    applyView('cutaway');
-    cameraGoal.target.set(-0.1, 0, 0);
-    cameraGoal.position.set(1.0, 1.35, 2.9);
-    cameraAnimating = true;
+    engine.setVisible('nacelle', false);
+    engine.setVisible('core-casing', false);
+    fitCamera();
+    cameraGoal.position.sub(cameraGoal.target).multiplyScalar(0.82).add(cameraGoal.target);
   } else if (mode === 'twin') {
     if (!assets) return;
     secondary = new Engine(assets);
@@ -413,6 +440,26 @@ function applyDebug(params: URLSearchParams) {
     for (const component of assets?.manifest.components ?? []) {
       if (component.order > limit) engine.setVisible(component.id, false);
     }
+    cameraGoal.target.set(-1.55, 0, 0);
+    cameraGoal.position.set(-3.5, 0.7, 1.7);
+    cameraAnimating = true;
+  }
+  const warm = Number(params.get('warm') ?? 0);
+  if (warm > 0) {
+    engine.update(warm, true);
+    if (secondary) secondary.update(warm, true);
+  }
+  // Review states are captured without waiting for the camera tween.
+  camera.position.copy(cameraGoal.position);
+  controls.target.copy(cameraGoal.target);
+  cameraAnimating = false;
+  controls.update();
+  if (view === 'cutaway') {
+    const dy = camera.position.y - controls.target.y;
+    const dz = camera.position.z - controls.target.z;
+    const length = Math.hypot(dy, dz) || 1;
+    clipPlane.normal.set(0, -dy / length, -dz / length);
+    clipPlane.constant = 0;
   }
 }
 
@@ -497,6 +544,9 @@ setLanguage(new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : '
 function applyState(mode: string, extra: Record<string, string> = {}) {
   if (!engine) return;
   engine.reset();
+  for (const moduleRuntime of engine.modules) {
+    for (const component of moduleRuntime.components) component.group.rotation.x = 0;
+  }
   if (secondary) { scene.remove(secondary.root); secondary = null; }
   explode = 0; explodeTarget = 0;
   setExplode(0);
@@ -511,5 +561,6 @@ if (import.meta.env.DEV) {
     get secondary() { return secondary; },
     camera, controls, renderer, scene,
     setRunning, applyView, setExplode, select, selectPart, applyState,
+    commitCamera: () => { camera.position.copy(cameraGoal.position); controls.target.copy(cameraGoal.target); cameraAnimating = false; controls.update(); },
   };
 }

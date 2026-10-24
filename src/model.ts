@@ -54,6 +54,7 @@ type PartState = {
   visible: boolean;
   opacity: number;
   promoted: THREE.Mesh | null;
+  followRotor: boolean;
 };
 
 export type ComponentRuntime = {
@@ -201,7 +202,7 @@ export class Engine {
             const state: PartState = {
               meta, group, index: instanced ? index : -1, matrix,
               baseColor: sourceColor.clone(), color: sourceColor.clone(),
-              visible: true, opacity: 1, promoted: null,
+              visible: true, opacity: 1, promoted: null, followRotor: false,
             };
             this.parts.set(id, state);
             if (meta.rotor) {
@@ -300,7 +301,7 @@ export class Engine {
         material.needsUpdate = true;
       } else {
         for (const id of parts) {
-          this.promote(id);
+          this.promote(id, true);
           const state = this.parts.get(id)!;
           if (state.promoted) {
             const material = state.promoted.material as THREE.MeshStandardMaterial;
@@ -337,7 +338,7 @@ export class Engine {
     for (const id of this.resolve(ids)) {
       const state = this.parts.get(id);
       if (!state) continue;
-      this.promote(id);
+      this.promote(id, false);
       const mesh = state.promoted!;
       const matrix = state.matrix.clone();
       if (transform.position) {
@@ -357,9 +358,21 @@ export class Engine {
     }
   }
 
-  private promote(id: string) {
+  /**
+   * Give one part its own mesh. `followRotor` keeps it under its component, so a
+   * transparent blade still turns with the rotor; removing a part from the rotor
+   * instead parks it in the extracted group.
+   */
+  private promote(id: string, followRotor: boolean) {
     const state = this.parts.get(id);
-    if (!state || state.promoted) return;
+    if (!state) return;
+    if (state.promoted) {
+      if (state.followRotor === followRotor) return;
+      const parent = followRotor ? state.group.mesh.parent! : this.extracted;
+      parent.add(state.promoted);
+      state.followRotor = followRotor;
+      return;
+    }
     const source = state.group.mesh as THREE.Mesh;
     const material = (source.material as THREE.MeshStandardMaterial).clone();
     material.color.copy(state.color);
@@ -370,8 +383,9 @@ export class Engine {
     mesh.matrix.copy(state.matrix);
     mesh.name = id;
     mesh.userData.partId = id;
-    this.extracted.add(mesh);
+    (followRotor ? source.parent! : this.extracted).add(mesh);
     state.promoted = mesh;
+    state.followRotor = followRotor;
     this.pickables.push(mesh);
     if (state.index >= 0) {
       const instanced = state.group.mesh as THREE.InstancedMesh;
@@ -385,7 +399,7 @@ export class Engine {
   private unpromote(id: string, restore = true) {
     const state = this.parts.get(id);
     if (!state || !state.promoted) return;
-    this.extracted.remove(state.promoted);
+    state.promoted.removeFromParent();
     this.pickables = this.pickables.filter(p => p !== state.promoted);
     (state.promoted.material as THREE.Material).dispose();
     state.promoted = null;
