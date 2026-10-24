@@ -14,6 +14,7 @@ sys.path.insert(0, HERE)
 from glb_pieces import load, pieces_of
 from parts import make_parts
 import blade as blade_mod
+import rotor_disk
 
 MODULES = [
     ('fan', '风扇'), ('fan-cowl', '进气罩'), ('compressor', '压气机'),
@@ -28,6 +29,7 @@ COMPONENTS = {
     'fan.blade-tips': ('风扇叶尖封严块', 8),
     'fan.hub': ('风扇轮毂', 8),
     'fan.spinner': ('整流锥', 10),
+    'fan.inner-shroud': ('风扇内整流罩', 8),
     'fan-cowl.lip': ('进气唇口', 9),
     'fan-cowl.shell': ('进气罩壳体', 9),
     'fan-cowl.aft': ('进气罩后段', 9),
@@ -39,36 +41,44 @@ COMPONENTS = {
     'compressor.struts': ('压气机支板', 5),
     'compressor.drum': ('压气机鼓筒', 5),
     'compressor.casing': ('压气机机匣', 5),
-    'compressor.stators': ('压气机静子环', 5),
+    'compressor.inlet-bell': ('压气机前喇叭口', 5),
     'combustor.cans': ('燃烧室火焰筒', 6),
     'combustor.injectors': ('燃烧室喷嘴', 6),
     'combustor.casing': ('燃烧室机匣', 6),
+    'combustor.inner-shell': ('燃烧室内壳', 6),
     'turbine.stage-1-blades': ('第一级涡轮叶片', 1),
+    'turbine.stage-1-disk': ('第一级涡轮盘', 2),
+    'turbine.stage-1-tip-ring': ('第一级叶尖环', 3),
+    'turbine.stage-1-outer': ('第一级涡轮外环叶栅', 3),
+    'turbine.band': ('涡轮外环带', 3),
     'turbine.stage-2-blades': ('第二级涡轮叶片', 3),
     'turbine.stage-3-blades': ('第三级涡轮叶片', 3),
     'turbine.stage-4-blades': ('第四级涡轮叶片', 3),
     'turbine.stage-5-blades': ('第五级涡轮叶片', 3),
-    'turbine.stage-1-disc': ('第一级涡轮盘', 2),
-    'turbine.stage-2-disc': ('第二级涡轮盘', 3),
-    'turbine.stage-3-disc': ('第三级涡轮盘', 3),
-    'turbine.stage-4-disc': ('第四级涡轮盘', 3),
-    'turbine.stage-5-disc': ('第五级涡轮盘', 3),
-    'turbine.band': ('涡轮外环带', 3),
-    'turbine.stage-1-outer': ('第一级涡轮外环叶栅', 3),
+    'turbine.stage-2-hub': ('第二级轮毂', 3),
+    'turbine.stage-3-hub': ('第三级轮毂', 3),
+    'turbine.stage-4-hub': ('第四级轮毂', 3),
+    'turbine.stage-5-hub': ('第五级轮毂', 3),
+    'turbine.stage-2-tip-ring': ('第二级叶尖环', 3),
+    'turbine.stage-3-tip-ring': ('第三级叶尖环', 3),
+    'turbine.stage-4-tip-ring': ('第四级叶尖环', 3),
+    'turbine.stage-5-tip-ring': ('第五级叶尖环', 3),
     'turbine.stage-2-outer': ('第二级涡轮外环叶栅', 3),
     'turbine.stage-3-outer': ('第三级涡轮外环叶栅', 3),
     'turbine.stage-4-outer': ('第四级涡轮外环叶栅', 3),
     'turbine.stage-5-outer': ('第五级涡轮外环叶栅', 3),
+    'turbine.inner-cone': ('涡轮内锥壳', 3),
     'exhaust.nozzle': ('尾喷口', 10),
     'exhaust.bolts': ('尾喷口螺栓', 10),
+    'exhaust.fittings': ('尾喷口附件', 10),
     'exhaust.tail-cone': ('尾锥', 10),
     'core-casing.drum': ('核心机过渡段机匣', 7),
     'core-casing.tiles': ('核心机机匣瓦块', 7),
     'core-casing.struts': ('核心机支板', 7),
     'core-casing.flanges': ('核心机法兰', 7),
     'core-casing.bolts': ('核心机机匣螺栓', 7),
+    'core-casing.inner-wall': ('核心机内壁', 7),
     'nacelle.duct': ('外涵道机匣', 9),
-    'nacelle.struts': ('外涵道支板', 9),
     'shaft.main': ('主轴', 4),
 }
 
@@ -96,7 +106,7 @@ def classify(p):
     if r < 0.31 and length > 1.5:
         return 'shaft', 'shaft.main'
 
-    # Turbine blade stages and the band around them.
+    # Turbine blade stages, tip rings and hubs.
     if -1.82 <= x <= -1.30:
         stage = stage_of(x)
         if stage is None:
@@ -104,12 +114,17 @@ def classify(p):
         n = stage + 1
         if tris <= 8:
             return ('turbine', 'turbine.stage-%d-blades' % n) if r < 0.455 else ('turbine', 'turbine.stage-%d-outer' % n)
-        if r < 0.50:
-            return 'turbine', 'turbine.stage-%d-disc' % n
+        if 0.43 <= r <= 0.49:
+            return 'turbine', 'turbine.stage-%d-tip-ring' % n
+        if r < 0.40:
+            # A drum spanning two stages belongs to the stage its body sits in.
+            return 'turbine', 'turbine.stage-%d-hub' % n
         return 'turbine', 'turbine.band'
 
-    # Exhaust: bolts, nozzle, tail cone.
+    # Exhaust: fittings, bolts, nozzle.
     if x < -1.80:
+        if r > 0.60 and tris <= 60 and x < -1.91:
+            return 'exhaust', 'exhaust.fittings'
         if r > 0.60 and tris <= 400:
             return 'exhaust', 'exhaust.bolts'
         if tris > 600:
@@ -235,6 +250,111 @@ def signature(geom):
             round(max(rel) - min(rel), 3))
 
 
+
+SHELL_CUTS = [-1.45, -1.05, -0.28, 0.28, 1.15]
+SHELL_SEGMENTS = [
+    ('exhaust', 'exhaust.tail-cone', 11),
+    ('turbine', 'turbine.inner-cone', 4),
+    ('core-casing', 'core-casing.inner-wall', 8),
+    ('combustor', 'combustor.inner-shell', 7),
+    ('compressor', 'compressor.inlet-bell', 6),
+    ('fan', 'fan.inner-shroud', 9),
+]
+
+
+def flatten(part):
+    """One vertex list plus triangle index triples in world coordinates."""
+    verts, normals, tris = [], [], []
+    has_normals = all(piece.get('n') for piece in part['pieces'])
+    for piece in part['pieces']:
+        base = len(verts) // 3
+        pos, nrm = piece['pos'], piece.get('n')
+        remap = {v: i for i, v in enumerate(piece['vs'])}
+        for v in piece['vs']:
+            verts.extend(pos[v * 3:v * 3 + 3])
+            if has_normals:
+                normals.extend(nrm[v * 3:v * 3 + 3])
+        for tri in piece['trisv']:
+            tris.append((remap[tri[0]] + base, remap[tri[1]] + base, remap[tri[2]] + base))
+    return verts, normals if has_normals else [], tris
+
+
+def clip_x(poly, plane, keep_greater):
+    """Clip a polygon of (x, y, z, nx, ny, nz) tuples against x = plane."""
+    out = []
+    n = len(poly)
+    for i in range(n):
+        a = poly[i]
+        b = poly[(i + 1) % n]
+        inside_a = a[0] >= plane if keep_greater else a[0] <= plane
+        inside_b = b[0] >= plane if keep_greater else b[0] <= plane
+        if inside_a:
+            out.append(a)
+        if inside_a != inside_b:
+            t = (plane - a[0]) / (b[0] - a[0])
+            out.append(tuple(a[k] + (b[k] - a[k]) * t for k in range(6)))
+    return out
+
+
+def segment_geometry(verts, normals, tris, lo, hi, mat):
+    """Cut every triangle at the segment planes and keep the part in [lo, hi]."""
+    out_v, out_n, out_i = [], [], []
+    for tri in tris:
+        poly = []
+        for v in tri:
+            x, y, z = verts[v * 3:v * 3 + 3]
+            nx, ny, nz = normals[v * 3:v * 3 + 3] if normals else (0.0, 0.0, 0.0)
+            poly.append((x, y, z, nx, ny, nz))
+        if lo > -1e8:
+            poly = clip_x(poly, lo, True)
+        if hi < 1e8:
+            poly = clip_x(poly, hi, False)
+        if len(poly) < 3:
+            continue
+        base = len(out_v) // 3
+        for (x, y, z, nx, ny, nz) in poly:
+            out_v.extend((x, y, z))
+            if normals:
+                out_n.extend((nx, ny, nz))
+        for k in range(1, len(poly) - 1):
+            out_i.extend((base, base + k, base + k + 1))
+    return {'verts': out_v, 'normals': out_n, 'indices': out_i,
+            'mat': mat, 'tris': len(out_i) // 3}
+
+
+def triangle_area(geom):
+    v = geom['verts']
+    total = 0.0
+    idx = geom['indices']
+    for i in range(0, len(idx), 3):
+        a, b, c = idx[i] * 3, idx[i + 1] * 3, idx[i + 2] * 3
+        ux, uy, uz = v[b] - v[a], v[b + 1] - v[a + 1], v[b + 2] - v[a + 2]
+        vx, vy, vz = v[c] - v[a], v[c + 1] - v[a + 1], v[c + 2] - v[a + 2]
+        cx, cy, cz = uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx
+        total += 0.5 * math.sqrt(cx * cx + cy * cy + cz * cz)
+    return total
+
+
+def pieces_area(pieces):
+    total = 0.0
+    for pc in pieces:
+        pos = pc['pos']
+        for tri in pc['trisv']:
+            a, b, c = tri[0] * 3, tri[1] * 3, tri[2] * 3
+            ux, uy, uz = pos[b] - pos[a], pos[b + 1] - pos[a + 1], pos[b + 2] - pos[a + 2]
+            vx, vy, vz = pos[c] - pos[a], pos[c + 1] - pos[a + 1], pos[c + 2] - pos[a + 2]
+            cx, cy, cz = uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx
+            total += 0.5 * math.sqrt(cx * cx + cy * cy + cz * cz)
+    return total
+
+
+def geometry_stats(geom):
+    v = geom['verts']
+    xs, ys, zs = v[0::3], v[1::3], v[2::3]
+    radii = [math.hypot(y, z) for y, z in zip(ys, zs)]
+    return ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2, (min(zs) + max(zs)) / 2,
+            min(xs), max(xs), min(radii), max(radii))
+
 def main():
     src = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(
         '~/Downloads/turbine__turbofan_engine__jet_engine.glb')
@@ -246,25 +366,33 @@ def main():
     parts = parts_from_pieces(pieces)
     print('connected pieces', len(pieces), '-> parts', len(parts))
 
+    material_names = [m.get('name') for m in g.get('materials', [])]
+    shell_parts = [p for p in parts
+                   if (p['x1'] - p['x0']) > 1.5 and material_names[p['mat']] == 'plastic-cone-black']
+    shell_ids = {id(p) for p in shell_parts}
+    print('long shell parts to split', len(shell_parts))
+
     replaced = set()
     for p in parts:
+        if id(p) in shell_ids:
+            continue
         module, component = classify(p)
         p['module'], p['component'] = module, component
         if component == 'turbine.stage-1-blades':
             replaced.add(id(p))
 
-    unknown = [p for p in parts if p['module'] is None]
+    unknown = [p for p in parts if id(p) not in shell_ids and p.get('module') is None]
     print('unclassified parts', len(unknown))
     for p in unknown[:20]:
         print('  x=%.2f r=%.2f tris=%d' % (p['cx'], p['r'], p['tris']))
 
     # Stage-1 inner blades are regenerated: drop the original plates.
-    kept = [p for p in parts if id(p) not in replaced]
+    kept = [p for p in parts if id(p) not in replaced and id(p) not in shell_ids]
     print('stage-1 plates replaced', len(replaced))
 
     by_component = collections.defaultdict(list)
     for p in kept:
-        if p['module'] is None:
+        if p.get('module') is None:
             continue
         by_component[p['component']].append(p)
 
@@ -274,9 +402,10 @@ def main():
         'compressor.stage-1', 'compressor.stage-2', 'compressor.stage-3', 'compressor.stage-4',
         'compressor.drum', 'shaft.main',
         'turbine.stage-1-blades', 'turbine.stage-2-blades', 'turbine.stage-3-blades',
-        'turbine.stage-4-blades', 'turbine.stage-5-blades',
-        'turbine.stage-1-disc', 'turbine.stage-2-disc', 'turbine.stage-3-disc',
-        'turbine.stage-4-disc', 'turbine.stage-5-disc',
+        'turbine.stage-4-blades', 'turbine.stage-5-blades', 'turbine.stage-1-disk',
+        'turbine.stage-1-tip-ring', 'turbine.stage-2-tip-ring', 'turbine.stage-3-tip-ring',
+        'turbine.stage-4-tip-ring', 'turbine.stage-5-tip-ring',
+        'turbine.stage-2-hub', 'turbine.stage-3-hub', 'turbine.stage-4-hub', 'turbine.stage-5-hub',
     }
 
     # Build the part list in ring order (theta ascending) per component.
@@ -326,6 +455,8 @@ def main():
             'radius': [round(radius[0], 4), round(radius[1], 4)],
             'rotor': rotor,
             'pieceCount': piece_count,
+            'triangles': geom['tris'],
+            'area': round(triangle_area(geom), 6),
             'generated': generated,
         }
         manifest_parts.append(entry)
@@ -356,11 +487,37 @@ def main():
         cy, cz = math.cos(theta), math.sin(theta)
         pid = 'turbine.stage-1-blades.%03d' % (i + 1)
         add_part(pid, '第一级涡轮叶片 %03d' % (i + 1), 'blade', 'turbine.stage-1-blades', 'turbine',
-                 (x_stage, r_root * cy, r_root * cz), (x_stage - 0.008, x_stage + 0.008),
-                 (r_root, r_root + 0.146), True, blade_geom,
+                 (x_stage, r_root * cy, r_root * cz), (x_stage - 0.025, x_stage + 0.025),
+                 (r_root - 0.026, r_root + 0.146), True, blade_geom,
                  {'mesh': blade_shape, 't': [x_stage, r_root * cy, r_root * cz],
                   'r': [math.sin(theta / 2), 0, 0, math.cos(theta / 2)]},
                  piece_count=0, generated=True)
+
+    # Generated first-stage rotor disc, placed under the blade roots.
+    dv, dn, di = rotor_disk.disc_geometry()
+    disk_geom = {'verts': dv, 'normals': dn, 'indices': di, 'mat': 1, 'tris': len(di) // 3}
+    shapes.append(disk_geom)
+    disk_shape = len(shapes) - 1
+    add_part('turbine.stage-1-disk.001', '第一级涡轮盘 001', 'disk', 'turbine.stage-1-disk', 'turbine',
+             (x_stage, 0, 0), (x_stage - 0.015, x_stage + 0.015), (0.170, 0.302), True, disk_geom,
+             {'mesh': disk_shape, 't': [x_stage, 0, 0], 'r': [0, 0, 0, 1]},
+             piece_count=0, generated=True)
+
+    # The long black shell is cut into one part per module.
+    for part in shell_parts:
+        verts, normals, tris = flatten(part)
+        for idx, (module, component, _order) in enumerate(SHELL_SEGMENTS):
+            lo = SHELL_CUTS[idx - 1] if idx > 0 else -1e9
+            hi = SHELL_CUTS[idx] if idx < len(SHELL_CUTS) else 1e9
+            geom = segment_geometry(verts, normals, tris, lo, hi, part['mat'])
+            if not geom['tris']:
+                continue
+            cx, cy, cz, x0, x1, r0, r1 = geometry_stats(geom)
+            add_part('%s.001' % component, '%s 001' % COMPONENTS[component][0],
+                     component.split('.')[1], component, module,
+                     (cx, cy, cz), (x0, x1), (r0, r1),
+                     component in rotor_components, geom,
+                     piece_count=0, generated=False)
 
     # Manifest.
     modules = []
@@ -380,8 +537,12 @@ def main():
                 'assembly': [c['id'] for c in components],
                 'audit': {
                     'sourcePieces': len(pieces),
-                    'replacedPieces': len(replaced),
-                    'assignedPieces': sum(p['pieceCount'] for p in manifest_parts),
+                    'sourceTriangles': sum(p['tris'] for p in parts),
+                    'replacedTriangles': sum(p['tris'] for p in parts if id(p) in replaced),
+                    'sourceArea': round(pieces_area(pieces), 4),
+                    'replacedArea': round(sum(pieces_area(p['pieces']) for p in parts if id(p) in replaced), 4),
+                    'assignedArea': round(sum(p['area'] for p in manifest_parts if not p['generated']), 4),
+                    'generatedArea': round(sum(p['area'] for p in manifest_parts if p['generated']), 4),
                     'parts': len(manifest_parts),
                     'generatedBlades': 100,
                 }}
