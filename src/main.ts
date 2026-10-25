@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { loadEngineAssets, Engine, type EngineAssets } from './model';
 import { createEffects, type Effects } from './effects';
 import { EngineAudio } from './audio';
@@ -57,7 +58,8 @@ controls.minDistance = 0.06;
 controls.maxDistance = 26;
 controls.maxPolarAngle = Math.PI * 0.94;
 
-scene.add(new THREE.HemisphereLight('#dfeaf2', '#0a1418', 0.5));
+const hemisphere = new THREE.HemisphereLight('#dfeaf2', '#0a1418', 0.5);
+scene.add(hemisphere);
 const key = new THREE.DirectionalLight('#fff4e2', 2.6);
 key.position.set(4.2, 6.5, 5.5);
 key.castShadow = true;
@@ -74,13 +76,43 @@ const rim = new THREE.DirectionalLight('#8fc6de', 0.55);
 rim.position.set(0, -4.5, 3);
 scene.add(rim);
 
+let engineEnvironment: THREE.Texture | null = null;
+let studioEnvironment: THREE.Texture | null = null;
+let studioActive = false;
 new RGBELoader().load('/environment/poly_haven_studio_1k.hdr', texture => {
   const pmrem = new THREE.PMREMGenerator(renderer);
   texture.mapping = THREE.EquirectangularReflectionMapping;
-  scene.environment = pmrem.fromEquirectangular(texture).texture;
+  engineEnvironment = pmrem.fromEquirectangular(texture).texture;
+  if (!studioActive) scene.environment = engineEnvironment;
   texture.dispose();
   pmrem.dispose();
 });
+let contrastEnvironment: THREE.Texture | null = null;
+/**
+ * Studio lighting for the close-up blade: 'room' is three.js's neutral grey room,
+ * 'contrast' the bundled high-contrast studio HDR (loaded on first use).
+ */
+function useStudioEnvironment(on: boolean, kind: 'room' | 'contrast' = 'room') {
+  studioActive = on;
+  if (!on) { scene.environment = engineEnvironment; return; }
+  if (kind === 'contrast') {
+    if (contrastEnvironment) { scene.environment = contrastEnvironment; return; }
+    new RGBELoader().load('/environment/studio_kontrast_02_1k.hdr', texture => {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      contrastEnvironment = pmrem.fromEquirectangular(texture).texture;
+      texture.dispose(); pmrem.dispose();
+      if (studioActive) scene.environment = contrastEnvironment;
+    });
+    return;
+  }
+  if (!studioEnvironment) {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    studioEnvironment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+  }
+  scene.environment = studioEnvironment;
+}
 
 const audio = new EngineAudio();
 let assets: EngineAssets | null = null;
@@ -326,8 +358,173 @@ function resize() {
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   backdrop.resize(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
+  if (studioBackground) scene.background = studioBackground;
 }
 addEventListener('resize', resize);
+
+const HERO_IDS = ['root', 'platform', 'tip', 'edges', 'wall-ps', 'wall-ps-cut', 'wall-ss', 'dividers',
+  'ribs-1', 'ribs-2', 'ribs-3', 'pin-fins', 'airflow', 'coat-base', 'coat-bond', 'coat-tgo', 'coat-ysz',
+  'film-ps-1', 'film-ps-2', 'film-ps-3', 'film-ps-4', 'film-ss-1', 'film-ss-2', 'film-ss-3', 'film-ss-4']
+  .map(id => `turbine.hero-blade.${id}`);
+
+/** ?debug=hero-check: runtime self-check of the close-up blade, printed on the page. */
+function runHeroCheck(current: Engine) {
+  const hero = current.hero, runtime = hero.runtime;
+  const lines: string[] = [];
+  let ok = true;
+  const check = (pass: boolean, label: string, detail = '') => {
+    ok &&= pass;
+    lines.push(`${pass ? 'PASS' : 'FAIL'}  ${label}${detail ? '  ' + detail : ''}`);
+  };
+  const listed = current.listParts('turbine.hero-blade');
+  const missing = HERO_IDS.filter(id => !listed.includes(id) || !current.getPart(id) || current.resolve(id)[0] !== id);
+  check(missing.length === 0 && listed.length === HERO_IDS.length, `${HERO_IDS.length} 个 id 都能取到`,
+    missing.length ? `缺少 ${missing.join(', ')}` : `listParts 返回 ${listed.length} 个`);
+
+  // Colour isolation: only the coloured part changes, the rest of the blade and the engine do not.
+  const engineColors = () => [...current.parts.values()].map(state => state.color.getHexString()).join();
+  const engineBefore = engineColors();
+  const leaks: string[] = [];
+  for (const id of HERO_IDS) {
+    const before = HERO_IDS.map(other => runtime.materialState(other));
+    current.setColor(id, '#ff2600');
+    const after = HERO_IDS.map(other => runtime.materialState(other));
+    const changed = HERO_IDS.filter((other, i) => before[i] !== after[i]);
+    if (changed.length !== 1 || changed[0] !== id) leaks.push(`${id} -> ${changed.join('/') || '无变化'}`);
+    if (engineColors() !== engineBefore) leaks.push(`${id} -> 整机`);
+    current.setColor(id, null);
+  }
+  check(leaks.length === 0, '每个 id 设颜色后只有它自己变色', leaks.join('; '));
+
+  // Every caller API restores.
+  const base = runtime.snapshot();
+  for (const id of HERO_IDS) {
+    current.setDim(id, 0.2); current.setColor(id, null);
+    current.setOpacity(id, 0.3); current.setOpacity(id, 1);
+    current.setVisible(id, false); current.setVisible(id, true);
+  }
+  check(runtime.snapshot() === base, 'setDim / setOpacity / setVisible 设置后能恢复');
+
+  // Continuous parameters: 0 -> 1 -> 0, repeated in one frame, with mid values.
+  const sweep = [0, 0.1, 0.3, 0.5, 0.75, 0.99, 1, 1, 0.6, 0.2, 0];
+  const restored: string[] = [];
+  for (const [name, set] of [['setCutaway', (v: number) => hero.setCutaway(v)], ['setCoatings', (v: number) => hero.setCoatings(v)],
+    ['setAirflow', (v: number) => hero.setAirflow(v)]] as [string, (v: number) => void][]) {
+    sweep.forEach(set);
+    set(0); set(0);
+    if (runtime.snapshot() !== base) restored.push(name);
+  }
+  for (const v of sweep) { hero.setCutaway(v); hero.setCoatings(v); hero.setAirflow(v); }
+  hero.setCutaway(0); hero.setCoatings(0); hero.setAirflow(0);
+  if (runtime.snapshot() !== base) restored.push('三个一起');
+  check(restored.length === 0, '三个连续参数 0→1→0 后几何和材质恢复原样', restored.length ? `未恢复：${restored.join(', ')}` : '');
+
+  // Same value twice in a frame gives the same state.
+  hero.setCutaway(0.5); const once = runtime.snapshot(); hero.setCutaway(0.5);
+  check(runtime.snapshot() === once, '同一帧里重复设置结果一致');
+  hero.setCutaway(0);
+
+  const rise = runtime.linerRise();
+  check(rise <= 1e-6, '孔内衬不高出叶片表面', `最高处 ${rise.toExponential(2)}（负数表示低于表面）`);
+  check(!current.getPart('turbine.hero-blade.neck') && !current.resolve('turbine.hero-blade.film-le-1').length, '旧零件 id 已不存在');
+  lines.push(`三角形 ${runtime.triangles().toLocaleString('en-US')}`);
+  lines.unshift(ok ? 'HERO-CHECK PASS' : 'HERO-CHECK FAIL');
+  return { ok, lines };
+}
+
+function showHeroCheck(report: { ok: boolean; lines: string[] }) {
+  const panel = document.createElement('pre');
+  panel.id = 'hero-check';
+  panel.textContent = report.lines.join('\n');
+  panel.style.cssText = 'position:fixed;left:24px;top:120px;z-index:50;margin:0;padding:14px 16px;max-width:760px;'
+    + 'white-space:pre-wrap;font:13px/1.55 ui-monospace,monospace;color:#e8f1f4;border-radius:8px;'
+    + `background:${report.ok ? 'rgba(10,40,24,.92)' : 'rgba(60,12,12,.92)'};`;
+  document.body.append(panel);
+}
+
+// ---- Close-up blade review states (?debug=hero).
+// Studio: the blade alone at reference scale with the reference tilt, which is the
+// caller's choice of orientation (the blade itself has none).
+const STUDIO_TILT = new THREE.Euler(-0.06, -0.12, -0.13);
+const STUDIO_BACKGROUNDS = { dark: new THREE.Color('#03070c'), light: new THREE.Color('#ececec') };
+let studioBackground: THREE.Color | null = null;
+const chrome = () => document.querySelectorAll<HTMLElement>('.topbar, .parts, .info, .dock, .credit');
+
+function heroStudio(current: Engine, params: URLSearchParams) {
+  const hero = current.hero;
+  const num = (key: string, fallback = 0) => {
+    const value = Number(params.get(key) ?? fallback);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  for (const moduleRuntime of current.modules) current.setVisible(moduleRuntime.meta.id, false);
+  if (effects) effects.setVisible(false);
+  setRunning(false);
+  chrome().forEach(element => { element.style.visibility = 'hidden'; });
+  studioBackground = STUDIO_BACKGROUNDS[params.get('bg') === 'light' ? 'light' : 'dark'];
+  scene.background = studioBackground;
+  // Studio light: lower key and environment so the alloy reads as dark metal and
+  // the ceramic as mid grey, as in the reference renders. Restored by applyState.
+  renderer.toneMappingExposure = num('exposure', 0.62);
+  key.color.set('#ffffff'); fill.color.set('#dfe8ee');
+  key.intensity = num('key', 0.8);
+  fill.intensity = num('fill', 0.3);
+  rim.intensity = num('rim', 0.25);
+  hemisphere.intensity = num('hemi', 0.35);
+  scene.environmentIntensity = num('env', 1);
+  useStudioEnvironment(true, params.get('studio') === 'room' ? 'room' : 'contrast');
+  scene.environmentRotation.set(0, THREE.MathUtils.degToRad(num('envrot', 10)), 0);
+
+  hero.setCutaway(num('cut'));
+  hero.setCoatings(num('coat'));
+  hero.setAirflow(num('flow'));
+  const rows = params.get('rows');
+  const ps = [1, 2, 3, 4].map(n => `turbine.hero-blade.film-ps-${n}`);
+  const ss = [1, 2, 3, 4].map(n => `turbine.hero-blade.film-ss-${n}`);
+  const lit = rows === 'ps' ? ps : rows === 'ss' ? ss : rows === 'all' ? [...ps, ...ss]
+    : rows && /^(ps|ss)[1-4]$/.test(rows) ? [`turbine.hero-blade.film-${rows.slice(0, 2)}-${rows[2]}`] : [];
+  if (lit.length) current.setColor(lit, '#39d0ff');
+  if (params.get('ceramic') === '1') current.setColor('turbine.hero-blade.coat-ysz', '#e03b2f');
+
+  const pose = params.get('pose');
+  if (pose) {
+    // Ring swap: only the first-stage blade ring and its disc stay.
+    current.setVisible(['turbine.stage-1-blades', 'turbine.stage-1-disk'], true);
+    const blade = bladeIdFor(pose);
+    hero.poseFor(blade);
+    current.setVisible(blade, false);
+    hero.setLanding(num('land', 1));
+    const seat = new THREE.Vector3(...hero.pose().position);
+    const radial = new THREE.Vector3(0, seat.y, seat.z).normalize();
+    const side = new THREE.Vector3(0, -radial.z, radial.y);
+    if (params.get('shot') === 'near') {
+      // Camera at r = 0.72, just outside the turbine band (r 0.69).
+      cameraGoal.target.set(seat.x, 0, 0).addScaledVector(radial, 0.375);
+      cameraGoal.position.set(seat.x + 0.13, 0, 0).addScaledVector(radial, 0.695).addScaledVector(side, 0.19);
+    } else {
+      cameraGoal.target.set(seat.x, 0, 0).addScaledVector(radial, 0.1);
+      cameraGoal.position.set(seat.x + 1.25, 0, 0).addScaledVector(radial, 1.25).addScaledVector(side, 1.7);
+    }
+    return;
+  }
+
+  const matrix = new THREE.Matrix4().makeRotationFromEuler(STUDIO_TILT);
+  hero.placeAt(matrix);
+  hero.show(true);
+  const angle = params.get('angle') ?? 'front';
+  if (angle === 'zoom') {
+    // Platform-to-tip aerofoil at 80 % of the frame height, oblique, to show creases.
+    const height = 4.17 - 0.555, vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
+    const distance = height / 0.8 / 2 / Math.tan(vertical);
+    cameraGoal.target.set(0.2, 2.36, 0.05).applyMatrix4(matrix);
+    cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(0.62, 0.1, 0.78).normalize(), distance);
+  } else if (angle === 'back') {
+    cameraGoal.target.set(0.55, 1.85, -0.1);
+    cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(-0.08, 0.09, -1).normalize(), num('dist', 9.4));
+  } else {
+    cameraGoal.target.set(0.86, 1.92, 0.25);
+    cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(0.06, 0.09, 1).normalize(), num('dist', 9.9));
+  }
+}
 
 function applyDebug(params: URLSearchParams) {
   if (!engine) return;
@@ -435,52 +632,13 @@ function applyDebug(params: URLSearchParams) {
     cameraGoal.position.copy(center).addScaledVector(new THREE.Vector3(0.7, 0.35, 0.85).normalize(), distance);
     cameraAnimating = true;
   } else if (mode === 'hero') {
-    const cut = Number(params.get('cut') ?? 0);
-    const coat = Number(params.get('coat') ?? 0);
-    const rows = params.get('rows');
-    const zoom = Number(params.get('zoom') ?? 1);
-    const pose = params.get('pose');
-    const heroRows = ['film-le-1', 'film-le-2', 'film-le-3', 'film-le-4',
-      'film-ps-1', 'film-ps-2', 'film-ss-1', 'slot-te']
-      .map(id => `turbine.hero-blade.${id}`);
-    if (pose) {
-      engine.hero.show(true);
-      engine.hero.setCutaway(cut);
-      engine.hero.setCoatings(coat);
-      const poseResult = engine.hero.poseFor(bladeIdFor(pose));
-      engine.setVisible(bladeIdFor(pose), false);
-      if (poseResult) {
-        engine.setVisible('nacelle', false);
-        engine.setVisible('core-casing', false);
-        engine.setVisible('compressor', false);
-        engine.setVisible('turbine.band', false);
-        engine.setVisible('turbine.inner-cone', false);
-        const target = new THREE.Vector3(...poseResult.position);
-        cameraGoal.target.copy(target);
-        cameraGoal.position.copy(target)
-          .add(new THREE.Vector3(-0.45, 0.55, 0.7).normalize().multiplyScalar(0.85 * zoom));
-        cameraAnimating = true;
-      }
-    } else {
-      for (const moduleRuntime of engine.modules) {
-        for (const component of moduleRuntime.components) {
-          engine.setVisible(component.meta.id, component.meta.id === 'turbine.hero-blade');
-        }
-      }
-      engine.hero.show(true);
-      engine.hero.setCutaway(cut);
-      engine.hero.setCoatings(coat);
-      const angle = params.get('angle') ?? 'face';
-      cameraGoal.target.set(0, 0.075, 0.02);
-      const offset = angle === 'leading' ? new THREE.Vector3(0.37, 0.06, 0.26)
-        : angle === 'oblique' ? new THREE.Vector3(-0.14, 0.3, 0.3)
-        : new THREE.Vector3(0.24, 0.08, -0.34);
-      cameraGoal.position.copy(cameraGoal.target).addScaledVector(offset, zoom * 1.45);
-      cameraAnimating = true;
-    }
-    if (rows === 'all') engine.setColor(heroRows, '#39d0ff');
-    else if (rows === 'le') engine.setColor(heroRows.slice(0, 4), '#39d0ff');
-    if (params.get('ceramic') === '1') engine.setColor('turbine.hero-blade.coat-ysz', '#e03b2f');
+    heroStudio(engine, params);
+  } else if (mode === 'hero-check') {
+    const report = runHeroCheck(engine);
+    (window as unknown as Record<string, unknown>).__heroCheck = report;
+    document.body.dataset.heroCheck = report.ok ? 'pass' : 'fail';
+    console.log(report.lines.join('\n'));
+    showHeroCheck(report);
   } else if (mode === 'assemble') {
     const step = params.get('step');
     const limit = step === 'full' ? 99 : Number(step ?? 1);
@@ -599,6 +757,15 @@ function bladeIdFor(value: string): string {
 
 function applyState(mode: string, extra: Record<string, string> = {}) {
   if (!engine) return;
+  renderer.toneMappingExposure = 1.12;
+  key.intensity = 2.6; fill.intensity = 0.75; rim.intensity = 0.55; hemisphere.intensity = 0.5;
+  key.color.set('#fff4e2'); fill.color.set('#bcd7ea');
+  scene.environmentIntensity = 1;
+  useStudioEnvironment(false);
+  scene.environmentRotation.set(0, 0, 0);
+  studioBackground = null;
+  backdrop.restore();
+  chrome().forEach(element => { element.style.visibility = ''; });
   engine.reset();
   for (const moduleRuntime of engine.modules) {
     for (const component of moduleRuntime.components) component.group.rotation.x = 0;

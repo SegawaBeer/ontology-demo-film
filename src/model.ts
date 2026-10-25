@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createHeroBlade, heroToRing, HERO_COMPONENT, HERO_PART_NAME, type HeroBladeRuntime } from './hero-blade';
 
 export type PartMeta = {
   id: string;
@@ -134,7 +135,6 @@ export class Engine {
     this.extracted.name = 'extracted';
     this.root.add(this.extracted);
     this.build();
-    this.setVisible('turbine.hero-blade', false);
     this.hero = new HeroBlade(this);
   }
 
@@ -240,6 +240,9 @@ export class Engine {
     const list = Array.isArray(ids) ? ids : [ids];
     const out = new Set<string>();
     for (const id of list) {
+      // The close-up blade is not in the manifest; its ids resolve on their own.
+      if (id === HERO_COMPONENT) { this.hero?.ids.forEach(heroId => out.add(heroId)); continue; }
+      if (id.startsWith(HERO_COMPONENT + '.')) { if (this.hero?.runtime.has(id)) out.add(id); continue; }
       if (this.parts.has(id)) { out.add(id); continue; }
       const component = this.assets.components.get(id);
       if (component) { component.parts.forEach(p => out.add(p)); continue; }
@@ -252,6 +255,7 @@ export class Engine {
   setColor(ids: string | string[], color: THREE.Color | string | null): void {
     const target = new THREE.Color(color ?? '#ffffff');
     for (const id of this.resolve(ids)) {
+      if (this.hero?.runtime.has(id)) { this.hero.runtime.setColor(id, color ? target : null); continue; }
       const state = this.parts.get(id);
       if (!state) continue;
       state.color.copy(color ? target : state.baseColor);
@@ -274,6 +278,7 @@ export class Engine {
 
   setDim(ids: string | string[], amount = 0.2): void {
     for (const id of this.resolve(ids)) {
+      if (this.hero?.runtime.has(id)) { this.hero.runtime.setDim(id, amount); continue; }
       const state = this.parts.get(id);
       if (!state) continue;
       state.color.copy(state.baseColor).multiplyScalar(amount);
@@ -285,6 +290,7 @@ export class Engine {
   setOpacity(ids: string | string[], opacity: number): void {
     const target = new Set(this.resolve(ids));
     if (!target.size) return;
+    for (const id of target) if (this.hero?.runtime.has(id)) this.hero.runtime.setOpacity(id, opacity);
     // Whole material groups can share one transparent material.
     const groups = new Map<Group, string[]>();
     for (const id of target) {
@@ -319,7 +325,10 @@ export class Engine {
   }
 
   setVisible(ids: string | string[], visible: boolean): void {
+    // The close-up blade's component id also shows or hides the blade as a whole.
+    if ((Array.isArray(ids) ? ids : [ids]).includes(HERO_COMPONENT)) this.hero?.show(visible);
     for (const id of this.resolve(ids)) {
+      if (this.hero?.runtime.has(id)) { this.hero.runtime.setVisible(id, visible); continue; }
       const state = this.parts.get(id);
       if (!state) continue;
       state.visible = visible;
@@ -444,7 +453,7 @@ export class Engine {
       }
     }
     this.refreshEnvironment();
-    this.setVisible('turbine.hero-blade', false);
+    this.hero?.reset();
   }
 
   private refreshEnvironment() {
@@ -462,13 +471,19 @@ export class Engine {
     for (const id of ids) this.setVisible(id, visible);
   }
 
+  private elapsed = 0;
+
   update(delta: number, running: boolean, speed = 9.5) {
+    this.elapsed += delta;
+    // The close-up blade moves its airflow particles only while it is on screen.
+    if (this.hero?.visible) this.hero.runtime.update(delta, this.elapsed);
     if (!running) return;
     for (const moduleRuntime of this.modules) {
       for (const component of moduleRuntime.components) {
         if (component.rotor) component.group.rotation.x -= delta * speed;
       }
     }
+    if (this.hero?.visible) this.hero.follow();
   }
 
   pick(raycaster: THREE.Raycaster): string | null {
@@ -492,10 +507,21 @@ export class Engine {
   }
 
   listParts(componentId: string): string[] {
+    if (componentId === HERO_COMPONENT) return this.hero ? [...this.hero.ids] : [];
     return this.assets.components.get(componentId)?.parts ?? [];
   }
 
   getPart(id: string): PartMeta | undefined {
+    if (id.startsWith(HERO_COMPONENT + '.')) {
+      if (!this.hero?.runtime.has(id)) return undefined;
+      const box = new THREE.Box3().setFromObject(this.hero.runtime.root);
+      const center = box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
+      return {
+        id, name: HERO_PART_NAME.get(id) ?? id, type: 'hero-part', component: HERO_COMPONENT,
+        module: 'turbine', center: center.toArray() as [number, number, number],
+        axial: [box.min.x, box.max.x], radius: [0, 0], rotor: false,
+      };
+    }
     return this.assets.parts.get(id);
   }
 
@@ -511,6 +537,23 @@ export class Engine {
     mesh.matrixAutoUpdate = false;
     mesh.matrix.copy(state.matrix).multiply(new THREE.Matrix4().makeTranslation(dx, dy, dz));
     mesh.matrixWorldNeedsUpdate = true;
+  }
+
+  /**
+   * World matrix of a part where it is assembled (or moved to), ignoring whether
+   * it is hidden: a hidden instance has a zero-scale matrix, the stored one does not.
+   */
+  partRestWorldMatrix(id: string): THREE.Matrix4 | null {
+    const state = this.parts.get(id);
+    if (!state) return null;
+    if (state.promoted) {
+      state.promoted.updateWorldMatrix(true, false);
+      return state.promoted.matrixWorld.clone();
+    }
+    const mesh = state.group.mesh;
+    mesh.updateWorldMatrix(true, false);
+    if (state.index >= 0) return state.matrix.clone().premultiply(mesh.matrixWorld);
+    return mesh.matrixWorld.clone();
   }
 
   /** World matrix of one part, including its instance transform. */
@@ -530,72 +573,148 @@ export class Engine {
   }
 }
 
-
 export type HeroPose = {
   position: [number, number, number];
   quaternion: [number, number, number, number];
+  /** World size of one hero-blade unit; the aerofoil is 3.65 units tall. */
   scale: number;
+  /** World matrix from hero-blade units to the scene. */
   matrix: THREE.Matrix4;
 };
 
 /**
- * The detailed blade used for close-ups. Its parts live in their own component,
- * hidden by default, and are driven by two continuous parameters.
+ * The close-up cooled blade (src/hero-blade.ts). It is generated at runtime, is
+ * not in the manifest or the assembly order and is hidden by default. Its parts
+ * answer to the engine's id API like any other part.
+ *
+ * Placement: at landing 0 the blade stands above the engine, outside the casing,
+ * at HOME_SCALE; at landing 1 it sits exactly on the ring blade chosen by poseFor,
+ * at that blade's aerofoil height, and follows it when the rotor turns or the
+ * modules are pulled apart.
  */
 export class HeroBlade {
-  private readonly componentId = 'turbine.hero-blade';
-  private cutParts: string[] = [];
-  private coatParts: { id: string; index: number }[] = [];
-  private spread = [0, 0.014, 0.026, 0.04];
+  readonly componentId = HERO_COMPONENT;
+  readonly runtime: HeroBladeRuntime;
+  /** Engine-root-local carrier of the blade; its matrix is the placement. */
+  readonly holder = new THREE.Group();
+  private target: string | null = null;
+  private landing = 0;
+  private free = false;
+  private static readonly HOME_SCALE = 0.1;
+  private static readonly HOME_RADIUS = 1.35;
+  private static readonly HOME_CENTER = new THREE.Vector3(0, 1.8, 0);
 
   constructor(private engine: Engine) {
-    for (const [id, state] of engine.parts) {
-      if (state.meta.component !== this.componentId) continue;
-      const meta = state.meta as PartMeta & { cut?: string | null; coat?: number | null };
-      if (meta.cut === 'pressure') this.cutParts.push(id);
-      if (typeof meta.coat === 'number') this.coatParts.push({ id, index: meta.coat });
-    }
+    this.runtime = createHeroBlade();
+    this.holder.name = HERO_COMPONENT;
+    this.holder.matrixAutoUpdate = false;
+    this.holder.add(this.runtime.root);
+    this.place();
   }
 
+  get ids(): string[] { return this.runtime.ids; }
+  get visible(): boolean { return this.holder.parent !== null; }
+
+  /**
+   * The blade is attached to the engine only while shown, so a hidden blade
+   * never enters the engine's bounding box or the camera framing.
+   */
   show(visible = true): void {
-    this.engine.setVisible(this.componentId, visible);
+    if (!visible) { this.hide(); return; }
+    if (!this.holder.parent) this.engine.root.add(this.holder);
+    if (!this.free) this.place();
   }
+  hide(): void { this.holder.removeFromParent(); }
 
-  /** 0 = closed blade, 1 = the pressure wall moved aside. */
-  setCutaway(value: number): void {
-    const t = Math.max(0, Math.min(1, value));
-    for (const id of this.cutParts) this.engine.translatePart(id, 0, 0, -0.075 * t);
-  }
+  /** 0 closed .. 1 pressure wall opened by a scan line from root to tip. */
+  setCutaway(value: number): void { this.runtime.setCutaway(value); }
+  /** 0 four layers bonded on the blade .. 1 layers separated beside it. */
+  setCoatings(value: number): void { this.runtime.setCoatings(value); }
+  /** 0 no cooling air .. 1 full airflow overlay with moving particles. */
+  setAirflow(value: number): void { this.runtime.setAirflow(value); }
 
-  /** 0 = four layers bonded, 1 = separated along the surface normal. */
-  setCoatings(value: number): void {
-    const t = Math.max(0, Math.min(1, value));
-    for (const part of this.coatParts) {
-      this.engine.translatePart(part.id, 0, 0, this.spread[part.index] * t);
-    }
-  }
-
-  /** Place the hero blade where a ring blade sits, and return the pose. */
+  /**
+   * Seat the blade on a ring blade (landing 1), show it and return the pose.
+   * Later setLanding(t) moves between the home position and this blade.
+   */
   poseFor(ringPartId: string): HeroPose | null {
-    const world = this.engine.partWorldMatrix(ringPartId);
-    if (!world) return null;
-    const heroPart = this.engine.parts.get('turbine.hero-blade.root');
-    const heroMesh = heroPart?.group.mesh;
-    if (!heroMesh) return null;
-    const component = heroMesh.parent!;
-    const local = new THREE.Matrix4().copy(component.parent!.matrixWorld).invert().multiply(world);
-    component.matrixAutoUpdate = false;
-    component.matrix.copy(local);
-    component.matrixWorldNeedsUpdate = true;
+    if (!this.engine.parts.has(ringPartId)) return null;
+    this.target = ringPartId;
+    this.landing = 1;
+    this.free = false;
+    this.place();
+    this.show(true);
+    return this.pose();
+  }
 
-    const position = new THREE.Vector3().setFromMatrixPosition(world);
-    const quaternion = new THREE.Quaternion().setFromRotationMatrix(world);
-    const scale = new THREE.Vector3().setFromMatrixScale(world);
+  /** 0 = home, above the engine; 1 = seated on the poseFor blade (001 if none). */
+  setLanding(value: number): void {
+    this.landing = THREE.MathUtils.clamp(Number.isFinite(value) ? value : 0, 0, 1);
+    this.free = false;
+    this.place();
+  }
+
+  /** Current world pose of the blade. */
+  pose(): HeroPose {
+    this.holder.updateWorldMatrix(true, false);
+    const matrix = this.holder.matrixWorld.clone();
+    const position = new THREE.Vector3(), quaternion = new THREE.Quaternion(), scale = new THREE.Vector3();
+    matrix.decompose(position, quaternion, scale);
     return {
-      position: [position.x, position.y, position.z],
-      quaternion: [quaternion.x, quaternion.y, quaternion.z, quaternion.w],
+      position: position.toArray() as [number, number, number],
+      quaternion: quaternion.toArray() as [number, number, number, number],
       scale: (scale.x + scale.y + scale.z) / 3,
-      matrix: world.clone(),
+      matrix,
     };
+  }
+
+  /** Called every frame by the engine so a seated blade follows its ring blade. */
+  follow(): void { if (this.landing > 0 && !this.free) this.place(); }
+
+  /**
+   * Free placement in engine-root space (for example a studio view with the
+   * caller's own tilt). null returns to the home/landing placement.
+   */
+  placeAt(matrix: THREE.Matrix4 | null): void {
+    this.free = matrix !== null;
+    if (matrix) {
+      this.holder.matrix.copy(matrix);
+      this.holder.matrixWorldNeedsUpdate = true;
+    } else this.place();
+  }
+
+  reset(): void {
+    this.runtime.reset();
+    this.target = null;
+    this.landing = 0;
+    this.free = false;
+    this.place();
+    this.hide();
+  }
+
+  /** Seat matrix in engine-root space for the target ring blade. */
+  private seat(): THREE.Matrix4 {
+    const id = this.target ?? 'turbine.stage-1-blades.001';
+    const world = this.engine.partRestWorldMatrix(id) ?? new THREE.Matrix4();
+    this.engine.root.updateWorldMatrix(true, false);
+    return new THREE.Matrix4().copy(this.engine.root.matrixWorld).invert().multiply(world).multiply(heroToRing().matrix);
+  }
+
+  private place(): void {
+    const seat = this.seat();
+    const p1 = new THREE.Vector3(), q1 = new THREE.Quaternion(), s1 = new THREE.Vector3();
+    seat.decompose(p1, q1, s1);
+    // Home: same orientation, centred outside the casing on the seat's radius.
+    const s0 = HeroBlade.HOME_SCALE;
+    const radial = new THREE.Vector3(0, p1.y, p1.z);
+    if (radial.lengthSq() < 1e-8) radial.set(0, 1, 0);
+    radial.normalize();
+    const p0 = new THREE.Vector3(p1.x, 0, 0).addScaledVector(radial, HeroBlade.HOME_RADIUS)
+      .sub(HeroBlade.HOME_CENTER.clone().multiplyScalar(s0).applyQuaternion(q1));
+    const t = this.landing;
+    const position = p0.lerp(p1, t);
+    const scale = Math.pow(s0, 1 - t) * Math.pow(s1.x, t);
+    this.holder.matrix.compose(position, q1, new THREE.Vector3(scale, scale, scale));
+    this.holder.matrixWorldNeedsUpdate = true;
   }
 }
