@@ -506,6 +506,37 @@ export class Engine {
     return null;
   }
 
+  /**
+   * World-space vertices of one part, used to frame it from whichever side
+   * shows the most of it. Vertices are transformed with the part's own stored
+   * matrix, so a hidden instance or a shared mesh still yields this part only.
+   */
+  partWorldPoints(id: string): Float32Array | null {
+    const state = this.parts.get(id);
+    if (!state) return null;
+    const attribute = state.group.mesh.geometry.getAttribute('position') as THREE.BufferAttribute | undefined;
+    if (!attribute) return null;
+    const matrix = new THREE.Matrix4();
+    if (state.promoted) {
+      state.promoted.updateWorldMatrix(true, false);
+      matrix.copy(state.promoted.matrixWorld);
+    } else {
+      const mesh = state.group.mesh;
+      mesh.updateWorldMatrix(true, false);
+      if (state.index >= 0) matrix.multiplyMatrices(mesh.matrixWorld, state.matrix);
+      else matrix.copy(mesh.matrixWorld);
+    }
+    const out = new Float32Array(attribute.count * 3);
+    const vertex = new THREE.Vector3();
+    for (let i = 0; i < attribute.count; i++) {
+      vertex.fromBufferAttribute(attribute, i).applyMatrix4(matrix);
+      out[i * 3] = vertex.x;
+      out[i * 3 + 1] = vertex.y;
+      out[i * 3 + 2] = vertex.z;
+    }
+    return out;
+  }
+
   listParts(componentId: string): string[] {
     if (componentId === HERO_COMPONENT) return this.hero ? [...this.hero.ids] : [];
     return this.assets.components.get(componentId)?.parts ?? [];

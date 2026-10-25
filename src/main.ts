@@ -126,7 +126,9 @@ let running = false;
 let explode = 0;
 let explodeTarget = 0;
 let selected: string | null = null;
+let selectedPart: string | null = null;
 let isolate = false;
+let isolatedPart: string | null = null;
 
 const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const cameraGoal = { position: camera.position.clone(), target: controls.target.clone() };
@@ -200,9 +202,18 @@ function setExplode(value: number) {
 
 function applyVisibility() {
   if (!engine) return;
-  for (const moduleRuntime of engine.modules) {
-    const hide = isolate && moduleRuntime.meta.id !== selected;
-    engine.setVisible(moduleRuntime.meta.id, !hide);
+  if (isolate && isolatedPart) {
+    // A part shares its InstancedMesh with the rest of its component, so hide
+    // every module first (each instance through its own matrix) and then bring
+    // back only the selected instance. Nothing is destroyed: returning to the
+    // engine sets every module visible again.
+    for (const moduleRuntime of engine.modules) engine.setVisible(moduleRuntime.meta.id, false);
+    engine.setVisible(isolatedPart, true);
+  } else {
+    for (const moduleRuntime of engine.modules) {
+      const hide = isolate && moduleRuntime.meta.id !== selected;
+      engine.setVisible(moduleRuntime.meta.id, !hide);
+    }
   }
   applyCutawayClipping(view === 'cutaway' && !isolate);
   if (effects) effects.group.visible = !isolate && explode < 0.4;
@@ -220,6 +231,7 @@ function updateIsolateButton() {
 function applyView(next: View) {
   view = next;
   isolate = false;
+  isolatedPart = null;
   updateIsolateButton();
   document.querySelectorAll<HTMLButtonElement>('#views button').forEach(button => {
     if (button.dataset.view === next) button.setAttribute('aria-current', 'page');
@@ -245,6 +257,8 @@ function highlight() {
 
 function select(id: string | null, focus = true) {
   selected = id;
+  selectedPart = null;
+  isolatedPart = null;
   if (!id) isolate = false;
   updateIsolateButton();
   highlight();
@@ -267,14 +281,18 @@ function selectPart(partId: string) {
   if (!engine) return;
   const meta = engine.getPart(partId);
   if (!meta) return;
+  // The part is the selection: the module only supplies the info text and the
+  // dimming group, while "单独显示" acts on this one part.
   selected = meta.module;
+  selectedPart = partId;
+  isolatedPart = null;
   isolate = false;
   updateIsolateButton();
   highlight();
   applyVisibility();
   info.hidden = false;
   const moduleMeta = engine.modules.find(m => m.meta.id === meta.module)?.meta;
-  infoTitle.textContent = `${t(moduleMeta?.name ?? meta.module)} · ${meta.name}`;
+  infoTitle.textContent = `${t(moduleMeta?.name ?? meta.module)} · ${t(meta.name)}`;
   infoBody.textContent = t(DESCRIPTIONS[meta.module] ?? '');
   focusOn(engine.root);
 }
@@ -315,6 +333,74 @@ function focusOn(object: THREE.Object3D | null) {
   beginCameraMove();
 }
 
+/** 26 view directions: six axes, twelve edge diagonals, eight body diagonals. */
+const VIEW_DIRECTIONS: THREE.Vector3[] = (() => {
+  const directions: THREE.Vector3[] = [];
+  for (const x of [-1, 0, 1]) for (const y of [-1, 0, 1]) for (const z of [-1, 0, 1]) {
+    if (x === 0 && y === 0 && z === 0) continue;
+    directions.push(new THREE.Vector3(x, y, z).normalize());
+  }
+  return directions;
+})();
+
+/**
+ * Frame a single part. This works from the part's own world vertices rather
+ * than from a group, so a blade that shares an InstancedMesh with its ring
+ * still fills the frame on its own. The view is the direction that shows the
+ * largest silhouette, which for an 8-triangle compressor blade means its face
+ * instead of its edge.
+ */
+function focusOnPart(partId: string) {
+  if (!engine) return;
+  const points = engine.partWorldPoints(partId);
+  if (!points || points.length < 9) { focusOn(engine.root); return; }
+  const vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
+  const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
+  const defaultDirection = new THREE.Vector3(0.78, 0.36, 0.92).normalize();
+
+  const project = (direction: THREE.Vector3) => {
+    const forward = direction.clone().negate();
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
+    if (right.lengthSq() < 1e-8) right.set(1, 0, 0); else right.normalize();
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (let i = 0; i < points.length; i += 3) {
+      const x = points[i], y = points[i + 1], z = points[i + 2];
+      const px = x * right.x + y * right.y + z * right.z;
+      const py = x * up.x + y * up.y + z * up.z;
+      const pz = x * forward.x + y * forward.y + z * forward.z;
+      if (px < minX) minX = px; if (px > maxX) maxX = px;
+      if (py < minY) minY = py; if (py > maxY) maxY = py;
+      if (pz < minZ) minZ = pz; if (pz > maxZ) maxZ = pz;
+    }
+    const ex = (maxX - minX) / 2, ey = (maxY - minY) / 2, ez = (maxZ - minZ) / 2;
+    const center = new THREE.Vector3()
+      .addScaledVector(right, (minX + maxX) / 2)
+      .addScaledVector(up, (minY + maxY) / 2)
+      .addScaledVector(forward, (minZ + maxZ) / 2);
+    return { direction, ex, ey, ez, center, score: 4 * ex * ey * (1 + 0.05 * direction.dot(defaultDirection)) };
+  };
+
+  let best = project(defaultDirection);
+  for (const direction of VIEW_DIRECTIONS) {
+    const candidate = project(direction);
+    if (candidate.score > best.score) best = candidate;
+  }
+  // Straight above or below makes OrbitControls sit at its pole; a small tilt
+  // keeps orbiting natural without changing which face is shown.
+  let chosen = best;
+  if (Math.abs(best.direction.y) > 0.99) {
+    const tilted = best.direction.clone();
+    tilted.x += 0.12;
+    chosen = project(tilted.normalize());
+  }
+  const fit = Math.max(chosen.ey / Math.tan(vertical), chosen.ex / Math.tan(horizontal)) * 1.12;
+  const distance = Math.max(controls.minDistance + 0.02, fit + chosen.ez);
+  cameraGoal.target.copy(chosen.center);
+  cameraGoal.position.copy(chosen.center).addScaledVector(chosen.direction, distance);
+  beginCameraMove();
+}
+
 function setRunning(next: boolean) {
   running = next;
   runButton.setAttribute('aria-pressed', String(running));
@@ -330,13 +416,26 @@ soundButton.addEventListener('click', async () => {
 });
 isolateButton.addEventListener('click', () => {
   if (!selected) return;
-  isolate = !isolate;
+  if (isolate) {
+    isolate = false;
+    isolatedPart = null;
+    updateIsolateButton();
+    applyVisibility();
+    return;
+  }
+  isolate = true;
+  // A selected part gets part-level isolation; a selected module keeps the
+  // module-level behaviour.
+  isolatedPart = selectedPart;
   updateIsolateButton();
   applyVisibility();
-  if (isolate && engine) {
-    const moduleRuntime = engine.modules.find(m => m.meta.id === selected);
-    if (moduleRuntime) focusOn(moduleRuntime.group);
+  if (!engine) return;
+  if (isolatedPart) {
+    focusOnPart(isolatedPart);
+    return;
   }
+  const moduleRuntime = engine.modules.find(m => m.meta.id === selected);
+  if (moduleRuntime) focusOn(moduleRuntime.group);
 });
 clearButton.addEventListener('click', () => select(null));
 
@@ -352,7 +451,12 @@ onLanguage(() => {
   updateIsolateButton();
   if (selected && engine) {
     const moduleRuntime = engine.modules.find(m => m.meta.id === selected);
-    if (moduleRuntime) infoTitle.textContent = t(moduleRuntime.meta.name);
+    if (moduleRuntime) {
+      const partName = selectedPart ? engine.getPart(selectedPart)?.name : null;
+      infoTitle.textContent = partName
+        ? `${t(moduleRuntime.meta.name)} · ${t(partName)}`
+        : t(moduleRuntime.meta.name);
+    }
   }
 });
 
@@ -762,7 +866,9 @@ function frame(now: number) {
   if (engine) {
     explode += (explodeTarget - explode) * Math.min(1, delta * 5.5);
     if (Math.abs(explodeTarget - explode) > 0.0005) setExplode(explode);
-    engine.update(delta, running);
+    // A part isolated from a rotor component would spin out of its own close-up,
+    // so hold the rotor while one part is shown on its own.
+    engine.update(delta, running && !isolatedPart);
     if (secondary) secondary.update(delta, running);
   }
 
