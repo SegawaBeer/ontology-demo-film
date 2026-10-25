@@ -11,7 +11,7 @@ This is an independent study, not manufacturer CAD and not a specific engine typ
 
 ## Hierarchy
 
-`engine > module > component > part`, with 9 modules, 52 components and 2,049 parts (22 of them belong to the close-up hero blade, hidden by default):
+`engine > module > component > part`, with 9 modules, 51 components and 2,027 parts. The close-up blade `turbine.hero-blade` (25 parts) is generated at runtime and is not in the model file:
 
 | Module | Parts | Components |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ This is an independent study, not manufacturer CAD and not a specific engine typ
 | fan-cowl 进气罩 | 32 | 进气唇口, 进气罩壳体, 进气罩后段 |
 | compressor 压气机 | 520 | 四级叶环, 静子环, 支板, 鼓筒, 前喇叭口 |
 | combustor 燃烧室 | 130 | 火焰筒, 喷嘴, 机匣, 内壳 |
-| turbine 涡轮 | 911 | 五级叶片、轮毂、叶尖环、外环叶栅, 第一级轮盘, 内锥壳, 外环带, 精细叶片 |
+| turbine 涡轮 | 889 | 五级叶片、轮毂、叶尖环、外环叶栅, 第一级轮盘, 内锥壳, 外环带 |
 | exhaust 尾喷管 | 67 | 尾喷口, 尾喷口螺栓, 附件, 尾锥 |
 | core-casing 核心机机匣 | 252 | 过渡段机匣, 机匣瓦块, 机匣螺栓, 内壁 |
 | nacelle 外涵道机匣 | 14 | 外涵道机匣 |
@@ -71,20 +71,24 @@ scene.add(second.root);
 second.setColor(second.listParts('turbine.stage-1-blades').slice(0, 30), '#e03b2f');
 ```
 
-The close-up blade is a separate component, `turbine.hero-blade`, hidden by default and outside the
-assembly order. Drive it through `engine.hero`:
+The close-up cooled blade, `turbine.hero-blade`, is built at runtime by `src/hero-blade.ts`
+(ported from Turbine Explorer's `src/blade-study.ts`). It is hidden by default, outside the
+assembly order and not counted in the 100 first-stage blades. Drive it through `engine.hero`:
 
 ```ts
-engine.hero.show();                 // reveal the detailed blade
-engine.hero.setCutaway(0.5);        // 0 closed .. 1 pressure wall moved aside
-engine.hero.setCoatings(1);         // 0 bonded .. 1 four layers separated
-const pose = engine.hero.poseFor('turbine.stage-1-blades.001'); // place it on a ring blade
+engine.hero.show();                  // reveal it (hide() removes it again)
+engine.hero.setCutaway(0.5);         // 0 closed .. 1 window open, scan line from root to tip
+engine.hero.setCoatings(1);          // 0 four layers bonded on the blade .. 1 separated
+engine.hero.setAirflow(1);           // 0 off .. 1 cooling air with moving particles
+const pose = engine.hero.poseFor('turbine.stage-1-blades.001'); // seat it on a ring blade
+engine.hero.setLanding(0.3);         // 0 above the engine .. 1 seated on that blade
 ```
 
-Its parts are ordinary ids: `turbine.hero-blade.film-le-1` … `film-ss-1`, `slot-te`,
-`passage-1` … `passage-3`, `pin-fin`, `coat-base`, `coat-bond`, `coat-tgo`, `coat-ysz`.
-Review states: `?debug=hero&angle=face|leading|oblique&cut=0..1&coat=0..1&rows=all|le&ceramic=1`,
-`&pose=001&zoom=…`.
+Its 25 parts are ordinary ids: `root`, `platform`, `tip`, `edges`, `wall-ps`, `wall-ps-cut`,
+`wall-ss`, `dividers`, `ribs-1` … `ribs-3`, `pin-fins`, `airflow`, `coat-base`, `coat-bond`,
+`coat-tgo`, `coat-ysz`, `film-ps-1` … `film-ps-4`, `film-ss-1` … `film-ss-4`, each prefixed with
+`turbine.hero-blade.`. Review states: `?debug=hero&bg=dark|light&cut=&coat=&flow=&rows=ps|ss|all|ps1..ss4&ceramic=1&angle=front|back|zoom|edge`,
+`&pose=001&shot=far|near`; `?debug=hero-check` runs a self-check and prints it on the page.
 
 Parts are packed into `InstancedMesh` objects per component and shared geometry, so the whole
 engine draws in about 170 calls. A part made individually transparent is promoted to its own
