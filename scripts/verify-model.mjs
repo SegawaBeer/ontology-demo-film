@@ -71,23 +71,16 @@ const generatedDisc = generated.filter(p => p.component === 'turbine.stage-1-dis
 if (generatedBlades.length !== 100) fail(`expected 100 generated blades, found ${generatedBlades.length}`);
 if (generatedDisc.length !== 1) fail(`expected one generated disc, found ${generatedDisc.length}`);
 for (const part of generated) {
-  if (part.component !== 'turbine.stage-1-blades' && part.component !== 'turbine.stage-1-disk'
-    && part.component !== 'turbine.hero-blade') fail(`unexpected generated part ${part.id}`);
+  if (part.component !== 'turbine.stage-1-blades' && part.component !== 'turbine.stage-1-disk') {
+    fail(`unexpected generated part ${part.id}`);
+  }
 }
 
-// Detailed close-up blade: present, complete and outside the assembly order.
-const hero = manifest.components.find(c => c.id === 'turbine.hero-blade');
-if (!hero) fail('hero blade component missing');
+// The close-up blade is generated at runtime, so the GLB must not carry it.
+if (manifest.parts.some(p => p.component === 'turbine.hero-blade')) fail('old hero blade parts are still in the manifest');
+if (manifest.components.some(c => c.id === 'turbine.hero-blade')) fail('old hero blade component is still in the manifest');
 if (manifest.assembly.includes('turbine.hero-blade')) fail('hero blade is part of the assembly order');
-const heroParts = new Set(manifest.parts.filter(p => p.component === 'turbine.hero-blade').map(p => p.id));
-const requiredHero = ['skin-suction', 'skin-pressure', 'tip', 'platform', 'neck', 'root',
-  'film-le-1', 'film-le-2', 'film-le-3', 'film-le-4', 'film-ps-1', 'film-ps-2', 'film-ss-1',
-  'slot-te', 'passage-1', 'passage-2', 'passage-3', 'pin-fin',
-  'coat-base', 'coat-bond', 'coat-tgo', 'coat-ysz'];
-for (const suffix of requiredHero) {
-  if (!heroParts.has(`turbine.hero-blade.${suffix}`)) fail(`hero blade part missing: ${suffix}`);
-}
-
+if (partNodes.some(node => node.name.startsWith('turbine.hero-blade'))) fail('old hero blade nodes are still in the GLB');
 // The combustor must stay in its axial band after the shell split.
 for (const part of manifest.parts.filter(p => p.module === 'combustor')) {
   if (part.axial[0] < -0.6 || part.axial[1] > 0.6) fail(`combustor part ${part.id} spans ${part.axial}`);
