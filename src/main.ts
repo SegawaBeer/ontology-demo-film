@@ -130,7 +130,29 @@ let isolate = false;
 
 const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const cameraGoal = { position: camera.position.clone(), target: controls.target.clone() };
+// The move is a fixed-duration tween, not a "close enough" loop: a goal closer
+// than controls.minDistance can never be reached exactly, and any per-frame
+// distance test would keep pulling the camera back while the user is dragging.
+const CAMERA_MOVE_MS = 700;
 let cameraAnimating = false;
+let cameraMoveStart = 0;
+const cameraMoveFrom = { position: camera.position.clone(), target: controls.target.clone() };
+
+function beginCameraMove() {
+  cameraMoveFrom.position.copy(camera.position);
+  cameraMoveFrom.target.copy(controls.target);
+  cameraMoveStart = performance.now();
+  cameraAnimating = true;
+}
+
+/** Hand control to the user. A started drag, pan or zoom always wins. */
+function stopCameraMove() {
+  if (!cameraAnimating) return;
+  cameraAnimating = false;
+  cameraGoal.position.copy(camera.position);
+  cameraGoal.target.copy(controls.target);
+}
+controls.addEventListener('start', stopCameraMove);
 
 const loader = document.querySelector<HTMLDivElement>('#loader')!;
 const loaderText = loader.querySelector('span')!;
@@ -271,7 +293,7 @@ function fitCamera(spread = 0) {
   const direction = new THREE.Vector3(0.78, 0.36, 0.92).normalize();
   cameraGoal.target.copy(center);
   cameraGoal.position.copy(center).addScaledVector(direction, distance);
-  cameraAnimating = true;
+  beginCameraMove();
 }
 
 function focusOn(object: THREE.Object3D | null) {
@@ -285,10 +307,12 @@ function focusOn(object: THREE.Object3D | null) {
   const vertical = THREE.MathUtils.degToRad(camera.fov) / 2;
   const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
   const distance = Math.max(0.12, radius / Math.sin(Math.min(vertical, horizontal)) * 1.15);
-  const direction = camera.position.clone().sub(controls.target).normalize();
+  const direction = camera.position.clone().sub(controls.target);
+  if (direction.lengthSq() < 1e-8) direction.set(0.78, 0.36, 0.92);
+  direction.normalize();
   cameraGoal.target.copy(center);
   cameraGoal.position.copy(center).addScaledVector(direction, distance);
-  cameraAnimating = true;
+  beginCameraMove();
 }
 
 function setRunning(next: boolean) {
@@ -758,9 +782,15 @@ function frame(now: number) {
   if (!Number.isFinite(cameraGoal.position.x) && engine && innerWidth > 0) fitCamera();
   if (cameraAnimating) {
     if (!Number.isFinite(camera.position.x)) camera.position.copy(cameraGoal.position);
-    camera.position.lerp(cameraGoal.position, Math.min(1, delta * 4.5));
-    controls.target.lerp(cameraGoal.target, Math.min(1, delta * 4.5));
-    if (camera.position.distanceTo(cameraGoal.position) < 0.01) cameraAnimating = false;
+    const progress = Math.min(1, (now - cameraMoveStart) / CAMERA_MOVE_MS);
+    const eased = progress * progress * (3 - 2 * progress);
+    camera.position.lerpVectors(cameraMoveFrom.position, cameraGoal.position, eased);
+    controls.target.lerpVectors(cameraMoveFrom.target, cameraGoal.target, eased);
+    if (progress >= 1) {
+      camera.position.copy(cameraGoal.position);
+      controls.target.copy(cameraGoal.target);
+      cameraAnimating = false;
+    }
   }
 
   controls.update();
