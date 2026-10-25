@@ -477,7 +477,7 @@ export class Engine {
     this.elapsed += delta;
     // The close-up blade moves its airflow particles only while it is on screen.
     if (this.hero?.visible) this.hero.runtime.update(delta, this.elapsed);
-    if (!running) return;
+    if (!running) { if (this.hero?.visible) this.hero.follow(); return; }
     for (const moduleRuntime of this.modules) {
       for (const component of moduleRuntime.components) {
         if (component.rotor) component.group.rotation.x -= delta * speed;
