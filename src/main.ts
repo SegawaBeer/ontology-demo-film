@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { loadEngineAssets, Engine, type EngineAssets } from './model';
+import { bladePoint, HERO_PLATFORM_TOP, HERO_TIP } from './hero-blade';
 import { createEffects, type Effects } from './effects';
 import { EngineAudio } from './audio';
 import { createBackdrop, appendBackdropControl, setBackdrop } from './backdrop';
@@ -427,6 +428,24 @@ function runHeroCheck(current: Engine) {
   const rise = runtime.linerRise();
   check(rise <= 1e-6, '孔内衬不高出叶片表面', `最高处 ${rise.toExponential(2)}（负数表示低于表面）`);
   check(!current.getPart('turbine.hero-blade.neck') && !current.resolve('turbine.hero-blade.film-le-1').length, '旧零件 id 已不存在');
+  // poseFor: aerofoil height and tip radius match ring blade 001.
+  const ringId = 'turbine.stage-1-blades.001';
+  const seated = hero.poseFor(ringId);
+  const ring = current.partRestWorldMatrix(ringId);
+  if (seated && ring) {
+    const height = (HERO_TIP - HERO_PLATFORM_TOP) * seated.scale;
+    const radial = (v: THREE.Vector3) => Math.hypot(v.y, v.z);
+    const tip = radial(bladePoint(0.5, 1, 0).applyMatrix4(seated.matrix));
+    const ringTip = radial(new THREE.Vector3(0, 0.146, 0).applyMatrix4(ring));
+    // Mid-span chord centre (halfway between leading and trailing edge) on the ring blade's stacking axis.
+    const chordMid = bladePoint(0, 0.5, 0).add(bladePoint(1, 0.5, 0)).multiplyScalar(0.5).applyMatrix4(seated.matrix);
+    const axial = Math.abs(chordMid.x - new THREE.Vector3().setFromMatrixPosition(ring).x);
+    check(Math.abs(height - 0.126) < 1e-4 && Math.abs(tip - ringTip) < 0.002 && axial < 0.003,
+      'poseFor 缩放和位置与 001 号叶片一致',
+      `叶身高 ${height.toFixed(4)}（环上 0.1260），叶尖半径 ${tip.toFixed(4)}（环上 ${ringTip.toFixed(4)}），轴向偏差 ${axial.toFixed(4)}`);
+  } else check(false, 'poseFor 返回位姿');
+  hero.reset();
+  check(runtime.snapshot() === base && !hero.visible, 'reset 后恢复隐藏和初始状态');
   lines.push(`三角形 ${runtime.triangles().toLocaleString('en-US')}`);
   lines.unshift(ok ? 'HERO-CHECK PASS' : 'HERO-CHECK FAIL');
   return { ok, lines };
@@ -517,6 +536,11 @@ function heroStudio(current: Engine, params: URLSearchParams) {
     const distance = height / 0.8 / 2 / Math.tan(vertical);
     cameraGoal.target.set(0.2, 2.36, 0.05).applyMatrix4(matrix);
     cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(0.62, 0.1, 0.78).normalize(), distance);
+  } else if (angle === 'edge') {
+    // Grazing view along the pressure face from the leading edge, to check that
+    // no hole liner stands proud of the surface.
+    cameraGoal.target.set(-0.35, 2.4, 0.3).applyMatrix4(matrix);
+    cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(-0.93, 0.12, 0.34).normalize(), num('dist', 4.2));
   } else if (angle === 'back') {
     cameraGoal.target.set(0.55, 1.85, -0.1);
     cameraGoal.position.copy(cameraGoal.target).addScaledVector(new THREE.Vector3(-0.08, 0.09, -1).normalize(), num('dist', 9.4));

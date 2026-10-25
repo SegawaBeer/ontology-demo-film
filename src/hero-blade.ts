@@ -522,7 +522,8 @@ export function createHeroBlade(): HeroBladeRuntime {
 
   // Cooling-air overlay: one serpentine path through the three passages, nine
   // film streams leaving the first pressure-side column, and moving particles.
-  const airMaterial = new THREE.MeshBasicMaterial({ color: 0x7bbfca, transparent: true, opacity: 0.26, depthWrite: false });
+  // Not tone-mapped: the overlay keeps the reference's cyan under the studio's low exposure.
+  const airMaterial = new THREE.MeshBasicMaterial({ color: 0x7bbfca, transparent: true, opacity: 0.26, depthWrite: false, toneMapped: false });
   const curve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-0.20, -0.59, 0), bladePoint(0.16, 0, 0), bladePoint(0.16, 0.78, 0),
     bladePoint(0.23, 0.95, 0), bladePoint(0.43, 0.95, 0), bladePoint(0.43, 0.65, 0),
@@ -549,7 +550,7 @@ export function createHeroBlade(): HeroBladeRuntime {
   particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
   particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
   const particleMaterial = new THREE.PointsMaterial({ size: 0.092, map: tex.sprite, transparent: true, opacity: 0.9,
-    vertexColors: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    vertexColors: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
   const particles = new THREE.Points(particleGeometry, particleMaterial);
   particles.frustumCulled = false;
   const airflowPart = register('airflow', [airTubes, particles], [airMaterial, particleMaterial], 0);
