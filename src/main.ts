@@ -48,7 +48,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 const backdrop = createBackdrop(scene);
-const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.05, 80);
+const camera = new THREE.PerspectiveCamera(32, innerWidth > 0 && innerHeight > 0 ? innerWidth / innerHeight : 16 / 9, 0.05, 80);
 camera.position.set(3.4, 1.9, 3.6);
 
 const controls = new OrbitControls(camera, canvas);
@@ -354,7 +354,10 @@ canvas.addEventListener('pointerup', event => {
 });
 
 function resize() {
+  // The page can load in a hidden or collapsed pane; a 0×0 size would turn the
+  // camera aspect into NaN and the first framing would never recover.
   const width = innerWidth, height = innerHeight;
+  if (width < 1 || height < 1) return;
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
@@ -752,7 +755,9 @@ function frame(now: number) {
     effects.update(now / 1000, delta, running, intensity);
   }
 
+  if (!Number.isFinite(cameraGoal.position.x) && engine && innerWidth > 0) fitCamera();
   if (cameraAnimating) {
+    if (!Number.isFinite(camera.position.x)) camera.position.copy(cameraGoal.position);
     camera.position.lerp(cameraGoal.position, Math.min(1, delta * 4.5));
     controls.target.lerp(cameraGoal.target, Math.min(1, delta * 4.5));
     if (camera.position.distanceTo(cameraGoal.position) < 0.01) cameraAnimating = false;
