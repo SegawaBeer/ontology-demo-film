@@ -39,7 +39,7 @@ function reversePath(svg: SVGSVGElement, d: string) {
   return `M${points.join(' L')}`;
 }
 
-function label(n: GraphNode, parent: Element, lit: boolean) {
+function label(n: GraphNode, parent: Element, lit: boolean, sub?: string) {
   const r = radius[n.kind];
   const size = n.kind === 'engine' ? 15 : n.kind === 'part' ? 14 : n.kind === 'biz' ? 13 : n.kind === 'module' ? 12 : 10.5;
   const pos = {
@@ -54,9 +54,10 @@ function label(n: GraphNode, parent: Element, lit: boolean) {
     class: isDigit ? 'mono' : '', fill: lit ? 'var(--ink)' : 'var(--ink-2)',
     'font-weight': n.kind === 'engine' || lit ? 500 : 400,
   }, parent).textContent = n.label;
-  if (n.sub) {
+  const text = sub ?? n.sub;
+  if (text) {
     const y = n.anchor === 'above' ? pos.y - size - 2 : pos.y + 16;
-    el('text', { x: pos.x, y, 'text-anchor': pos.anchor, 'font-size': 11, class: 'mono', fill: 'var(--ink-3)' }, parent).textContent = n.sub;
+    el('text', { x: pos.x, y, 'text-anchor': pos.anchor, 'font-size': 11, class: 'mono', fill: 'var(--ink-3)' }, parent).textContent = text;
   }
 }
 
@@ -65,6 +66,8 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   svg.setAttribute('viewBox', '0 0 640 1080');
   const spawnedNodes = (state.spawned ?? []).map(s => s.node);
   const all = [...nodes, ...spawnedNodes];
+  const only = state.only ? new Set(state.only) : null;
+  const visible = only ? all.filter(n => only.has(n.id)) : all;
   const byId = new Map(all.map(n => [n.id, n]));
   const allEdges = [
     ...edges,
@@ -80,20 +83,20 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   const drawing = state.drawing ?? [];
   const drawingPairs = drawing.map(d => [d.from, d.to] as [string, string]);
   const spawnedPairs = (state.spawned ?? []).flatMap(s => s.edges.map(([f, t]) => [f, t] as [string, string]));
-  const shownEdges = allEdges.filter(e => !same(e.from, e.to, state.hidden) && !same(e.from, e.to, drawingPairs));
+  const shownEdges = only ? [] : allEdges.filter(e => !same(e.from, e.to, state.hidden) && !same(e.from, e.to, drawingPairs));
 
   el('text', { x: 32, y: 64, 'font-size': 12, class: 'mono', fill: 'var(--ink-3)', 'letter-spacing': '0.14em' }, svg).textContent = '对象与关系';
   el('text', { x: 608, y: 64, 'font-size': 12, class: 'mono', fill: 'var(--ink-3)', 'text-anchor': 'end' }, svg)
-    .textContent = state.counter ?? `${all.length} 个节点 · ${allEdges.length} 条关系`;
+    .textContent = state.counter ?? `${visible.length} 个节点 · ${allEdges.length} 条关系`;
   el('line', { x1: 32, x2: 608, y1: 84, y2: 84, stroke: 'var(--rule)' }, svg);
 
-  for (const g of groups) {
+  for (const g of only ? [] : groups) {
     const gLit = all.some(n => n.group === g.id && lit.has(n.id));
     const t = el('text', { x: g.x, y: g.y, 'font-size': 12, 'letter-spacing': '0.12em', 'text-anchor': g.align, fill: gLit || strong ? 'var(--ink-2)' : 'var(--ink-3)' }, svg);
     t.textContent = g.label;
     if (!gLit && dimming) t.style.opacity = String(0.5 + 0.5 * Math.max(0, (dimValue - 0.22) / 0.78));
   }
-  for (const c of captions) {
+  for (const c of only ? [] : captions) {
     const t = el('text', { x: c.x, y: c.y + 12, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--ink-3)' }, svg);
     t.textContent = c.text;
     t.style.opacity = dim;
@@ -141,9 +144,9 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   }
 
   const fresh = new Set(state.fresh ?? []);
-  for (const n of all) {
+  for (const n of visible) {
     const on = lit.has(n.id);
-    const appear = appearOf.get(n.id);
+    const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
     if (appear !== undefined && appear <= 0) continue;
     const g = el('g', {}, svg);
     const floor = state.nodeAlpha?.[n.id];
@@ -169,7 +172,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     } else {
       el('circle', { cx: n.x, cy: n.y, r, fill: on ? ring : 'var(--node)', stroke: ring, 'stroke-width': n.kind === 'engine' ? 1.5 : 1.1 }, g);
     }
-    label(n, g, on);
+    label(n, g, on, state.sub?.[n.id]);
     const chip = state.chip[n.id];
     if (chip) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';

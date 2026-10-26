@@ -4,6 +4,7 @@ import { renderDialog, type Turn } from './dialog';
 import { renderGraph } from './graph';
 import { fleetBlocks, type GraphState } from './data';
 import { createModelView, type Theme } from './scene';
+import { mountOpen } from './open';
 
 const params = new URLSearchParams(location.search);
 const theme: Theme = params.get('theme') === 'dark' ? 'dark' : 'light';
@@ -259,6 +260,6 @@ async function clip() {
   requestAnimationFrame(loop);
 }
 
-const frames: Record<string, () => Promise<void>> = { q3: questionThree, stale: staleAnswer, net: treeToNet, clip };
+const frames: Record<string, () => Promise<void>> = { q3: questionThree, stale: staleAnswer, net: treeToNet, clip, open: () => mountOpen(theme) };
 await (frames[frameName] ?? questionThree)();
 document.documentElement.dataset.ready = '1';

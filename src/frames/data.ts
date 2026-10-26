@@ -98,6 +98,12 @@ export type GraphState = {
   nodeAlpha?: Record<string, number>;
   /** Expanding ring on a node, 0..1 through its life. */
   pulse?: Record<string, number>;
+  /** Draw only these nodes, with no groups, captions or edges. */
+  only?: string[];
+  /** Per-node subtitle override. */
+  sub?: Record<string, string>;
+  /** Per-node fade-in, 0..1. */
+  appear?: Record<string, number>;
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.

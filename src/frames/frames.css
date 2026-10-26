@@ -67,11 +67,14 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--
 body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
 
 .frame {
+  position: relative;
   display: grid;
   grid-template-columns: 560px 720px 640px;
   width: 1920px;
   height: 1080px;
 }
+/* Full-frame overlay for the link that crosses the divider in the opening frame. */
+.thread { position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none; z-index: 5; }
 .col { position: relative; height: 1080px; }
 .col + .col { border-left: 1px solid var(--rule); }
 .col-model { background: var(--bg); overflow: hidden; }
