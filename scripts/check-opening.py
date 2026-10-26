@@ -43,6 +43,36 @@ def mask_bbox(path):
                 minx = min(minx, x); maxx = max(maxx, x); miny = min(miny, y); maxy = max(maxy, y)
     return minx, miny, maxx, maxy, p
 
+def pixel_share(a, b, region, tol):
+    ia = Image.open(a).convert('RGB'); ib = Image.open(b).convert('RGB')
+    x0, y0, x1, y1 = region
+    ca = ia.crop((x0, y0, x1, y1)); cb = ib.crop((x0, y0, x1, y1))
+    pa = ca.load(); pb = cb.load()
+    w, h = ca.size
+    bad = 0
+    for y in range(h):
+        for x in range(w):
+            r1, g1, b1 = pa[x, y]; r2, g2, b2 = pb[x, y]
+            if max(abs(r1 - r2), abs(g1 - g2), abs(b1 - b2)) > tol: bad += 1
+    return bad / (w * h)
+
+def black_count(path, x1=1280):
+    im = Image.open(path).convert('L').crop((0, 0, x1, 1080))
+    return sum(im.histogram()[:60])
+
+def mean_channel_diff(a, b, region):
+    ia = Image.open(a).convert('RGB'); ib = Image.open(b).convert('RGB')
+    x0, y0, x1, y1 = region
+    ca = ia.crop((x0, y0, x1, y1)); cb = ib.crop((x0, y0, x1, y1))
+    pa = ca.load(); pb = cb.load()
+    w, h = ca.size
+    total = 0
+    for y in range(h):
+        for x in range(w):
+            r1, g1, b1 = pa[x, y]; r2, g2, b2 = pb[x, y]
+            total += (abs(r1 - r2) + abs(g1 - g2) + abs(b1 - b2)) / 3
+    return total / (w * h)
+
 def near_black(pm, pt, radius=40):
     x0 = max(0, int(pt[0]) - radius); x1 = min(1280, int(pt[0]) + radius)
     y0 = max(0, int(pt[1]) - radius); y1 = min(1080, int(pt[1]) + radius)
@@ -195,17 +225,36 @@ with sync_playwright() as pw:
           f'step {max_step:.1f}px jerk {max_jerk:.2f}px w {w_before:.2f}/{w_after:.2f}deg/s seat_in {in_left} margin {margin:.0f} h {height:.0f}',
           'step<=40 jerk<=4 dw<=1 seat inside, 6.4 box in column h 120-420')
 
-    # ---- 7 swap is invisible ----
-    a = shot('frame=opening&theme=light&t=7.39', 'swap-a')
-    b = shot('frame=opening&theme=light&t=7.40', 'swap-b')
-    _, pa = rgb(a); _, pb = rgb(b)
-    bad = 0
-    for y in range(1080):
-        for x in range(1280):
-            ca, cb = pa[x, y], pb[x, y]
-            if max(abs(ca[0] - cb[0]), abs(ca[1] - cb[1]), abs(ca[2] - cb[2])) > 12: bad += 1
-    s7 = bad / (1280 * 1080)
-    check('7 swap invisible', s7 < 0.003, f'{s7*100:.3f}%', '< 0.3%')
+    # ---- 7 cross-fade is smooth and lands on the ring metal ----
+    go('frame=opening&theme=light&t=7.3')
+    box = [int(round(v)) for v in probe()['fadeBox']]
+    prev = None; worst7 = 0.0
+    times7 = [7.20 + i / 60 for i in range(int((7.64 - 7.20) * 60) + 1)]
+    for tt in times7:
+        page.evaluate(f'window.__seek({tt})')
+        time.sleep(0.03)
+        path = f'{TMP}/fade-{tt:.3f}.png'
+        page.screenshot(path=path)
+        if prev is not None:
+            worst7 = max(worst7, mean_channel_diff(prev, path, box))
+        prev = path
+    page.evaluate('window.__seek(7.30)'); time.sleep(0.05); page.screenshot(path=f'{TMP}/c730.png')
+    page.evaluate('window.__seek(7.64)'); time.sleep(0.05); page.screenshot(path=f'{TMP}/c764.png')
+    def subject_colour(path):
+        P = Image.open(path).convert('RGB').load()
+        tot = [0, 0, 0]; n = 0
+        for y in range(box[1], box[3]):
+            for x in range(box[0], box[2]):
+                r, g, b = P[x, y]
+                if max(abs(r - BG[0]), abs(g - BG[1]), abs(b - BG[2])) > 20:
+                    tot[0] += r; tot[1] += g; tot[2] += b; n += 1
+        return [v / max(1, n) for v in tot]
+    c1 = subject_colour(f'{TMP}/c730.png'); c2 = subject_colour(f'{TMP}/c764.png')
+    drift = max(abs(a - b) for a, b in zip(c1, c2))
+    ok7 = worst7 <= 3.0 and drift <= 10
+    check('7 cross-fade', ok7,
+          f'worst frame diff {worst7:.2f}, colour {[round(v) for v in c1]} -> {[round(v) for v in c2]} drift {drift:.1f}',
+          'frame diff <= 3.0, colour drift <= 10')
 
     # ---- 8 ring view ----
     ring = shot('frame=opening&theme=light&t=7.3&mask=1', 'ring-mask')
@@ -219,7 +268,7 @@ with sync_playwright() as pw:
     def expected(t):
         n = 1
         for k in range(2, 101):
-            if t >= 7.45 + 1.15 * math.sqrt((k - 2) / 98): n = k
+            if t >= 7.65 + 0.95 * math.sqrt((k - 2) / 98): n = k
             else: break
         return n
     go('frame=opening&theme=light&t=0')
@@ -285,6 +334,54 @@ with sync_playwright() as pw:
         p = shot(f'frame=opening&theme=light&t={t}', f'bg-{t}')
         worst13 = max(worst13, nonbg(p, 40, 200, 900, 1040), nonbg(p, 1100, 1260, 900, 1040))
     check('13 background clean', worst13 == 0.0, f'{worst13:.5f}', 'all pixels within 3 of #eef0ee')
+
+    # ---- 15 disc reveal runs one way only ----
+    captured = {}
+    for mode in ('disk', 'disk-solid'):
+        go(f'frame=opening&theme=light&mask={mode}&t=4.8')
+        frames = []
+        for i in range(int((7.0 - 4.8) * 60) + 1):
+            tt = 4.8 + i / 60
+            page.evaluate(f'window.__seek({tt})')
+            time.sleep(0.02)
+            path = f'{TMP}/{mode}-{i:03d}.png'
+            page.screenshot(path=path)
+            frames.append(path)
+        captured[mode] = frames
+    F = [black_count(p) for p in captured['disk']]
+    S = [black_count(p) for p in captured['disk-solid']]
+    first_ok = None; ratios = []; mono_ok = True; prev_ratio = None
+    for i in range(len(F)):
+        if F[i] >= 2000 and first_ok is None:
+            first_ok = (S[i] == 0)
+        if F[i] >= 2000:
+            r = S[i] / F[i]
+            ratios.append((4.8 + i / 60, r))
+            if prev_ratio is not None and r < prev_ratio - 0.01:
+                mono_ok = False
+            prev_ratio = r
+    end_ratio = ratios[-1][1] if ratios else 0
+    with open(f'{OUT}/涡轮盘铺材质曲线.csv', 'w') as f:
+        f.write('t,S/F\n')
+        for tt, r in ratios:
+            f.write(f'{tt:.3f},{r:.4f}\n')
+    ok15 = bool(first_ok) and mono_ok and end_ratio >= 0.99
+    check('15 disc reveal', ok15,
+          f'first frame outline-only {bool(first_ok)}, monotonic {mono_ok}, t=7.0 S/F {end_ratio:.3f}',
+          'first F>=2000 has S=0, non-decreasing, S/F >= 0.99 at 7.0')
+
+    # ---- 16 the fade is doing real work ----
+    go('frame=opening&theme=light&t=7.64')
+    box = [int(round(v)) for v in probe()['fadeBox']]
+    a = f'{TMP}/nf-a.png'; page.screenshot(path=a)
+    go('frame=opening&theme=light&t=7.64&nofade=1'); b = f'{TMP}/nf-b.png'; page.screenshot(path=b)
+    s716 = pixel_share(a, b, box, 8)
+    go('frame=opening&theme=light&t=8.70')
+    c = f'{TMP}/nf-c.png'; page.screenshot(path=c)
+    go('frame=opening&theme=light&t=8.70&nofade=1'); d = f'{TMP}/nf-d.png'; page.screenshot(path=d)
+    s816 = pixel_share(c, d, (0, 0, 1280, 1080), 8)
+    ok16 = s716 < 0.01 and s816 < 0.0001
+    check('16 fade is real', ok16, f'7.64 {s716*100:.3f}%, 8.70 {s816*100:.4f}%', '7.64 < 1%, 8.70 < 0.01%')
 
     # ---- 14 console ----
     check('14 console clean', not console, console[:3] or 'none', 'no error / pageerror')

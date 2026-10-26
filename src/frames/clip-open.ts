@@ -27,7 +27,7 @@ const lerp = THREE.MathUtils.lerp;
 
 const bladeId = (n: number) => `${RING}.${String(n).padStart(3, '0')}`;
 // Blade k (2..100) starts here; the gaps shorten as the ring fills.
-const bladeStart = (k: number) => 7.45 + 1.15 * Math.sqrt((k - 2) / 98);
+const bladeStart = (k: number) => 7.65 + 0.95 * Math.sqrt((k - 2) / 98);
 // How long each blade shows only its outline, before turning solid.
 const outlineFor = (k: number) => 0.3 - 0.2 * ((k - 2) / 98);
 function bladesShown(t: number) {
@@ -44,7 +44,9 @@ const spinIntegral = (u: number) => u - u ** 6 + 3 * u ** 5 - 2.5 * u ** 4;
 
 export async function mountOpening(theme: Theme) {
   const params = new URLSearchParams(location.search);
-  const mask = params.get('mask') === '1';
+  const maskMode = params.get('mask');
+  const mask = maskMode !== null;
+  const diskMode = maskMode === 'disk' || maskMode === 'disk-solid';
   const open = await createOpenScene(theme, mask);
   const { view, scene, camera, hero, tilt, spin, center, Y3 } = open;
 
@@ -178,7 +180,7 @@ export async function mountOpening(theme: Theme) {
       const qb = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dirEnd);
       const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(qa.slerp(qb, u));
       const distance = Math.exp(lerp(Math.log(startDist), Math.log(ring.distance), u));
-      const orbit = THREE.MathUtils.degToRad(1.5) * (t > 7.6 ? (t - 7.6 - 0.6 * smoother(seg(t, 7.6, 8.2))) : 0);
+      const orbit = THREE.MathUtils.degToRad(1.5) * (t > 7.3 ? (t - 7.3 - 0.6 * smoother(seg(t, 7.3, 7.9))) : 0);
       dir.applyAxisAngle(new THREE.Vector3(1, 0, 0), orbit);
       camera.position.copy(target).addScaledVector(dir, distance);
       camera.lookAt(target);
@@ -246,21 +248,38 @@ export async function mountOpening(theme: Theme) {
   }
 
   // ---- blade materials for the colour hand-off ----------------------------
-  const heroColors: { material: THREE.Material & { color: THREE.Color }; base: THREE.Color }[] = [];
+  type HeroMat = THREE.MeshStandardMaterial;
+  const heroColors: { material: HeroMat; base: THREE.Color; metalness: number; roughness: number; env: number }[] = [];
   hero.root.traverse(o => {
     const mesh = o as THREE.Mesh & { isLineSegments2?: boolean; userData: { openShell?: boolean } };
     if (!mesh.isMesh || mesh.isLineSegments2 || mesh.userData.openShell) return;
     for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
-      const mat = m as THREE.Material & { color?: THREE.Color };
-      if (mat.color && !heroColors.some(e => e.material === mat)) heroColors.push({ material: mat as THREE.Material & { color: THREE.Color }, base: mat.color.clone() });
+      const mat = m as HeroMat;
+      if (!mat.color || heroColors.some(e => e.material === mat)) continue;
+      heroColors.push({
+        material: mat, base: mat.color.clone(),
+        metalness: mat.metalness ?? 1, roughness: mat.roughness ?? 0.5, env: mat.envMapIntensity ?? 1,
+      });
     }
   });
-  let ringColor = new THREE.Color('#8d9194');
   const bladeComp = components.find(c => c.meta.id === RING);
+  let ringMat: THREE.MeshStandardMaterial | null = null;
   bladeComp?.group.traverse(o => {
     const m = o as THREE.Mesh;
-    if (m.isMesh) for (const mat of Array.isArray(m.material) ? m.material : [m.material]) if ((mat as THREE.MeshStandardMaterial).color) ringColor = (mat as THREE.MeshStandardMaterial).color.clone();
+    if (!m.isMesh || ringMat) return;
+    for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+      const std = mat as THREE.MeshStandardMaterial;
+      if (std.color) { ringMat = std; break; }
+    }
   });
+  // Assigned inside a callback, so read it back through a cast.
+  const ringFound = ringMat as THREE.MeshStandardMaterial | null;
+  const ringColor = ringFound ? ringFound.color.clone() : new THREE.Color('#8d9194');
+  const ringPbr = {
+    metalness: ringFound?.metalness ?? 0.9,
+    roughness: ringFound?.roughness ?? 0.4,
+    env: ringFound?.envMapIntensity ?? 1,
+  };
 
   // ---- ring outlines ------------------------------------------------------
   const bladeMesh = (() => {
@@ -319,26 +338,34 @@ export async function mountOpening(theme: Theme) {
       edges.dispose();
     }
   }
-  const discPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
+  // The disc is thin, so the reveal runs downwards across it: every point can
+  // only go from outline to metal, whichever side the camera is on.
+  const discPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+  const discAbove = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const discBox = new THREE.Box3();
+  engineGroup.matrix.identity();
+  engineGroup.updateMatrixWorld(true);
+  for (const part of engine.listParts(DISC)) {
+    const pts = engine.partWorldPoints(part);
+    if (!pts) continue;
+    for (let i = 0; i < pts.length; i += 3) discBox.expandByPoint(new THREE.Vector3(pts[i], pts[i + 1], pts[i + 2]));
+  }
+  engineGroup.matrix.copy(Qinv);
+  engineGroup.updateMatrixWorld(true);
+  const discTop = discBox.max.y + 0.05, discBottom = discBox.min.y - 0.05;
 
   function discAt(t: number) {
-    const appear = smootherAt(t, 4.8, 5.3);
+    const appear = smootherAt(t, 5.0, 5.6);
     engine.setVisible(DISC, appear > 0.001);
-    const sweep = smootherAt(t, 5.4, 6.2);
+    const sweep = smootherAt(t, 5.9, 6.9);
+    const y = lerp(discTop, discBottom, sweep);
+    // Material keeps what is above the plane (already revealed); the white
+    // stand-in for unswept metal keeps what is below it.
+    discPlane.set(new THREE.Vector3(0, 1, 0), -y);
+    discAbove.set(new THREE.Vector3(0, -1, 0), y);
     for (const line of discLines) line.visible = appear > 0.001 && sweep < 0.999;
-    for (const m of discMaterials) {
-      m.clippingPlanes = sweep > 0 && sweep < 0.999 ? [discPlane] : null;
-    }
-    // Sweep from the rear of the disc towards the front.
-    const box = new THREE.Box3();
-    for (const part of engine.listParts(DISC)) {
-      const c = engine.getPart(part)?.center;
-      if (c) box.expandByPoint(new THREE.Vector3(c[0], c[1], c[2]));
-    }
-    const x0 = box.min.x - 0.08, x1 = box.max.x + 0.08;
-    discPlane.set(new THREE.Vector3(1, 0, 0), -lerp(x0, x1, sweep));
-    for (const line of discLines) line.visible = appear > 0.001 && sweep < 0.999;
-    if (sweep >= 0.999) for (const m of discMaterials) m.clippingPlanes = null;
+    const clip = maskMode === 'disk' ? false : sweep > 0 && sweep < 0.999;
+    for (const m of discMaterials) if (!m.userData.maskFix) m.clippingPlanes = clip ? [discPlane] : null;
   }
 
   // ---- blades on the ring -------------------------------------------------
@@ -439,8 +466,9 @@ export async function mountOpening(theme: Theme) {
   }
 
   // ---- frame --------------------------------------------------------------
+  let lastBladeState = '';
   function apply(t: number, render = true) {
-    if (t < 5.0) {
+    if (t < 5.0 && !diskMode) {
       // Opening-frame space: untouched rig and camera, engine pulled in.
       tilt.matrixAutoUpdate = true;
       tilt.updateMatrixWorld(true);
@@ -474,21 +502,53 @@ export async function mountOpening(theme: Theme) {
       open.lineMat.visible = false;
       open.lineMat.opacity = 0;
     }
+    const fade = params.get('nofade') === '1'
+      ? (t >= 7.30 ? 1 : 0)
+      : smootherAt(t, 7.30, 7.60);
     hero.root.updateMatrixWorld(true);
-    open.hero.root.visible = t < 7.4;
+    open.hero.root.visible = fade < 0.999;
+    if (diskMode) {
+      hero.root.visible = false;
+      open.hero.root.visible = false;
+      engine.setVisible(RING, false);
+      cameraAt(t);
+      lightsAt(t);
+      discAt(t);
+      if (render) view.render();
+      return;
+    }
     cameraAt(t);
     lightsAt(t);
     discAt(t);
     ringAt(t);
     flashAt(Math.min(t, 9.3));
-    if (t >= 6.4) {
-      const p = smootherAt(t, 6.4, 7.35);
-      for (const entry of heroColors) entry.material.color.copy(entry.base).lerp(ringColor, p);
+    // Hand the hero blade over to the ring's own metal before the cross-fade.
+    const handoff = smootherAt(t, 5.0, 7.30);
+    for (const entry of heroColors) {
+      entry.material.color.copy(entry.base).lerp(ringColor, handoff);
+      entry.material.metalness = lerp(entry.metalness, ringPbr.metalness, handoff);
+      entry.material.roughness = lerp(entry.roughness, ringPbr.roughness, handoff);
+      entry.material.envMapIntensity = lerp(entry.env, ringPbr.env, handoff);
+      const opacity = 1 - fade;
+      if (Math.abs(entry.material.opacity - opacity) > 0.002 || entry.material.transparent !== (opacity < 0.999)) {
+        entry.material.opacity = opacity;
+        entry.material.transparent = opacity < 0.999;
+        entry.material.needsUpdate = true;
+      }
     }
-    if (t >= 7.4) {
-      open.hero.root.visible = false;
-      engine.setVisible(bladeId(1), bladesShown(t) >= 1);
+    // Touch blade 001 only while it is changing, so the resulting engine state
+    // is the same however the playhead got here.
+    const bladeState = t < 7.30 ? 'hidden' : fade >= 0.999 ? 'solid' : 'fading';
+    if (bladeState === 'fading') {
+      engine.setVisible(bladeId(1), true);
+      engine.setOpacity(bladeId(1), fade);
+    } else if (bladeState !== lastBladeState) {
+      engine.setVisible(bladeId(1), bladeState === 'solid');
+      // Restoring through the whole ring puts the part back in the shared mesh,
+      // so it draws with the same depth state as every other blade.
+      if (bladeState === 'solid') engine.setOpacity(engine.listParts(RING), 1);
     }
+    lastBladeState = bladeState;
     graphAt(t);
     if (!mask) {
       const first = firstBladeTip();
@@ -551,9 +611,22 @@ export async function mountOpening(theme: Theme) {
         screen: view.project(new THREE.Vector3().setFromMatrixPosition(hero.root.matrixWorld)),
         box: [bx0, by0, bx1, by1],
       },
+      fadeBox: (() => {
+        let x0 = bx0, y0 = by0, x1 = bx1, y1 = by1;
+        const pts = engine.partWorldPoints(bladeId(1));
+        if (pts) {
+          for (let i = 0; i < pts.length; i += 3) {
+            const q = view.project(new THREE.Vector3(pts[i], pts[i + 1], pts[i + 2]));
+            x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y);
+            x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y);
+          }
+        }
+        return [x0 - 8, y0 - 8, x1 + 8, y1 + 8];
+      })(),
       blades: { count: shownNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
       graph: { nodes, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
       threads,
+      disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       seat: view.project(seatPos.clone()),
       seatMatrix: seatMatrix.elements.slice(),
     };
@@ -565,6 +638,22 @@ export async function mountOpening(theme: Theme) {
       const m = o as THREE.Mesh & { isLineSegments2?: boolean; userData: { openShell?: boolean } };
       if (m.isMesh && !m.isLineSegments2 && !m.userData.openShell) m.material = black;
     });
+    if (maskMode === 'disk-solid') {
+      // Solid part black (below the sweep), unswept part opaque white (above).
+      const blackBelow = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, toneMapped: false });
+      blackBelow.clippingPlanes = [discPlane];
+      blackBelow.userData.maskFix = true;
+      for (const mesh of discMeshes) {
+        const white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, toneMapped: false });
+        white.clippingPlanes = [discAbove];
+        white.userData.maskFix = true;
+        const twin = mesh.clone();
+        twin.material = white;
+        mesh.parent!.add(twin);
+        mesh.material = blackBelow;
+      }
+      for (const m of discMaterials) m.userData.maskFix = true;
+    }
   }
 
   const hold = params.get('t');
