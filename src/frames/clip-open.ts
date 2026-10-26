@@ -557,7 +557,6 @@ export async function mountOpening(theme: Theme) {
     flash: THREE.Color; idle: number; tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[];
   };
   const pieces: Piece[] = [];
-  const shellMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide });
 
 
   function buildEdges(mesh: THREE.Mesh, mat: LineMaterial) {
@@ -589,6 +588,10 @@ export async function mountOpening(theme: Theme) {
     const lines: LineSegments2[] = [];
     const shells: THREE.Mesh[] = [];
     const lineMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
+    const shellMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide });
+    shellMat.polygonOffset = true;
+    shellMat.polygonOffsetFactor = 1;
+    shellMat.polygonOffsetUnits = 1;
     lineMat.resolution.set(1280, 1080);
     let base: THREE.Color | null = null;
     for (const id of ids) {
