@@ -305,8 +305,9 @@ with sync_playwright() as pw:
                 continue
             sm3 = [(col[max(0, i - 1)] + col[i] + col[min(len(col) - 1, i + 1)]) / 3 for i in range(len(col))]
             peak = max(range(len(sm3)), key=lambda i: abs(sm3[i]))
-            rising = all(sm3[i + 1] >= sm3[i] - 0.5 for i in range(peak))
-            falling = all(sm3[i + 1] <= sm3[i] + 0.5 for i in range(peak, len(sm3) - 1))
+            sgn = 1 if sm3[peak] >= 0 else -1
+            rising = all(sgn * sm3[i + 1] >= sgn * sm3[i] - 0.5 for i in range(peak))
+            falling = all(sgn * sm3[i + 1] <= sgn * sm3[i] + 0.5 for i in range(peak, len(sm3) - 1))
             if not (rising and falling):
                 peaks_ok = False
         # visible in the full frame
