@@ -364,7 +364,9 @@ export async function mountOpening(theme: Theme) {
     discPlane.set(new THREE.Vector3(0, 1, 0), -y);
     discAbove.set(new THREE.Vector3(0, -1, 0), y);
     for (const line of discLines) line.visible = appear > 0.001 && sweep < 0.999;
-    const clip = maskMode === 'disk' ? false : sweep > 0 && sweep < 0.999;
+    // Keep the plane attached from the first frame: at sweep 0 it sits at the
+    // top of the disc, so nothing is drawn as metal until the sweep descends.
+    const clip = maskMode === 'disk' ? false : sweep < 0.999;
     for (const m of discMaterials) if (!m.userData.maskFix) m.clippingPlanes = clip ? [discPlane] : null;
   }
 

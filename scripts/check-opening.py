@@ -56,6 +56,19 @@ def pixel_share(a, b, region, tol):
             if max(abs(r1 - r2), abs(g1 - g2), abs(b1 - b2)) > tol: bad += 1
     return bad / (w * h)
 
+def metal_share(real, mask):
+    R = Image.open(real).convert('RGB').load()
+    M = Image.open(mask).convert('L').load()
+    seen = far = 0
+    for y in range(1080):
+        for x in range(1280):
+            if M[x, y] < 60:
+                seen += 1
+                r, g, b = R[x, y]
+                if max(abs(r - BG[0]), abs(g - BG[1]), abs(b - BG[2])) > 20:
+                    far += 1
+    return far / max(1, seen)
+
 def black_count(path, x1=1280):
     im = Image.open(path).convert('L').crop((0, 0, x1, 1080))
     return sum(im.histogram()[:60])
@@ -369,6 +382,28 @@ with sync_playwright() as pw:
     check('15 disc reveal', ok15,
           f'first frame outline-only {bool(first_ok)}, monotonic {mono_ok}, t=7.0 S/F {end_ratio:.3f}',
           'first F>=2000 has S=0, non-decreasing, S/F >= 0.99 at 7.0')
+
+    # ---- 17 the disc reveal in the real picture ----
+    issues = []
+    worst17 = 0.0
+    for i in range(21):
+        tt = round(5.0 + i * 0.1, 1)
+        idx = min(int(round((tt - 4.8) * 60)), len(F) - 1)
+        sf = S[idx] / max(1, F[idx])
+        go(f'frame=opening&theme=light&t={tt}')
+        real = f'{TMP}/real17-{tt}.png'
+        page.screenshot(path=real)
+        share = metal_share(real, captured['disk'][idx])
+        worst17 = max(worst17, abs(share - sf))
+        if sf < 0.05 and share > 0.15:
+            issues.append(f'{tt}s outline-only but {share*100:.0f}% metal')
+        if sf > 0.95 and share < 0.70:
+            issues.append(f'{tt}s full but only {share*100:.0f}% metal')
+        if abs(share - sf) > 0.25:
+            issues.append(f'{tt}s real {share*100:.0f}% vs solid {sf*100:.0f}%')
+    check('17 disc on the real picture', not issues,
+          '; '.join(issues[:3]) if issues else f'worst gap {worst17*100:.0f} points',
+          'outline-only stays <= 15% metal, full reads >= 70%, gap <= 25 points')
 
     # ---- 16 the fade is doing real work ----
     go('frame=opening&theme=light&t=7.64')
