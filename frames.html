@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, initial-scale=1.0" />
+    <title>样式帧</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <main id="frame" class="frame">
+      <section class="col col-dialog" id="dialog"></section>
+      <section class="col col-model">
+        <canvas id="model"></canvas>
+        <svg class="callouts" id="callouts"></svg>
+        <div class="callout-labels" id="callout-labels"></div>
+      </section>
+      <section class="col col-graph">
+        <svg id="graph" class="graph"></svg>
+      </section>
+    </main>
+    <script type="module" src="/src/frames/main.ts"></script>
+  </body>
+</html>

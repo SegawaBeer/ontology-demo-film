@@ -20,6 +20,7 @@ maps and libraries carry their own licenses, listed below.
 - Poly Haven studio HDR environments: CC0. Sources: https://polyhaven.com/a/poly_haven_studio and https://polyhaven.com/a/studio_kontrast_02 . License: https://polyhaven.com/license . Files and provenance are listed in `public/environment/README.md`.
 - Manrope font: SIL Open Font License 1.1. Copyright and complete license: `public/fonts/Manrope-OFL.txt`.
 - Space Grotesk font: SIL Open Font License 1.1. Copyright and complete license: `public/fonts/SpaceGrotesk-OFL.txt`.
+- IBM Plex Mono font: SIL Open Font License 1.1. Copyright and complete license: `public/fonts/IBMPlexMono-OFL.txt`.
 - Sound is synthesized by project code. No third-party sound recordings are bundled.
 
 ## Dependencies
