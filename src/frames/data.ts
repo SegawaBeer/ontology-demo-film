@@ -106,6 +106,10 @@ export type GraphState = {
   appear?: Record<string, number>;
   /** With `only`, the captions to keep (matched by their text). */
   captions?: string[];
+  /** With `only`, the finished edges to keep drawing. */
+  onlyEdges?: [string, string][];
+  /** Match the drawing head's thickness so completion does not pop. */
+  edgeWidth?: number;
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.

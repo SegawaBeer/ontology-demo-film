@@ -80,10 +80,16 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   const dimValue = state.dimLevel ?? (state.focus ? 0.22 : 1);
   const dim = state.dimLevel !== undefined ? String(state.dimLevel) : state.focus ? 'var(--dim)' : '1';
   const strong = state.relStyle === 'strong';
+  const litWidth = state.edgeWidth ?? 1.5;
   const drawing = state.drawing ?? [];
   const drawingPairs = drawing.map(d => [d.from, d.to] as [string, string]);
   const spawnedPairs = (state.spawned ?? []).flatMap(s => s.edges.map(([f, t]) => [f, t] as [string, string]));
-  const shownEdges = only ? [] : allEdges.filter(e => !same(e.from, e.to, state.hidden) && !same(e.from, e.to, drawingPairs));
+  const shownEdges = allEdges.filter(e => {
+    if (same(e.from, e.to, state.hidden) || same(e.from, e.to, drawingPairs)) return false;
+    if (!only) return true;
+    if (!only.has(e.from) || !only.has(e.to)) return false;
+    return (state.onlyEdges ?? []).some(([a, b]) => same(a, b, [[e.from, e.to]]));
+  });
 
   el('text', { x: 32, y: 64, 'font-size': 12, class: 'mono', fill: 'var(--ink-3)', 'letter-spacing': '0.14em' }, svg).textContent = '对象与关系';
   el('text', { x: 608, y: 64, 'font-size': 12, class: 'mono', fill: 'var(--ink-3)', 'text-anchor': 'end' }, svg)
@@ -112,7 +118,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const path = el('path', {
       d: e.kind === 'tree' ? treePath(a, b) : relPath(a, b, e.bend), fill: 'none',
       stroke: on ? 'var(--lit)' : e.kind === 'tree' ? 'var(--tree)' : relStroke,
-      'stroke-width': on ? 1.5 : 1,
+      'stroke-width': on ? litWidth : 1,
       'stroke-dasharray': e.kind === 'rel' && !on ? (strong ? '3 3' : '2 4') : 'none',
     }, on ? litLayer : dimLayer);
     const appear = Math.min(appearOf.get(e.from) ?? 1, appearOf.get(e.to) ?? 1);
@@ -128,7 +134,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const dpath = e.kind === 'tree'
       ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
       : relPath(a, b, forward ? e.bend : -(e.bend ?? 0));
-    const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': 1.6 }, litLayer);
+    const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
     const length = path.getTotalLength();
     const p = Math.min(1, d.progress);
     path.setAttribute('stroke-dasharray', `${length * p} ${length}`);

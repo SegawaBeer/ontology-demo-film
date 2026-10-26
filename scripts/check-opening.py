@@ -306,7 +306,9 @@ with sync_playwright() as pw:
     texts = ' '.join(g['texts'])
     ok10 = (g['nodes'] == 2 and g['counter'] == '2 个节点 · 1 条关系' and '×100' in texts
             and '涡轮叶环' in texts and not any(k in texts for k in ('研发', '生产', '质量', '供应链', '压气机叶环')))
-    check('10 graph end state', ok10, f"nodes {g['nodes']} counter {g['counter']}", '2 nodes, counter 2/1, ×100, no groups')
+    edges9 = page.evaluate("() => [...document.querySelectorAll('#graph path')].filter(p => p.getAttribute('stroke') === 'var(--lit)').length")
+    ok10 = ok10 and edges9 == 1
+    check('10 graph end state', ok10, f"nodes {g['nodes']} counter {g['counter']} edges {edges9}", '2 nodes, 1 drawn edge, ×100, no groups')
 
     # ---- 11 threads ----
     go('frame=opening&theme=light&t=6.0')
@@ -338,8 +340,28 @@ with sync_playwright() as pw:
                     r, g, b = pc[x, y]
                     total += b - r; cnt += 1
         vals.append(total / max(1, cnt))
-    ok12 = (vals[1] - vals[0] >= 15) and abs(vals[2] - vals[0]) <= 4
-    check('12 flash', ok12, ' / '.join(f'{v:.1f}' for v in vals), '9.05 - 8.75 >= 15, 9.35 ~ 8.75')
+    worst12 = 0.0
+    for t in ('8.75', '9.05', '9.35'):
+        cur = f'{TMP}/m1flash-{t}.png'
+        ref = f'{TMP}/m1flash-ref-{t}.png'
+        page.goto(f'{URL}?frame=opening&theme=light&t={t}')
+        page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=120000)
+        time.sleep(0.5)
+        page.screenshot(path=cur)
+        page.goto(f'{BASE_URL}?frame=opening&theme=light&t={t}')
+        page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=120000)
+        time.sleep(0.5)
+        page.screenshot(path=ref)
+        _, pa = rgb(cur); _, pb = rgb(ref)
+        bad = 0
+        for y in range(1080):
+            for x in range(1280):
+                ca, cb = pa[x, y], pb[x, y]
+                if max(abs(ca[0] - cb[0]), abs(ca[1] - cb[1]), abs(ca[2] - cb[2])) > 8:
+                    bad += 1
+        worst12 = max(worst12, bad / (1280 * 1080))
+    ok12 = (vals[1] - vals[0] >= 15) and abs(vals[2] - vals[0]) <= 4 and worst12 < 0.0001
+    check('12 flash', ok12, ' / '.join(f'{v:.1f}' for v in vals) + f', vs old {worst12*100:.4f}%', 'peak >= 15, tail ~ start, unchanged vs old build')
 
     # ---- 13 background ----
     worst13 = 0.0

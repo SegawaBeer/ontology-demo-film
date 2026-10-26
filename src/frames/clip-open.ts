@@ -503,32 +503,41 @@ export async function mountOpening(theme: Theme) {
     }
     const drawing: { from: string; to: string; progress: number }[] = [];
     const litEdges: [string, string][] = [];
+    const doneEdges: [string, string][] = [];
     let drawn = 0;
     if (t >= 8.6) {
       const p = smootherAt(t, 8.6, 8.85);
-      if (p >= 0.999) { litEdges.push(['c-t1', 'blade']); drawn++; }
+      if (p >= 0.999) { litEdges.push(['c-t1', 'blade']); doneEdges.push(['c-t1', 'blade']); drawn++; }
       else drawing.push({ from: 'blade', to: 'c-t1', progress: p });
     }
     for (const e of M2_EDGES) {
       if (t < e.time || !nodes.includes(e.from) || !nodes.includes(e.to)) continue;
       const p = smootherAt(t, e.time, e.time + 0.3);
-      if (p >= 0.999) { litEdges.push([e.from, e.to]); drawn++; }
+      if (p >= 0.999) { litEdges.push([e.from, e.to]); doneEdges.push([e.from, e.to]); drawn++; }
       else drawing.push({ from: e.from, to: e.to, progress: p });
     }
     const captions: string[] = [];
     if (two) captions.push('涡轮叶环');
     if (t >= compStart(0)) captions.push('压气机叶环');
     lastGraphNodes = nodes;
-    const state: GraphState = {
+    const pulse: Record<string, number> = {};
+    for (const f of M2_FLASH) {
+      const v = seg(t, f.time, f.time + 0.4);
+      if (v > 0 && v < 1) pulse[f.id] = v;
+    }
+    lastPulse = Object.keys(pulse);
+    renderGraph(graphEl, {
       focus: false, lit: nodes, litEdges, chip: {}, status: {}, timing: [],
       only: nodes,
       sub: { blade: `×${Math.max(1, shown)}` },
       appear: appearMap,
       counter: `${nodes.length} 个节点 · ${drawn} 条关系`,
       drawing,
+      onlyEdges: doneEdges,
+      edgeWidth: 1.5,
+      pulse,
       captions,
-    };
-    renderGraph(graphEl, state);
+    });
   }
 
   // ---- milestone two: turbine stages 2-5, shaft, compressor ----------------
@@ -543,10 +552,12 @@ export async function mountOpening(theme: Theme) {
 
   type Piece = {
     ids: string[]; meshes: THREE.Mesh[]; mats: THREE.Material[]; lines: LineSegments2[];
-    box: THREE.Box3; plane: THREE.Plane; start: number; dur: number; axis: 'y' | 'x';
+    box: THREE.Box3; plane: THREE.Plane; linePlane: THREE.Plane; shells: THREE.Mesh[]; start: number; dur: number; axis: 'y' | 'x';
+    outlineTo: number; sweepFrom: number; sweepTo: number;
     flash: THREE.Color; idle: number; tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[];
   };
   const pieces: Piece[] = [];
+  const shellMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide });
 
 
   function buildEdges(mesh: THREE.Mesh, mat: LineMaterial) {
@@ -571,11 +582,12 @@ export async function mountOpening(theme: Theme) {
     return lines;
   }
 
-  function addPiece(ids: string[], start: number, dur: number, axis: 'y' | 'x') {
+  function addPiece(ids: string[], start: number, dur: number, axis: 'y' | 'x', outlineTo: number, sweepFrom: number, sweepTo: number) {
     const mats: THREE.Material[] = [];
     const meshes: THREE.Mesh[] = [];
     const tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[] = [];
     const lines: LineSegments2[] = [];
+    const shells: THREE.Mesh[] = [];
     const lineMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
     lineMat.resolution.set(1280, 1080);
     let base: THREE.Color | null = null;
@@ -595,7 +607,23 @@ export async function mountOpening(theme: Theme) {
         meshes.push(mesh);
         if (cloned.color) tints.push({ mat: cloned, base: cloned.color.clone(), metal: cloned.metalness ?? 1, rough: cloned.roughness ?? 0.5, env: cloned.envMapIntensity ?? 1 });
         if (!base && cloned.color) base = cloned.color.clone();
-        if (!mask) { const l = buildEdges(mesh, lineMat); mesh.add(l); lines.push(l); }
+        if (!mask) {
+          const l = buildEdges(mesh, lineMat);
+          mesh.add(l);
+          lines.push(l);
+          // Depth-only twin of the unswept half, so interior lines stay hidden.
+          const twin = mesh.clone() as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
+          const source = mesh as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
+          if (source.instanceMatrix) twin.instanceMatrix = source.instanceMatrix;
+          twin.material = shellMat;
+          twin.matrixAutoUpdate = false;
+          twin.matrix.copy(mesh.matrix);
+          twin.castShadow = false;
+          twin.receiveShadow = false;
+          twin.renderOrder = -1;
+          mesh.parent!.add(twin);
+          shells.push(twin);
+        }
       }
     }
     const box = new THREE.Box3();
@@ -608,7 +636,7 @@ export async function mountOpening(theme: Theme) {
     // tuned for one part reads differently on the rest.
     const flash = new THREE.Color(0.55, 1.00, 2.40);
     void base;
-    const piece: Piece = { ids, meshes, mats, lines, box, plane: new THREE.Plane(), start, dur, axis, flash, idle: 0, tints };
+    const piece: Piece = { ids, meshes, mats, lines, shells, box, plane: new THREE.Plane(), linePlane: new THREE.Plane(), start, dur, axis, outlineTo, sweepFrom, sweepTo, flash, idle: 0, tints };
     for (const m of mats) m.clippingPlanes = [piece.plane];
     engine.setVisible(ids, false);
     pieces.push(piece);
@@ -617,42 +645,47 @@ export async function mountOpening(theme: Theme) {
 
   engineGroup.matrix.identity();
   engineGroup.updateMatrixWorld(true);
-  const stagePieces = STAGE_GROUPS.map(g => addPiece(g.ids, g.start, 0.6, 'y'));
-  const shaftPiece = addPiece(['shaft.main'], 12.70, 1.0, 'x');
-  const compPieces = COMP_ORDER.map((id, i) => addPiece([id], compStart(i), 0.4, 'y'));
+  const stagePieces = STAGE_GROUPS.map(g => addPiece(g.ids, g.start, 0.6, 'y', 0.10, 0.20, 0.55));
+  const shaftPiece = addPiece(['shaft.main'], 12.70, 1.0, 'x', 0.10, 0.25, 1.00);
+  const compPieces = COMP_ORDER.map((id, i) => addPiece([id], compStart(i), 0.4, 'y', 0.08, 0.14, 0.40));
   engineGroup.matrix.copy(Qinv);
   engineGroup.updateMatrixWorld(true);
 
   function pieceAt(p: Piece, t: number) {
     const on = t >= p.start;
     engine.setVisible(p.ids, on);
-    for (const l of p.lines) l.visible = on;
+    for (const l of p.lines) l.visible = on && !noLines;
+    for (const sh of p.shells) sh.visible = on;
     if (!on) return 0;
-    // Metal lands quickly so the node's flash falls on a built part; the
-    // shaft keeps its slow pass along the axis.
-    const sweepDur = p.axis === 'x' ? p.dur : Math.min(p.dur, 0.26);
-    const u = smootherAt(t, p.start + 0.06, p.start + sweepDur);
-    const alpha = smootherAt(t, p.start, p.start + 0.06);
+    const alpha = smootherAt(t, p.start, p.start + p.outlineTo);
+    const u = smootherAt(t, p.start + p.sweepFrom, p.start + p.sweepTo);
+    const linesOn = u < 0.999;
     for (const l of p.lines) {
       const mat = l.material as LineMaterial;
       mat.opacity = alpha;
-      mat.visible = alpha > 0.001;
-      mat.clippingPlanes = [p.plane];
+      mat.visible = linesOn && alpha > 0.001 && !noLines;
+      mat.clippingPlanes = [p.linePlane];
+    }
+    for (const sh of p.shells) {
+      sh.visible = linesOn;
+      (sh.material as THREE.Material).clippingPlanes = [p.linePlane];
+    }
+    if (p.axis === 'y') {
+      const h = lerp(p.box.max.y + 0.02, p.box.min.y - 0.02, u);
+      p.plane.set(new THREE.Vector3(0, 1, 0), -h);
+      p.linePlane.set(new THREE.Vector3(0, -1, 0), h);
+    } else {
+      const h = lerp(p.box.min.x - 0.02, p.box.max.x + 0.02, u);
+      p.plane.set(new THREE.Vector3(-1, 0, 0), h);
+      p.linePlane.set(new THREE.Vector3(1, 0, 0), -h);
     }
     if (u >= 0.999) {
       for (const m of p.mats) m.clippingPlanes = null;
       for (const l of p.lines) { l.visible = false; (l.material as LineMaterial).clippingPlanes = null; }
+      for (const sh of p.shells) sh.visible = false;
       return 1;
     }
     for (const m of p.mats) m.clippingPlanes = [p.plane];
-    if (p.axis === 'y') {
-      const h = lerp(p.box.max.y + 0.02, p.box.min.y - 0.02, u);
-      p.plane.set(new THREE.Vector3(0, 1, 0), -h);
-    } else {
-      const h = lerp(p.box.min.x - 0.02, p.box.max.x + 0.02, u);
-      p.plane.set(new THREE.Vector3(-1, 0, 0), h);
-    }
-    void alpha;
     return u;
   }
 
@@ -671,7 +704,47 @@ export async function mountOpening(theme: Theme) {
     ...['c-t1', 'c-t2', 'c-t3', 'c-t4', 'c-t5'].map((id, i) => ({ from: id, to: 'm-turb', time: 12.60 + i * 0.05 })),
     ...['c-comp1', 'c-comp2', 'c-comp3', 'c-comp4'].map((id, i) => ({ from: id, to: 'm-comp', time: 16.30 + i * 0.06 })),
   ];
-  const flashOn = new Map<Piece, boolean>();
+  // Every part's own colour, read once, so a flash can return to it exactly.
+  const LIT_SRGB = LIT.clone().convertLinearToSRGB();
+  type Tint = { mesh?: THREE.InstancedMesh; index?: number; mat?: HeroMat; base: THREE.Color };
+  const pieceTints: Tint[][] = pieces.map(() => []);
+  for (let pi = 0; pi < pieces.length; pi++) {
+    const p = pieces[pi];
+    engine.setColor(p.ids, null);
+    for (const mesh of p.meshes) {
+      const inst = mesh as THREE.InstancedMesh;
+      const arr = inst.instanceColor?.array as Float32Array | undefined;
+      if (inst.isInstancedMesh && arr) {
+        for (let i = 0; i < inst.count; i++) {
+          pieceTints[pi].push({ mesh: inst, index: i, base: new THREE.Color(arr[i * 3], arr[i * 3 + 1], arr[i * 3 + 2]) });
+        }
+      } else {
+        const mat = mesh.material as HeroMat;
+        pieceTints[pi].push({ mat, base: mat.color.clone() });
+      }
+    }
+  }
+  const flashOf = (piece: Piece) => piece.start + piece.sweepTo;
+  const M2_FLASH: { id: string; time: number; pieces: Piece[] }[] = [
+    ...STAGE_GROUPS.map((g, i) => ({ id: g.node, time: flashOf(stagePieces[i]), pieces: [stagePieces[i]] })),
+    { id: 'm-turb', time: 12.60, pieces: stagePieces },
+    { id: 'm-shaft', time: flashOf(shaftPiece), pieces: [shaftPiece] },
+    { id: 'c-comp4', time: flashOf(compPieces[0]), pieces: [compPieces[0]] },
+    { id: 'c-comp3', time: flashOf(compPieces[2]), pieces: [compPieces[2]] },
+    { id: 'c-comp2', time: flashOf(compPieces[4]), pieces: [compPieces[4]] },
+    { id: 'c-comp1', time: flashOf(compPieces[5]), pieces: [compPieces[5]] },
+    { id: 'm-comp', time: 16.30, pieces: compPieces },
+  ];
+  const noFlash = params.get('noflash') === '1';
+  const noLines = params.get('nolines') === '1';
+  function writeTint(tint: Tint, colour: THREE.Color) {
+    if (tint.mesh) {
+      tint.mesh.setColorAt(tint.index!, colour);
+      tint.mesh.instanceColor!.needsUpdate = true;
+    } else if (tint.mat) {
+      tint.mat.color.copy(colour);
+    }
+  }
   for (const p of pieces) m2Box.union(p.box);
   m2Target = m2Box.getCenter(new THREE.Vector3());
   for (const x of [m2Box.min.x, m2Box.max.x]) for (const y of [m2Box.min.y, m2Box.max.y]) for (const z of [m2Box.min.z, m2Box.max.z]) m2Corners.push(new THREE.Vector3(x, y, z));
@@ -694,28 +767,29 @@ export async function mountOpening(theme: Theme) {
       if (solo && !p.ids.some(id => solo.includes(id))) continue;
       pieceAt(p, t);
     }
-    for (const node of M2_NODES) {
+    // Flash strength is a pure function of t; a piece shared by two nodes takes
+    // the stronger one, and each part's colour is written once per frame.
+    const amounts = new Map<Piece, number>();
+    for (const node of M2_FLASH) {
       const p = seg(t, node.time, node.time + 0.4);
-      const amount = params.get('noflash') === '1' ? 0 : p <= 0 || p >= 1 ? 0 : Math.sin(Math.PI * p) * 0.25;
-      for (const piece of node.pieces) {
-        const was = flashOn.get(piece) ?? false;
-        if (amount > 0.002) {
-          // Tint the materials this frame actually renders.
-          // Base colour alone barely moves a polished metal, so the flash also
-          // flattens the surface for its short life.
-          // A colour mix barely registers on polished metal, so the pulse is
-          // carried by a short emissive lift toward the same highlight blue.
-          const k = amount / 0.25;
-          engine.setColor(piece.ids, new THREE.Color(
-            1 + (0.45 - 1) * k,
-            1 + (1.0 - 1) * k,
-            1 + (2.2 - 1) * k,
-          ));
-          flashOn.set(piece, true);
-        } else if (was) {
-          engine.setColor(piece.ids, null);
-          flashOn.set(piece, false);
+      if (p <= 0 || p >= 1 || noFlash) continue;
+      const a = Math.sin(Math.PI * p) * 0.25;
+      for (const piece of node.pieces) amounts.set(piece, Math.max(amounts.get(piece) ?? 0, a));
+    }
+    for (let pi = 0; pi < pieces.length; pi++) {
+      const a = amounts.get(pieces[pi]) ?? 0;
+      const tints = pieceTints[pi];
+      if (!tints.length) continue;
+      if (a <= 0.0005) {
+        if (pieces[pi].idle !== 1) {
+          for (const tint of tints) writeTint(tint, tint.base);
+          pieces[pi].idle = 1;
         }
+        continue;
+      }
+      pieces[pi].idle = 0;
+      for (const tint of tints) {
+        writeTint(tint, tint.base.clone().convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear());
       }
     }
   }
@@ -724,6 +798,7 @@ export async function mountOpening(theme: Theme) {
   let lastBladeState = '';
   let appliedT = 0;
   let lastGraphNodes: string[] = [];
+  let lastPulse: string[] = [];
   function attached(t: number) {
     appliedT = t;
     discAt(t);
@@ -829,7 +904,8 @@ export async function mountOpening(theme: Theme) {
       if (first && t >= 1.8 && fade > 0) line(firstPath, firstDot, first, { x: 1573, y: 410 }, 9, clamp01((t - 1.8) / 1.4), 0.85 * fade);
       else { firstPath.style.opacity = '0'; firstDot.style.opacity = '0'; }
       const tip = t >= 8.8 ? bladeTipScreen(100) : null;
-      if (tip) line(secondPath, secondDot, tip, { x: 1573, y: 330 }, 6, seg(t, 8.8, 9.2), 0.85);
+      const threadFade = 1 - smootherAt(t, 9.6, 10.1);
+      if (tip && threadFade > 0.002) line(secondPath, secondDot, tip, { x: 1573, y: 330 }, 6, seg(t, 8.8, 9.2), 0.85 * threadFade);
       else { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
     }
     if (render) view.render();
@@ -897,7 +973,7 @@ export async function mountOpening(theme: Theme) {
         return [x0 - 8, y0 - 8, x1 + 8, y1 + 8];
       })(),
       blades: { count: shownNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
-      graph: { nodes, ids: lastGraphNodes, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
+      graph: { nodes, ids: lastGraphNodes, pulse: lastPulse, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
