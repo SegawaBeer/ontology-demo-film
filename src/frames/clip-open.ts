@@ -781,17 +781,14 @@ export async function mountOpening(theme: Theme) {
       const piece = pieces[pi];
       if (a <= 0.0005) {
         if (piece.idle !== 1) {
-          engine.setColor(piece.ids, null);
-          for (const tint of pieceTints[pi]) if (tint.mat) tint.mat.color.copy(tint.base);
+          for (const tint of pieceTints[pi]) writeTint(tint, tint.base);
           piece.idle = 1;
         }
         continue;
       }
       piece.idle = 0;
-      const k = a / 0.25;
-      engine.setColor(piece.ids, new THREE.Color(1 + (0.55 - 1) * k, 1 + (0.9 - 1) * k, 1 + (1.9 - 1) * k));
       for (const tint of pieceTints[pi]) {
-        if (tint.mat) tint.mat.color.copy(tint.base).convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear();
+        writeTint(tint, tint.base.clone().convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear());
       }
     }
   }
@@ -850,9 +847,11 @@ export async function mountOpening(theme: Theme) {
     if (partMask) {
       hero.root.visible = false;
       open.hero.root.visible = false;
+      engine.setVisible(RING, false);
+      engine.setVisible(DISC, false);
       cameraAt(t);
       lightsAt(t);
-      attached(t);
+      appliedT = t;
       if (render) view.render();
       return;
     }
@@ -1001,6 +1000,8 @@ export async function mountOpening(theme: Theme) {
     });
     if (partMask) {
       for (const p of pieces) engine.setVisible(p.ids, false);
+      engine.setVisible(RING, false);
+      engine.setVisible(DISC, false);
       engine.setVisible(partMask, true);
       for (const p of pieces) for (const m of p.mats) m.clippingPlanes = null;
       for (const p of pieces) for (const l of p.lines) l.visible = false;
@@ -1008,7 +1009,7 @@ export async function mountOpening(theme: Theme) {
     for (const piece of pieces) {
       for (const mesh of piece.meshes) {
         const bm = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, toneMapped: false });
-        bm.clippingPlanes = [piece.plane];
+        bm.clippingPlanes = partMask ? null : [piece.plane];
         mesh.material = bm;
         piece.mats.push(bm);
       }

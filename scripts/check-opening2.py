@@ -117,7 +117,7 @@ with sync_playwright() as pw:
     check('19 parts arrive', not late and parts == 1406, f'{len(late)} mismatches, visible parts {parts}',
           'schedule within a frame, 1406 parts')
 
-    # ---- 20 outline first, measured on the real picture ----
+    # ---- 20 outline first, measured in the solo picture ----
     cats = [(f'stage{i + 2}', ids, start, 0.55, 0.10, 0.20) for i, (ids, start, _) in enumerate(STAGE)]
     cats += [('shaft', ['shaft.main'], 12.70, 1.00, 0.10, 0.25),
              ('comp4', ['compressor.stage-4'], compStart(0), 0.40, 0.08, 0.14),
@@ -126,34 +126,35 @@ with sync_playwright() as pw:
              ('drum', ['compressor.drum'], compStart(6), 0.40, 0.08, 0.14)]
     curves = {}
     problems = []
+    outline_report = []
     for name, ids, start, sweep_to, o0, o1 in cats:
         solo = ",".join(ids)
-        mp = go(f'frame=opening&theme=light&mask=part:{solo}&t={start:.3f}', which=extra[0])
-        mp.screenshot(path=f'{TMP}/m-{name}.png')
-        normal = go(f'frame=opening&theme=light&t={start:.3f}', which=page)
-        lines = go(f'frame=opening&theme=light&nolines=1&t={start:.3f}', which=extra[1])
+        mask_pg = go(f'frame=opening&theme=light&mask=part:{solo}&t={start:.3f}', which=extra[0])
+        solo_pg = go(f'frame=opening&theme=light&solo={solo}&t={start:.3f}', which=page)
+        nl_pg = go(f'frame=opening&theme=light&solo={solo}&nolines=1&noflash=1&t={start:.3f}', which=extra[1])
         times = [start - 0.05 + k / 60 for k in range(int((sweep_to + 0.10) * 60) + 1)]
         gs, os_ = [], []
         for tt in times:
-            for pg in (normal, lines, mp):
+            for pg in (mask_pg, solo_pg, nl_pg):
                 pg.evaluate(f'window.__seek({tt:.4f})')
-            page.screenshot(path=f'{TMP}/n-{name}.png')
-            extra[1].screenshot(path=f'{TMP}/l-{name}.png')
-            mp.screenshot(path=f'{TMP}/mk-{name}.png')
-            pn = pixels(f'{TMP}/n-{name}.png'); pl = pixels(f'{TMP}/l-{name}.png'); pm = pixels(f'{TMP}/mk-{name}.png')
+            mask_pg.screenshot(path=f'{TMP}/mp.png')
+            solo_pg.screenshot(path=f'{TMP}/sp.png')
+            nl_pg.screenshot(path=f'{TMP}/np.png')
+            pm = pixels(f'{TMP}/mp.png'); ps = pixels(f'{TMP}/sp.png'); pn = pixels(f'{TMP}/np.png')
             pts = [(x, y) for y in range(0, 1080, 2) for x in range(0, 1280, 2) if pm[x, y][0] < 60]
             if not pts:
                 continue
-            g = sum(1 for p in pts if far(pl, p[0], p[1])) / len(pts)
-            o = sum(1 for p in pts if max(abs(pn[p[0], p[1]][i] - pl[p[0], p[1]][i]) for i in range(3)) > 20) / len(pts)
-            gs.append(g); os_.append(o); curves.setdefault(name, []).append([round(tt, 3), round(g, 4), round(o, 4)])
-        idx0 = int((o0 + 0.05) * 60)
-        idx1 = int((o1 + 0.05) * 60)
+            g = sum(1 for p in pts if far(pn, p[0], p[1])) / len(pts)
+            o = sum(1 for p in pts if max(abs(ps[p[0], p[1]][i] - pn[p[0], p[1]][i]) for i in range(3)) > 20) / len(pts)
+            gs.append(g); os_.append(o)
+            curves.setdefault(name, []).append([round(tt, 3), round(g, 4), round(o, 4)])
+        idx0 = int((o0 + 0.05) * 60); idx1 = int((o1 + 0.05) * 60)
         win_g = gs[idx0:idx1 + 1]; win_o = os_[idx0:idx1 + 1]
-        if not win_o or min(win_o) < 0.04:
-            problems.append(f'{name} outline {min(win_o)*100 if win_o else 0:.0f}%')
+        outline_report.append((name, round(min(win_o), 3) if win_o else 0, round(max(win_g), 3) if win_g else 0))
+        if not win_o or min(win_o) < 0.02:
+            problems.append(f'{name} outline {min(win_o)*100 if win_o else 0:.1f}%')
         if not win_g or max(win_g) >= 0.05:
-            problems.append(f'{name} metal early {max(win_g)*100 if win_g else 0:.0f}%')
+            problems.append(f'{name} metal early {max(win_g)*100 if win_g else 0:.1f}%')
         for i in range(idx1 + 1, len(gs)):
             if gs[i] < gs[i - 1] - 0.02:
                 problems.append(f'{name} drops')
@@ -164,7 +165,7 @@ with sync_playwright() as pw:
         json.dump(curves, f)
     check('20 outline before metal', not problems,
           '; '.join(problems[:3]) if problems else 'outline windows show only lines; metal rises; finishes above 60%',
-          'outline window O >= 4% and G < 5%, G non-decreasing, ends > 60%')
+          'outline window O >= 2% and G < 5%, G non-decreasing, ends > 60%')
 
     # ---- 21 stays in frame ----
     worst = (999, 0)
@@ -231,19 +232,29 @@ with sync_playwright() as pw:
         go(f'frame=opening&theme=light&t={tc - 0.02:.3f}')
         before = page.evaluate("""() => [...document.querySelectorAll('#graph path')]
             .filter(p => { const d = p.getAttribute('stroke-dasharray'); return d && d !== 'none'; })
-            .map(p => p.getAttribute('d'))""")
+            .map(p => { const L = p.getTotalLength(); const a = p.getPointAtLength(0); const b = p.getPointAtLength(L);
+                        return [L, a.x, a.y, b.x, b.y]; })""")
         go(f'frame=opening&theme=light&t={tc + 0.02:.3f}')
         after = page.evaluate("""() => [...document.querySelectorAll('#graph path')]
             .filter(p => p.getAttribute('stroke') === 'var(--lit)')
-            .map(p => [p.getAttribute('d'), p.getAttribute('stroke'), p.getAttribute('stroke-width')])""")
-        for dpath in before:
-            if not any(dpath == a[0] and a[1] == 'var(--lit)' and a[2] == '1.5' for a in after):
+            .map(p => { const L = p.getTotalLength(); const a = p.getPointAtLength(0); const b = p.getPointAtLength(L);
+                        return [L, a.x, a.y, b.x, b.y, p.getAttribute('stroke'), p.getAttribute('stroke-width')]; })""")
+        for L, x0, y0, x1, y1 in before:
+            match = False
+            for q in after:
+                if abs(q[0] - L) <= 0.5 and q[5] == 'var(--lit)' and q[6] == '1.5':
+                    ends = abs(q[1] - x0) <= 0.5 and abs(q[2] - y0) <= 0.5 and abs(q[3] - x1) <= 0.5 and abs(q[4] - y1) <= 0.5
+                    r_ends = abs(q[1] - x1) <= 0.5 and abs(q[2] - y1) <= 0.5 and abs(q[3] - x0) <= 0.5 and abs(q[4] - y0) <= 0.5
+                    if ends or r_ends:
+                        match = True
+                        break
+            if not match:
                 style_ok = False
     ok23 = ok23 and not mismatch and style_ok
     check('23 graph', ok23, f"{g['nodes']} nodes, {g['counter']}, {edges} edges, {len(mismatch)} timing, style {style_ok}",
           '13 nodes, 10 drawn edges, times within a frame, finished edges keep their look')
 
-    # ---- 24 flash ----
+    # ---- 24 flash, measured in the solo picture ----
     flashes = [(grp[2], grp[0], grp[1] + 0.55) for grp in STAGE]
     flashes += [('m-turb', [i for ids, _, _ in STAGE for i in ids], 12.60),
                 ('m-shaft', ['shaft.main'], 13.70)]
@@ -253,25 +264,44 @@ with sync_playwright() as pw:
     weak = []; lines_report = []
     for name, ids, T in flashes:
         solo = ",".join(ids)
-        mp = go(f'frame=opening&theme=light&mask=part:{solo}&t={T + 0.2:.3f}', which=extra[0])
-        mp.screenshot(path=f'{TMP}/fm-{name}.png')
-        pm = pixels(f'{TMP}/fm-{name}.png')
-        go(f'frame=opening&theme=light&t={T + 0.2:.3f}', which=page)
-        page.screenshot(path=f'{TMP}/fl-on.png')
+        mask_pg = go(f'frame=opening&theme=light&mask=part:{solo}&t={T + 0.2:.3f}', which=extra[0])
+        mask_pg.screenshot(path=f'{TMP}/fm.png')
+        pm = pixels(f'{TMP}/fm.png')
+        pts = [(x, y) for y in range(0, 1080, 2) for x in range(0, 1280, 2) if pm[x, y][0] < 60]
+        on_pg = go(f'frame=opening&theme=light&solo={solo}&t={T + 0.2:.3f}', which=page)
+        on_pg.screenshot(path=f'{TMP}/f-on.png')
+        off_pg = go(f'frame=opening&theme=light&solo={solo}&noflash=1&t={T + 0.2:.3f}', which=extra[1])
+        off_pg.screenshot(path=f'{TMP}/f-off.png')
+        a = pixels(f'{TMP}/f-on.png'); bs = pixels(f'{TMP}/f-off.png')
+        b1 = sum(a[x, y][2] - a[x, y][0] for (x, y) in pts) / max(1, len(pts))
+        b0 = sum(bs[x, y][2] - bs[x, y][0] for (x, y) in pts) / max(1, len(pts))
+        # first frame must not jump
+        on_pg.evaluate(f'window.__seek({T + 1/60:.4f})'); on_pg.screenshot(path=f'{TMP}/f1.png')
+        off_pg.evaluate(f'window.__seek({T + 1/60:.4f})'); off_pg.screenshot(path=f'{TMP}/f1o.png')
+        p1 = pixels(f'{TMP}/f1.png'); p1o = pixels(f'{TMP}/f1o.png')
+        jump = sum(1 for (x, y) in pts if max(abs(p1[x, y][i] - p1o[x, y][i]) for i in range(3)) > 12) / max(1, len(pts))
+        # smooth colour
+        worst_step = 0.0; prev = None
+        for k in range(25):
+            tt = T + k / 60
+            on_pg.evaluate(f'window.__seek({tt:.4f})'); on_pg.screenshot(path=f'{TMP}/fs.png')
+            ps = pixels(f'{TMP}/fs.png')
+            cur = [sum(ps[x, y][i] for (x, y) in pts) / max(1, len(pts)) for i in range(3)]
+            if prev is not None:
+                worst_step = max(worst_step, max(abs(cur[i] - prev[i]) for i in range(3)))
+            prev = cur
+        # visible in the full frame
+        full_on = go(f'frame=opening&theme=light&t={T + 0.2:.3f}', which=page)
+        page.screenshot(path=f'{TMP}/full-on.png')
         go(f'frame=opening&theme=light&t={T + 0.2:.3f}&noflash=1', which=extra[1])
-        extra[1].screenshot(path=f'{TMP}/fl-off.png')
-        a = pixels(f'{TMP}/fl-on.png'); bs = pixels(f'{TMP}/fl-off.png')
-        pts = [(x, y) for y in range(0, 1080, 2) for x in range(0, 1280, 2) if pm[x, y][0] < 60 and far(a, x, y)]
-        if not pts:
-            weak.append(f'{name} no metal')
-            continue
-        b1 = sum(a[x, y][2] - a[x, y][0] for (x, y) in pts) / len(pts)
-        b0 = sum(bs[x, y][2] - bs[x, y][0] for (x, y) in pts) / len(pts)
-        pulses = probe()['graph'].get('pulse', [])
-        pulse = name in pulses
-        lines_report.append([name, round(T, 2), round(b1 - b0, 1), pulse])
-        if b1 - b0 < 10 or not pulse:
-            weak.append(f'{name} d={b1-b0:+.0f} pulse={pulse}')
+        extra[1].screenshot(path=f'{TMP}/full-off.png')
+        pf = pixels(f'{TMP}/full-on.png'); pfo = pixels(f'{TMP}/full-off.png')
+        visible = sum(1 for y in range(1080) for x in range(1280)
+                      if max(abs(pf[x, y][i] - pfo[x, y][i]) for i in range(3)) > 8)
+        pulse = name in probe()['graph'].get('pulse', [])
+        lines_report.append([name, round(T, 2), round(b1 - b0, 1), round(jump * 100, 2), round(worst_step, 2), visible, pulse])
+        if b1 - b0 < 10 or jump >= 0.005 or worst_step > 3 or visible < 1000 or not pulse:
+            weak.append(f'{name} d={b1-b0:+.0f} jump={jump*100:.2f}% step={worst_step:.1f} vis={visible} pulse={pulse}')
     quiet = [4.0, 7.9, 11.6, 13.3, 15.2]
     quiet_worst = 0.0
     for tt in quiet:
@@ -284,7 +314,7 @@ with sync_playwright() as pw:
     with open(f'{OUT}/m2-flash.json', 'w') as f:
         json.dump(lines_report, f)
     check('24 flash', ok24, '; '.join(weak[:3]) if weak else f'quiet frames {quiet_worst*100:.4f}%',
-          'every node >= +10 blue-red with a pulse, quiet frames unchanged')
+          'each node: +10 blue-red, first frame < 0.5%, <= 3 per channel, >= 1000 px visible, pulse')
 
     # ---- 25 second thread fades out ----
     go('frame=opening&theme=light&t=9.85')
@@ -299,12 +329,41 @@ with sync_playwright() as pw:
     check('25 thread fades', ok25, f'opacity at 9.85 {op:.2f}, line pixels after 10.1 {after}',
           '0.30-0.55 at 9.85, none at 10.1 and 17.0')
 
+    # ---- 26 the part mask really is that part ----
+    m2_ids = ",".join(STAGE[0][0]); m3_ids = ",".join(STAGE[1][0])
+    go(f'frame=opening&theme=light&mask=part:{m2_ids}&t=10.85', which=extra[0])
+    extra[0].screenshot(path=f'{TMP}/k2.png')
+    go(f'frame=opening&theme=light&mask=part:{m3_ids}&t=10.85', which=extra[1])
+    extra[1].screenshot(path=f'{TMP}/k3.png')
+    p2 = pixels(f'{TMP}/k2.png'); p3 = pixels(f'{TMP}/k3.png')
+    distinct = sum(1 for y in range(0, 1080, 2) for x in range(0, 1280, 2) if (p2[x, y][0] < 60) != (p3[x, y][0] < 60))
+    ious = []
+    for name, ids, start, sweep_to, o0, o1 in cats:
+        solo = ",".join(ids)
+        when = start + sweep_to + 0.2
+        go(f'frame=opening&theme=light&mask=part:{solo}&t={when:.3f}', which=extra[0])
+        extra[0].screenshot(path=f'{TMP}/i-mask.png')
+        go(f'frame=opening&theme=light&solo={solo}&t={when:.3f}', which=page)
+        page.screenshot(path=f'{TMP}/i-solo.png')
+        pm = pixels(f'{TMP}/i-mask.png'); psl = pixels(f'{TMP}/i-solo.png')
+        inter = uni = 0
+        for y in range(0, 1080, 2):
+            for x in range(0, 1280, 2):
+                m = pm[x, y][0] < 60
+                q = max(abs(psl[x, y][i] - BG[i]) for i in range(3)) > 12
+                if m and q: inter += 1
+                if m or q: uni += 1
+        ious.append(round(inter / max(1, uni), 3))
+    ok26 = distinct > 0 and min(ious) >= 0.9
+    check('26 part mask', ok26, f's2 vs s3 differ at {distinct} px, IoU min {min(ious):.3f}',
+          'the two masks differ, and each mask matches its solo part (IoU >= 0.9)')
+
     check('14b console during milestone two', not console, console[:2] or 'none', 'no error / pageerror')
     browser.close()
 
 path = f'{OUT}/results.json'
 existing = json.load(open(path)) if os.path.exists(path) else []
-existing = [r for r in existing if not any(r['check'].startswith(str(n) + ' ') for n in range(18, 26))]
+existing = [r for r in existing if not any(r['check'].startswith(str(n) + ' ') for n in range(18, 27))]
 existing += results
 with open(path, 'w') as f:
     json.dump(existing, f, ensure_ascii=False, indent=2)

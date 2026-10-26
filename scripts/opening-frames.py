@@ -112,4 +112,33 @@ for i, (name, series) in enumerate(curves.items()):
     d2.line(pts, fill=colours[i % len(colours)], width=2)
     d2.text((left2 + 10, top2 + 10 + i * 18), name, font=font2, fill=colours[i % len(colours)])
 chart2.save(f'{OUT}/m2/线框到材质曲线.png')
+
+# Outline phase close-ups: stage two and the compressor stage-four ring.
+def part_centre(ids, t):
+    page.goto(f'{URL}?frame=opening&theme=light&mask=part:{ids}&t={t}')
+    page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=120000)
+    time.sleep(0.3)
+    page.screenshot(path='/tmp/oc.png')
+    im = Image.open('/tmp/oc.png').convert('L').load()
+    xs = [x for y in range(0, 1080, 2) for x in range(0, 1280, 2) if im[x, y] < 60]
+    ys = [y for y in range(0, 1080, 2) for x in range(0, 1280, 2) if im[x, y] < 60]
+    return (sum(xs) // len(xs), sum(ys) // len(ys)) if xs else (640, 540)
+
+zoom = Image.new('RGB', (4 * 480, 2 * 360), '#ffffff')
+rows = [('turbine.stage-2-blades,turbine.stage-2-hub,turbine.stage-2-outer,turbine.stage-2-tip-ring,turbine.stage-1-outer,turbine.stage-1-tip-ring', [10.15, 10.25, 10.40, 10.60]),
+        ('compressor.stage-4', [13.54, 13.61, 13.75, 13.90])]
+for r, (ids, times) in enumerate(rows):
+    for c, t in enumerate(times):
+        cx, cy = part_centre(ids, t)
+        pth = shot(f'frame=opening&theme=light&t={t}', f'/tmp/oz-{r}-{c}.png')
+        im = Image.open(pth).convert('RGB').crop((cx - 240, cy - 180, cx + 240, cy + 180))
+        zoom.paste(im, (c * 480, r * 360))
+zoom.save(f'{OUT}/m2/线框阶段放大.png')
+
+# Graph column at 9.6 and 17.0.
+a = Image.open(shot('frame=opening&theme=light&t=9.6', '/tmp/g1.png')).convert('RGB').crop((1280, 0, 1920, 1080))
+c = Image.open(shot('frame=opening&theme=light&t=17.0', '/tmp/g2.png')).convert('RGB').crop((1280, 0, 1920, 1080))
+line_sheet = Image.new('RGB', (1280, 1080), '#ffffff')
+line_sheet.paste(a, (0, 0)); line_sheet.paste(c, (640, 0))
+line_sheet.save(f'{OUT}/m2/连线.png')
 print('deliverables written', len(files), 'tiles + m2')
