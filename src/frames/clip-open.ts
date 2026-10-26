@@ -47,6 +47,8 @@ export async function mountOpening(theme: Theme) {
   const maskMode = params.get('mask');
   const mask = maskMode !== null;
   const diskMode = maskMode === 'disk' || maskMode === 'disk-solid';
+  const partMask = maskMode && maskMode.startsWith('part:') ? maskMode.slice(5).split(',') : null;
+  const solo = params.get('solo') ? params.get('solo')!.split(',') : null;
   const open = await createOpenScene(theme, mask);
   const { view, scene, camera, hero, tilt, spin, center, Y3 } = open;
 
@@ -169,6 +171,24 @@ export async function mountOpening(theme: Theme) {
   const dirEnd = ring.position.clone().sub(ring.target).normalize();
 
   let camTargetNow = new THREE.Vector3();
+  const orbitAngle = (t: number) => {
+    if (t <= 7.3) return 0;
+    const at96 = 1.5 * (9.6 - 7.3 - 0.6 * smoother(seg(9.6, 7.3, 7.9)));
+    if (t <= 9.6) return THREE.MathUtils.degToRad(1.5 * (t - 7.3 - 0.6 * smoother(seg(t, 7.3, 7.9))));
+    const u = Math.min(1, (t - 9.6) / 0.5);
+    const f = u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
+    return THREE.MathUtils.degToRad(at96 + 1.5 * ((t - 9.6) - 0.5 * f));
+  };
+
+  // Framing for the assembled engine: box of the components this milestone
+  // adds, fitted the same way view.fit() does but without hidden parts.
+  const m2Box = new THREE.Box3();
+  const m2Corners: THREE.Vector3[] = [];
+  const m2Dir = new THREE.Vector3(0.62, 0.27, 0.73).normalize();
+  const m2Cam = new THREE.PerspectiveCamera(24, 1280 / 1080, 0.01, 100);
+  let m2Target = new THREE.Vector3();
+  let m2Distance = 6;
+
   function cameraAt(t: number) {
     if (t <= 5.0) {
       camera.position.copy(camStart);
@@ -180,14 +200,30 @@ export async function mountOpening(theme: Theme) {
       const qb = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dirEnd);
       const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(qa.slerp(qb, u));
       const distance = Math.exp(lerp(Math.log(startDist), Math.log(ring.distance), u));
-      const orbit = THREE.MathUtils.degToRad(1.5) * (t > 7.3 ? (t - 7.3 - 0.6 * smoother(seg(t, 7.3, 7.9))) : 0);
-      dir.applyAxisAngle(new THREE.Vector3(1, 0, 0), orbit);
+      dir.applyAxisAngle(new THREE.Vector3(1, 0, 0), orbitAngle(t));
       camera.position.copy(target).addScaledVector(dir, distance);
       camera.lookAt(target);
+      if (t > 10.1) {
+        const startDir = dirEnd.clone().applyAxisAngle(new THREE.Vector3(1, 0, 0), orbitAngle(10.1));
+        const startTarget = ring.target.clone();
+        const qa = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), startDir);
+        const qb = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), m2Dir);
+        // Front-loaded but still starts and ends at rest.
+        // Front-loaded, but with bounded acceleration at both ends.
+        const u2 = seg(t, 10.1, 16.6);
+        const k = 1 - Math.pow(1 - u2, 3) * (1 + 3 * u2);
+        const moveDir = new THREE.Vector3(0, 0, 1).applyQuaternion(qa.slerp(qb, k));
+        const moveTarget = startTarget.clone().lerp(m2Target, k);
+        const moveDistance = Math.exp(lerp(Math.log(ring.distance), Math.log(m2Distance), k));
+        camera.position.copy(moveTarget).addScaledVector(moveDir, moveDistance);
+        camera.lookAt(moveTarget);
+        camTargetNow = moveTarget;
+      }
     }
-    camTargetNow = t <= 5 ? targetStart.clone()
-      : t <= 7.3 ? targetStart.clone().lerp(ring.target, smootherAt(t, 5.0, 7.3))
-        : ring.target.clone();
+    if (t <= 5) camTargetNow = targetStart.clone();
+    else if (t <= 7.3) camTargetNow = targetStart.clone().lerp(ring.target, smootherAt(t, 5.0, 7.3));
+    else if (t <= 10.1) camTargetNow = ring.target.clone();
+    // beyond 10.1 the move sets its own target
     camera.updateMatrixWorld();
     const dist = camera.position.distanceTo(
       t <= 5 ? targetStart : t <= 7.3 ? targetStart.clone().lerp(ring.target, smootherAt(t, 5.0, 7.3)) : ring.target,
@@ -355,6 +391,7 @@ export async function mountOpening(theme: Theme) {
   const discTop = discBox.max.y + 0.05, discBottom = discBox.min.y - 0.05;
 
   function discAt(t: number) {
+    if (solo) { engine.setVisible(DISC, false); return; }
     const appear = smootherAt(t, 5.0, 5.6);
     engine.setVisible(DISC, appear > 0.001);
     const sweep = smootherAt(t, 5.9, 6.9);
@@ -374,6 +411,7 @@ export async function mountOpening(theme: Theme) {
   for (let n = 1; n <= 100; n++) engine.setVisible(bladeId(n), false);
   let shownNow = 0;
   function ringAt(t: number) {
+    if (solo) { engine.setVisible(RING, false); return; }
     const shown = bladesShown(t);
     if (shown !== shownNow) {
       for (let n = 1; n <= 100; n++) engine.setVisible(bladeId(n), n <= shown);
@@ -455,21 +493,248 @@ export async function mountOpening(theme: Theme) {
       renderGraph(graphEl, { focus: false, lit: [], litEdges: [], chip: {}, status: {}, timing: [], only: [], counter: '0 个节点 · 0 条关系' });
       return;
     }
+    const nodes: string[] = ['blade'];
+    const appearMap: Record<string, number> = { blade: appear };
+    if (two) { nodes.push('c-t1'); appearMap['c-t1'] = smootherAt(t, 8.8, 9.2); }
+    for (const node of M2_NODES) {
+      if (t < node.time) continue;
+      nodes.push(node.id);
+      appearMap[node.id] = smootherAt(t, node.time, node.time + 0.4);
+    }
+    const drawing: { from: string; to: string; progress: number }[] = [];
+    const litEdges: [string, string][] = [];
+    let drawn = 0;
+    if (t >= 8.6) {
+      const p = smootherAt(t, 8.6, 8.85);
+      if (p >= 0.999) { litEdges.push(['c-t1', 'blade']); drawn++; }
+      else drawing.push({ from: 'blade', to: 'c-t1', progress: p });
+    }
+    for (const e of M2_EDGES) {
+      if (t < e.time || !nodes.includes(e.from) || !nodes.includes(e.to)) continue;
+      const p = smootherAt(t, e.time, e.time + 0.3);
+      if (p >= 0.999) { litEdges.push([e.from, e.to]); drawn++; }
+      else drawing.push({ from: e.from, to: e.to, progress: p });
+    }
+    const captions: string[] = [];
+    if (two) captions.push('涡轮叶环');
+    if (t >= compStart(0)) captions.push('压气机叶环');
+    lastGraphNodes = nodes;
     const state: GraphState = {
-      focus: false, lit: ['blade', ...(two ? ['c-t1'] : [])], litEdges: [], chip: {}, status: {}, timing: [],
-      only: two ? ['blade', 'c-t1'] : ['blade'],
+      focus: false, lit: nodes, litEdges, chip: {}, status: {}, timing: [],
+      only: nodes,
       sub: { blade: `×${Math.max(1, shown)}` },
-      appear: { blade: appear, ...(two ? { 'c-t1': smootherAt(t, 8.8, 9.2) } : {}) },
-      counter: two ? '2 个节点 · 1 条关系' : '1 个节点 · 0 条关系',
-      drawing: t > 8.6 ? [{ from: 'blade', to: 'c-t1', progress: smootherAt(t, 8.6, 8.85) }] : [],
-      captions: two ? ['涡轮叶环'] : [],
+      appear: appearMap,
+      counter: `${nodes.length} 个节点 · ${drawn} 条关系`,
+      drawing,
+      captions,
     };
     renderGraph(graphEl, state);
   }
 
+  // ---- milestone two: turbine stages 2-5, shaft, compressor ----------------
+  const STAGE_GROUPS: { ids: string[]; start: number; node: string }[] = [
+    { ids: ['turbine.stage-2-blades', 'turbine.stage-2-hub', 'turbine.stage-2-outer', 'turbine.stage-2-tip-ring', 'turbine.stage-1-outer', 'turbine.stage-1-tip-ring'], start: 10.10, node: 'c-t2' },
+    { ids: ['turbine.stage-3-blades', 'turbine.stage-3-hub', 'turbine.stage-3-outer', 'turbine.stage-3-tip-ring'], start: 10.70, node: 'c-t3' },
+    { ids: ['turbine.stage-4-blades', 'turbine.stage-4-outer', 'turbine.stage-4-tip-ring'], start: 11.30, node: 'c-t4' },
+    { ids: ['turbine.stage-5-blades', 'turbine.stage-5-hub', 'turbine.stage-5-outer', 'turbine.stage-5-tip-ring'], start: 11.90, node: 'c-t5' },
+  ];
+  const COMP_ORDER = ['compressor.stage-4', 'compressor.stators', 'compressor.stage-3', 'compressor.struts', 'compressor.stage-2', 'compressor.stage-1', 'compressor.drum', 'compressor.inlet-bell'];
+  const compStart = (i: number) => 13.50 + 2.40 * Math.pow(i / 7, 0.7);
+
+  type Piece = {
+    ids: string[]; meshes: THREE.Mesh[]; mats: THREE.Material[]; lines: LineSegments2[];
+    box: THREE.Box3; plane: THREE.Plane; start: number; dur: number; axis: 'y' | 'x';
+    flash: THREE.Color; idle: number; tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[];
+  };
+  const pieces: Piece[] = [];
+
+
+  function buildEdges(mesh: THREE.Mesh, mat: LineMaterial) {
+    const edges = new THREE.EdgesGeometry(mesh.geometry, 25);
+    const pos = edges.getAttribute('position') as THREE.BufferAttribute;
+    const inst = mesh as THREE.InstancedMesh;
+    const count = inst.isInstancedMesh ? inst.count : 1;
+    const out: number[] = [];
+    const m = new THREE.Matrix4();
+    const v = new THREE.Vector3();
+    for (let k = 0; k < count; k++) {
+      if (inst.isInstancedMesh) inst.getMatrixAt(k, m); else m.identity();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(m);
+        out.push(v.x, v.y, v.z);
+      }
+    }
+    edges.dispose();
+    const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(out), mat);
+    lines.computeLineDistances();
+    lines.visible = false;
+    return lines;
+  }
+
+  function addPiece(ids: string[], start: number, dur: number, axis: 'y' | 'x') {
+    const mats: THREE.Material[] = [];
+    const meshes: THREE.Mesh[] = [];
+    const tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[] = [];
+    const lines: LineSegments2[] = [];
+    const lineMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
+    lineMat.resolution.set(1280, 1080);
+    let base: THREE.Color | null = null;
+    for (const id of ids) {
+      const comp = components.find(c => c.meta.id === id);
+      if (!comp) continue;
+      const found: THREE.Mesh[] = [];
+      comp.group.traverse(o => {
+        const mesh = o as THREE.Mesh & { isLineSegments2?: boolean };
+        if (mesh.isMesh && !mesh.isLineSegments2 && mesh.geometry) found.push(mesh);
+      });
+      for (const mesh of found) {
+        const source = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as HeroMat;
+        const cloned = source.clone();
+        mesh.material = cloned;
+        mats.push(cloned);
+        meshes.push(mesh);
+        if (cloned.color) tints.push({ mat: cloned, base: cloned.color.clone(), metal: cloned.metalness ?? 1, rough: cloned.roughness ?? 0.5, env: cloned.envMapIntensity ?? 1 });
+        if (!base && cloned.color) base = cloned.color.clone();
+        if (!mask) { const l = buildEdges(mesh, lineMat); mesh.add(l); lines.push(l); }
+      }
+    }
+    const box = new THREE.Box3();
+    for (const id of ids) for (const part of engine.listParts(id)) {
+      const pts = engine.partWorldPoints(part);
+      if (!pts) continue;
+      for (let i = 0; i < pts.length; i += 3) box.expandByPoint(new THREE.Vector3(pts[i], pts[i + 1], pts[i + 2]));
+    }
+    // One instance-colour multiplier for the whole piece: a per-material ratio
+    // tuned for one part reads differently on the rest.
+    const flash = new THREE.Color(0.55, 1.00, 2.40);
+    void base;
+    const piece: Piece = { ids, meshes, mats, lines, box, plane: new THREE.Plane(), start, dur, axis, flash, idle: 0, tints };
+    for (const m of mats) m.clippingPlanes = [piece.plane];
+    engine.setVisible(ids, false);
+    pieces.push(piece);
+    return piece;
+  }
+
+  engineGroup.matrix.identity();
+  engineGroup.updateMatrixWorld(true);
+  const stagePieces = STAGE_GROUPS.map(g => addPiece(g.ids, g.start, 0.6, 'y'));
+  const shaftPiece = addPiece(['shaft.main'], 12.70, 1.0, 'x');
+  const compPieces = COMP_ORDER.map((id, i) => addPiece([id], compStart(i), 0.4, 'y'));
+  engineGroup.matrix.copy(Qinv);
+  engineGroup.updateMatrixWorld(true);
+
+  function pieceAt(p: Piece, t: number) {
+    const on = t >= p.start;
+    engine.setVisible(p.ids, on);
+    for (const l of p.lines) l.visible = on;
+    if (!on) return 0;
+    // Metal lands quickly so the node's flash falls on a built part; the
+    // shaft keeps its slow pass along the axis.
+    const sweepDur = p.axis === 'x' ? p.dur : Math.min(p.dur, 0.26);
+    const u = smootherAt(t, p.start + 0.06, p.start + sweepDur);
+    const alpha = smootherAt(t, p.start, p.start + 0.06);
+    for (const l of p.lines) {
+      const mat = l.material as LineMaterial;
+      mat.opacity = alpha;
+      mat.visible = alpha > 0.001;
+      mat.clippingPlanes = [p.plane];
+    }
+    if (u >= 0.999) {
+      for (const m of p.mats) m.clippingPlanes = null;
+      for (const l of p.lines) { l.visible = false; (l.material as LineMaterial).clippingPlanes = null; }
+      return 1;
+    }
+    for (const m of p.mats) m.clippingPlanes = [p.plane];
+    if (p.axis === 'y') {
+      const h = lerp(p.box.max.y + 0.02, p.box.min.y - 0.02, u);
+      p.plane.set(new THREE.Vector3(0, 1, 0), -h);
+    } else {
+      const h = lerp(p.box.min.x - 0.02, p.box.max.x + 0.02, u);
+      p.plane.set(new THREE.Vector3(-1, 0, 0), h);
+    }
+    void alpha;
+    return u;
+  }
+
+  // ---- milestone two: graph and flashes ------------------------------------
+  const M2_NODES: { id: string; time: number; pieces: Piece[] }[] = [
+    ...STAGE_GROUPS.map((g, i) => ({ id: g.node, time: g.start, pieces: [stagePieces[i]] })),
+    { id: 'm-turb', time: 12.60, pieces: stagePieces },
+    { id: 'm-shaft', time: 12.70, pieces: [shaftPiece] },
+    { id: 'c-comp4', time: compStart(0), pieces: [compPieces[0]] },
+    { id: 'c-comp3', time: compStart(2), pieces: [compPieces[2]] },
+    { id: 'c-comp2', time: compStart(4), pieces: [compPieces[4]] },
+    { id: 'c-comp1', time: compStart(5), pieces: [compPieces[5]] },
+    { id: 'm-comp', time: 16.30, pieces: compPieces },
+  ];
+  const M2_EDGES: { from: string; to: string; time: number }[] = [
+    ...['c-t1', 'c-t2', 'c-t3', 'c-t4', 'c-t5'].map((id, i) => ({ from: id, to: 'm-turb', time: 12.60 + i * 0.05 })),
+    ...['c-comp1', 'c-comp2', 'c-comp3', 'c-comp4'].map((id, i) => ({ from: id, to: 'm-comp', time: 16.30 + i * 0.06 })),
+  ];
+  const flashOn = new Map<Piece, boolean>();
+  for (const p of pieces) m2Box.union(p.box);
+  m2Target = m2Box.getCenter(new THREE.Vector3());
+  for (const x of [m2Box.min.x, m2Box.max.x]) for (const y of [m2Box.min.y, m2Box.max.y]) for (const z of [m2Box.min.z, m2Box.max.z]) m2Corners.push(new THREE.Vector3(x, y, z));
+  for (let i = 0; i < 10; i++) {
+    m2Cam.position.copy(m2Target).addScaledVector(m2Dir, m2Distance);
+    m2Cam.lookAt(m2Target);
+    m2Cam.updateMatrixWorld();
+    let ex = 0, ey = 0;
+    for (const c of m2Corners) {
+      const q = c.clone().project(m2Cam);
+      ex = Math.max(ex, Math.abs(q.x));
+      ey = Math.max(ey, Math.abs(q.y));
+    }
+    m2Distance *= Math.max(ex / 0.84, ey / 0.80);
+  }
+
+  function m2At(t: number) {
+    if (t < 9.6) return;
+    for (const p of pieces) {
+      if (solo && !p.ids.some(id => solo.includes(id))) continue;
+      pieceAt(p, t);
+    }
+    for (const node of M2_NODES) {
+      const p = seg(t, node.time, node.time + 0.4);
+      const amount = params.get('noflash') === '1' ? 0 : p <= 0 || p >= 1 ? 0 : Math.sin(Math.PI * p) * 0.25;
+      for (const piece of node.pieces) {
+        const was = flashOn.get(piece) ?? false;
+        if (amount > 0.002) {
+          // Tint the materials this frame actually renders.
+          // Base colour alone barely moves a polished metal, so the flash also
+          // flattens the surface for its short life.
+          // A colour mix barely registers on polished metal, so the pulse is
+          // carried by a short emissive lift toward the same highlight blue.
+          const k = amount / 0.25;
+          for (const t of piece.tints) {
+            t.mat.color.copy(t.base).lerp(LIT, amount);
+            t.mat.metalness = lerp(t.metal, 0.1, k);
+            t.mat.roughness = lerp(t.rough, 0.7, k);
+          }
+          flashOn.set(piece, true);
+        } else if (was) {
+          for (const t of piece.tints) {
+            t.mat.color.copy(t.base);
+            t.mat.metalness = t.metal;
+            t.mat.roughness = t.rough;
+          }
+          flashOn.set(piece, false);
+        }
+      }
+    }
+  }
+
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
+  let appliedT = 0;
+  let lastGraphNodes: string[] = [];
+  function attached(t: number) {
+    appliedT = t;
+    discAt(t);
+    ringAt(t);
+  }
   function apply(t: number, render = true) {
+    appliedT = t;
     if (t < 5.0 && !diskMode) {
       // Opening-frame space: untouched rig and camera, engine pulled in.
       tilt.matrixAutoUpdate = true;
@@ -509,6 +774,15 @@ export async function mountOpening(theme: Theme) {
       : smootherAt(t, 7.30, 7.60);
     hero.root.updateMatrixWorld(true);
     open.hero.root.visible = fade < 0.999;
+    if (partMask) {
+      hero.root.visible = false;
+      open.hero.root.visible = false;
+      cameraAt(t);
+      lightsAt(t);
+      attached(t);
+      if (render) view.render();
+      return;
+    }
     if (diskMode) {
       hero.root.visible = false;
       open.hero.root.visible = false;
@@ -551,6 +825,7 @@ export async function mountOpening(theme: Theme) {
       if (bladeState === 'solid') engine.setOpacity(engine.listParts(RING), 1);
     }
     lastBladeState = bladeState;
+    if (t >= 9.6) m2At(t);
     graphAt(t);
     if (!mask) {
       const first = firstBladeTip();
@@ -626,20 +901,44 @@ export async function mountOpening(theme: Theme) {
         return [x0 - 8, y0 - 8, x1 + 8, y1 + 8];
       })(),
       blades: { count: shownNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
-      graph: { nodes, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
+      graph: { nodes, ids: lastGraphNodes, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
+      boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
+      components: Object.fromEntries(pieces.flatMap(p => p.ids.map(id => [id, appliedT >= p.start]))),
+      visibleParts: engine.listParts(RING).length + engine.listParts(DISC).length
+        + pieces.reduce((n, p) => (appliedT >= p.start ? n + p.ids.reduce((k, id) => k + engine.listParts(id).length, 0) : n), 0),
       seat: view.project(seatPos.clone()),
       seatMatrix: seatMatrix.elements.slice(),
     };
   };
 
+  if (solo) {
+    const keep = new Set(solo);
+    for (const c of components) if (!keep.has(c.meta.id)) engine.setVisible(c.meta.id, false);
+    hero.root.visible = false;
+    open.hero.root.visible = false;
+  }
   if (mask) {
     const black = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, toneMapped: false });
     scene.traverse(o => {
       const m = o as THREE.Mesh & { isLineSegments2?: boolean; userData: { openShell?: boolean } };
       if (m.isMesh && !m.isLineSegments2 && !m.userData.openShell) m.material = black;
     });
+    if (partMask) {
+      for (const p of pieces) engine.setVisible(p.ids, false);
+      engine.setVisible(partMask, true);
+      for (const p of pieces) for (const m of p.mats) m.clippingPlanes = null;
+      for (const p of pieces) for (const l of p.lines) l.visible = false;
+    }
+    for (const piece of pieces) {
+      for (const mesh of piece.meshes) {
+        const bm = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, toneMapped: false });
+        bm.clippingPlanes = [piece.plane];
+        mesh.material = bm;
+        piece.mats.push(bm);
+      }
+    }
     if (maskMode === 'disk-solid') {
       // Solid part black (below the sweep), unswept part opaque white (above).
       const blackBelow = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, toneMapped: false });
