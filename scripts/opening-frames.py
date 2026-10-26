@@ -1,5 +1,5 @@
 """Render the review stills, sheets and the reveal curve for opening milestone one."""
-import csv, os, time
+import csv, json, os, time
 from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
@@ -8,6 +8,7 @@ OUT = f'{ROOT}/review/opening'
 URL = 'http://127.0.0.1:5192/frames.html'
 os.makedirs(OUT, exist_ok=True)
 TIMES = ['0.6', '3', '5.5', '5.8', '6.1', '6.4', '7.0', '7.30', '7.45', '7.60', '8.0', '8.6', '9.05', '9.6']
+M2 = ['10.1', '10.7', '11.3', '11.9', '12.6', '13.2', '13.5', '14.5', '15.5', '16.3', '17.0']
 
 with sync_playwright() as pw:
     browser = pw.chromium.launch(channel='chrome', headless=True,
@@ -23,6 +24,10 @@ with sync_playwright() as pw:
 
     for t in TIMES:
         shot(f'frame=opening&theme=light&t={t}', f'{OUT}/t{float(t):05.2f}.png')
+    os.makedirs(f'{OUT}/m2', exist_ok=True)
+    for t in M2:
+        shot(f'frame=opening&theme=light&t={t}', f'{OUT}/m2/t{float(t):05.2f}.png')
+    shot('frame=opening&theme=light&t=17.0&mask=1', f'{OUT}/m2/mask-17.00.png')
     shot('frame=opening&theme=light&t=7.3&mask=1', f'{OUT}/mask-07.30.png')
     shot('frame=opening&theme=light&t=6.4&mask=disk-solid', f'{OUT}/disk-solid-06.40.png')
 
@@ -76,4 +81,35 @@ if rows:
     points = [(left + w * (t0 - 4.8) / 2.4, top + h - h * v) for t0, v in rows]
     d.line(points, fill='#1c5fb8', width=2)
 chart.save(f'{OUT}/涡轮盘铺材质曲线.png')
-print('deliverables written', len(files), 'tiles')
+# Milestone two sheet: 11 stills plus the 17 s mask, 4 columns by 3 rows.
+m2_files = [f'{OUT}/m2/t{float(t):05.2f}.png' for t in M2] + [f'{OUT}/m2/mask-17.00.png']
+m2_sheet = Image.new('RGB', (1920, 810), '#ffffff')
+for i, path in enumerate(m2_files):
+    m2_sheet.paste(Image.open(path).convert('RGB').resize((480, 270), Image.LANCZOS), ((i % 4) * 480, (i // 4) * 270))
+m2_sheet.save(f'{OUT}/m2/拼版.png')
+
+# Reveal curves for the milestone two pieces.
+try:
+    curves = json.load(open(f'{OUT}/m2-curves.json'))
+except Exception:
+    curves = {}
+chart2 = Image.new('RGB', (1100, 620), '#ffffff')
+d2 = ImageDraw.Draw(chart2)
+font2 = ImageFont.truetype('/System/Library/Fonts/Hiragino Sans GB.ttc', 15)
+d2.text((70, 14), '每类零件从线框到材质的推进（0 = 只有线框，1 = 铺满）', font=font2, fill='#1c2228')
+left2, top2, w2, h2 = 70, 50, 960, 500
+d2.rectangle([left2, top2, left2 + w2, top2 + h2], outline='#c8ccc8')
+for k in range(0, 101, 25):
+    y = top2 + h2 - h2 * k / 100
+    d2.line([left2, y, left2 + w2, y], fill='#e6e8e6')
+    d2.text((left2 - 44, y - 8), f'{k}%', font=font2, fill='#5b646b')
+colours = ['#1c5fb8', '#c2571a', '#2f7d4f', '#7a4fa3', '#a8342a', '#0f7d8c', '#8a5a00', '#3b6d11']
+for i, (name, series) in enumerate(curves.items()):
+    if not series:
+        continue
+    t0 = series[0][0]
+    pts = [(left2 + w2 * (tt - t0) / 0.9, top2 + h2 - h2 * g) for tt, g in series]
+    d2.line(pts, fill=colours[i % len(colours)], width=2)
+    d2.text((left2 + 10, top2 + 10 + i * 18), name, font=font2, fill=colours[i % len(colours)])
+chart2.save(f'{OUT}/m2/线框到材质曲线.png')
+print('deliverables written', len(files), 'tiles + m2')

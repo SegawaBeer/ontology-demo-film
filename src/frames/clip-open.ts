@@ -10,7 +10,7 @@ import { renderGraph } from './graph';
 import type { GraphState } from './data';
 import type { Theme } from './scene';
 
-export const DURATION = 9.6;
+export const DURATION = 17.0;
 
 const RING = 'turbine.stage-1-blades';
 const DISC = 'turbine.stage-1-disk';
@@ -706,18 +706,14 @@ export async function mountOpening(theme: Theme) {
           // A colour mix barely registers on polished metal, so the pulse is
           // carried by a short emissive lift toward the same highlight blue.
           const k = amount / 0.25;
-          for (const t of piece.tints) {
-            t.mat.color.copy(t.base).lerp(LIT, amount);
-            t.mat.metalness = lerp(t.metal, 0.1, k);
-            t.mat.roughness = lerp(t.rough, 0.7, k);
-          }
+          engine.setColor(piece.ids, new THREE.Color(
+            1 + (0.45 - 1) * k,
+            1 + (1.0 - 1) * k,
+            1 + (2.2 - 1) * k,
+          ));
           flashOn.set(piece, true);
         } else if (was) {
-          for (const t of piece.tints) {
-            t.mat.color.copy(t.base);
-            t.mat.metalness = t.metal;
-            t.mat.roughness = t.rough;
-          }
+          engine.setColor(piece.ids, null);
           flashOn.set(piece, false);
         }
       }

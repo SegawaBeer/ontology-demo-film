@@ -2,7 +2,7 @@
 
 Each frame is produced by seeking the page to an exact time, so the result
 does not depend on how fast the machine renders.
-Usage: export-clip.py URL OUT.mp4 [fps] [scale] [limit_frames]
+Usage: export-clip.py URL OUT.mp4 [fps] [scale] [limit_frames] [start_seconds]
 """
 import sys, time, subprocess
 from playwright.sync_api import sync_playwright
@@ -11,6 +11,7 @@ url, out = sys.argv[1], sys.argv[2]
 fps = int(sys.argv[3]) if len(sys.argv) > 3 else 60
 scale = int(sys.argv[4]) if len(sys.argv) > 4 else 2
 limit = int(sys.argv[5]) if len(sys.argv) > 5 else None
+start_at = float(sys.argv[6]) if len(sys.argv) > 6 else 0.0
 
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
@@ -19,7 +20,7 @@ with sync_playwright() as p:
     page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=120000)
     page.evaluate("document.fonts.ready")
     duration = page.evaluate("window.__duration")
-    total = int(round(duration * fps))
+    total = int(round((duration - start_at) * fps))
     if limit: total = min(total, limit)
     ffmpeg = subprocess.Popen([
         'ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
@@ -29,7 +30,7 @@ with sync_playwright() as p:
     ], stdin=subprocess.PIPE)
     started = time.time()
     for i in range(total):
-        page.evaluate(f"window.__seek({i / fps})")
+        page.evaluate(f"window.__seek({start_at + i / fps})")
         ffmpeg.stdin.write(page.screenshot(type='png'))
         if i % 60 == 0:
             elapsed = time.time() - started
