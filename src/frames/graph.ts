@@ -96,7 +96,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     t.textContent = g.label;
     if (!gLit && dimming) t.style.opacity = String(0.5 + 0.5 * Math.max(0, (dimValue - 0.22) / 0.78));
   }
-  for (const c of only ? [] : captions) {
+  for (const c of only ? captions.filter(x => (state.captions ?? []).includes(x.text)) : captions) {
     const t = el('text', { x: c.x, y: c.y + 12, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--ink-3)' }, svg);
     t.textContent = c.text;
     t.style.opacity = dim;

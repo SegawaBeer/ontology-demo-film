@@ -37,9 +37,8 @@ function samplePoints(root: THREE.Object3D, stride = 1) {
   return new Float32Array(out);
 }
 
-export async function mountOpen(theme: Theme) {
+export async function createOpenScene(theme: Theme, mask: boolean) {
   const params = new URLSearchParams(location.search);
-  const mask = params.get('mask') === '1';
   const frame = document.querySelector<HTMLElement>('#frame')!;
   frame.classList.add('layout-split');
 
@@ -109,6 +108,7 @@ export async function mountOpen(theme: Theme) {
   }
 
   const direction = new THREE.Vector3(0, Math.sin(THREE.MathUtils.degToRad(10)), Math.cos(THREE.MathUtils.degToRad(10))).normalize();
+  const openTarget = new THREE.Vector3();
 
   /** Aim at the blade, then settle distance and pan so it fills the left column. */
   function fit(yawDeg: number) {
@@ -138,6 +138,7 @@ export async function mountOpen(theme: Theme) {
     camera.position.copy(target).addScaledVector(direction, distance);
     camera.lookAt(target);
     camera.updateMatrixWorld();
+    openTarget.copy(target);
   }
 
   function measure(yawDeg: number) {
@@ -292,7 +293,7 @@ export async function mountOpen(theme: Theme) {
     nodeDot.style.opacity = p > 0 ? '1' : '0';
   }
 
-  function apply(t: number) {
+  function setTime(t: number, render = true) {
     const yaw = params.has('yaw') ? Number(params.get('yaw')) : Y3 + YAW_RATE * (t - 3);
     spin.rotation.y = THREE.MathUtils.degToRad(yaw);
     tilt.updateMatrixWorld(true);
@@ -303,7 +304,7 @@ export async function mountOpen(theme: Theme) {
     lineMat.visible = alpha > 0.001;
     drawGraph(t);
     drawThread(t);
-    view.render();
+    if (render) view.render();
   }
 
   if (mask) {
@@ -322,7 +323,20 @@ export async function mountOpen(theme: Theme) {
     nodeDot.setAttribute('opacity', '0.85');
   }
 
-  const seek = (t: number) => apply(t);
+  return {
+    view, scene, camera, mask, hero, spin, tilt, center, Y3,
+    openTarget: openTarget.clone(),
+    matrixFor, setTime, setSweep, lineMat, keepBelow, keepAbove, upAxis, low, high,
+    drawGraph, drawThread, nodePath, nodeDot, thread, graph,
+    project: view.project,
+  };
+}
+
+export type OpenScene = Awaited<ReturnType<typeof createOpenScene>>;
+
+export async function mountOpen(theme: Theme) {
+  const scene = await createOpenScene(theme, new URLSearchParams(location.search).get('mask') === '1');
+  const seek = (t: number) => scene.setTime(t);
   (window as unknown as { __seek: (t: number) => void }).__seek = seek;
-  seek(Number(params.get('t') ?? 3));
+  seek(Number(new URLSearchParams(location.search).get('t') ?? 3));
 }

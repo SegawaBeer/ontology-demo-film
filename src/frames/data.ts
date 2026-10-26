@@ -104,6 +104,8 @@ export type GraphState = {
   sub?: Record<string, string>;
   /** Per-node fade-in, 0..1. */
   appear?: Record<string, number>;
+  /** With `only`, the captions to keep (matched by their text). */
+  captions?: string[];
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.
