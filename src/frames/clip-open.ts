@@ -778,18 +778,20 @@ export async function mountOpening(theme: Theme) {
     }
     for (let pi = 0; pi < pieces.length; pi++) {
       const a = amounts.get(pieces[pi]) ?? 0;
-      const tints = pieceTints[pi];
-      if (!tints.length) continue;
+      const piece = pieces[pi];
       if (a <= 0.0005) {
-        if (pieces[pi].idle !== 1) {
-          for (const tint of tints) writeTint(tint, tint.base);
-          pieces[pi].idle = 1;
+        if (piece.idle !== 1) {
+          engine.setColor(piece.ids, null);
+          for (const tint of pieceTints[pi]) if (tint.mat) tint.mat.color.copy(tint.base);
+          piece.idle = 1;
         }
         continue;
       }
-      pieces[pi].idle = 0;
-      for (const tint of tints) {
-        writeTint(tint, tint.base.clone().convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear());
+      piece.idle = 0;
+      const k = a / 0.25;
+      engine.setColor(piece.ids, new THREE.Color(1 + (0.55 - 1) * k, 1 + (0.9 - 1) * k, 1 + (1.9 - 1) * k));
+      for (const tint of pieceTints[pi]) {
+        if (tint.mat) tint.mat.color.copy(tint.base).convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear();
       }
     }
   }
