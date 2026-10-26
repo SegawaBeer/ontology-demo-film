@@ -114,6 +114,7 @@ with sync_playwright() as p:
 
     # ---- deliverable frame ----
     render(page, 'frame=open&theme=light&t=3', STYLE)
+    probe = page.evaluate('window.__openProbe')
     render(page, 'frame=open&theme=light&t=3&mask=1', f'{OUT}/mask.png')
     render(page, 'frame=open&theme=light&t=3&sweep=0.5', f'{OUT}/sweep-0.5.png')
     for t in (0.6, 1.2, 1.8, 5):
@@ -273,6 +274,32 @@ for y in range(miny, maxy + 1, 2):
             n += 1
 mean_diff = diff / max(1, n)
 check('12 blade contrast', mean_diff >= 18, f'{mean_diff:.1f}', 'mean channel diff >= 18')
+
+# ---- 13 mid-blade wall is solid ----
+from statistics import pstdev
+
+def box_stats(cx, cy, size=120):
+    vals, black, total = [], 0, 0
+    for y in range(cy - size // 2, cy + size // 2):
+        for x in range(cx - size // 2, cx + size // 2):
+            r, g_, b = fpx[x, y]
+            vals.append(0.2126 * r + 0.7152 * g_ + 0.0722 * b)
+            total += 1
+            if mask_px[x, y] < 60:
+                black += 1
+    return pstdev(vals), black / total
+
+px, py = round(probe['x']), round(probe['y'])
+std_c, cover = box_stats(px, py)
+std_l, _ = box_stats(px - 60, py)
+std_r, _ = box_stats(px + 60, py)
+check('13 mid-blade solid', cover == 1.0 and std_c <= max(std_l, std_r) + 3,
+      f'coverage {cover*100:.1f}%, std c/l/r {std_c:.2f}/{std_l:.2f}/{std_r:.2f}',
+      'coverage 100%, centre std <= max(left, right) + 3')
+
+# zoom of the same patch for review
+zoom = Image.open(STYLE).convert('RGB').crop((px - 150, py - 120, px + 150, py + 120)).resize((900, 720), Image.LANCZOS)
+zoom.save(f'{OUT}/叶身中部放大.png')
 
 # ---- 10 build ----
 if skipped_build:

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import { createHeroBlade, bladePoint, outwardNormal } from '../hero-blade';
+import { createHeroBlade, bladePoint, outwardNormal, HERO_COMPONENT } from '../hero-blade';
 import { renderGraph } from './graph';
 import { createModelView, type Theme } from './scene';
 
@@ -51,6 +51,9 @@ export async function mountOpen(theme: Theme) {
   hero.setCutaway(0);
   hero.setCoatings(0);
   hero.setAirflow(0);
+  // The opening shot is about the part, not its coating, so the four sample
+  // slabs that sit proud of the pressure face stay out of it.
+  for (const id of ['coat-base', 'coat-bond', 'coat-tgo', 'coat-ysz']) hero.setVisible(`${HERO_COMPONENT}.${id}`, false);
 
   // Spin about the vertical axis through the mid-section, then tilt a little so
   // the tip section shows.
@@ -172,6 +175,11 @@ export async function mountOpen(theme: Theme) {
   }
 
   fit(Y3);
+
+  // Screen position of the middle of the pressure face, so the checks can look
+  // at that patch of the frame.
+  (window as unknown as { __openProbe: { x: number; y: number } }).__openProbe =
+    view.project(bladePoint(0.45, 0.55, 1).clone().applyMatrix4(matrixFor(Y3)));
 
   // ---- contour lines --------------------------------------------------------
   const lineMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
