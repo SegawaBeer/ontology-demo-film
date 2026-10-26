@@ -62,10 +62,11 @@ with sync_playwright() as pw:
         ys = [y for y in range(0, 1080, 2) for x in range(0, 1280, 2) if im[x, y] < 60]
         return (sum(xs) // len(xs), sum(ys) // len(ys)) if xs else (640, 540)
 
-    zoom = Image.new('RGB', (4 * 480, 3 * 360), '#ffffff')
+    zoom = Image.new('RGB', (4 * 480, 4 * 360), '#ffffff')
     rows = [('turbine.stage-2-blades,turbine.stage-2-hub,turbine.stage-2-outer,turbine.stage-2-tip-ring,turbine.stage-1-outer,turbine.stage-1-tip-ring', [10.15, 10.25, 10.40, 10.60]),
             ('compressor.stage-4', [13.54, 13.61, 13.75, 13.90]),
-            ('compressor.stators', [13.54 + 0.0, 13.61, 13.75, 13.90])]
+            ('compressor.stators', [13.54 + 0.0, 13.61, 13.75, 13.90]),
+        ('turbine.stage-1-blades', [7.70, 7.85, 8.00, 8.30])]
     for r, row in enumerate(rows):
         ids, times = row[0], row[1]
         for c, t in enumerate(times):

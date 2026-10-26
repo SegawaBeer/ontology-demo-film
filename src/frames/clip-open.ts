@@ -57,6 +57,13 @@ export async function mountOpening(theme: Theme) {
   view.setGhost(engine, 0);
   const components = engine.modules.flatMap(m => m.components);
   const allComponentIds = components.map(c => c.meta.id);
+  // Hiding an instanced part zeroes its instance matrix, so keep a copy for
+  // the outlines before that happens.
+  const instanceSnapshots = new Map<THREE.InstancedMesh, Float32Array>();
+  engine.root.traverse(o => {
+    const inst = o as THREE.InstancedMesh;
+    if (inst.isInstancedMesh) instanceSnapshots.set(inst, Float32Array.from(inst.instanceMatrix.array));
+  });
   engine.setVisible(allComponentIds, false);
   engine.root.updateMatrixWorld(true);
 
@@ -331,7 +338,8 @@ export async function mountOpening(theme: Theme) {
     const base = new LineSegmentsGeometry().fromEdgesGeometry(edges);
     const matrix = new THREE.Matrix4();
     for (let n = 1; n <= 100; n++) {
-      bladeMesh.getMatrixAt(n - 1, matrix);
+      const snap = instanceSnapshots.get(bladeMesh)!;
+      matrix.fromArray(snap, (n - 1) * 16);
       const local = base.clone();
       const arr: number[] = [];
       const src = (local.attributes.instanceStart as THREE.InterleavedBufferAttribute).data.array as Float32Array;
@@ -351,6 +359,25 @@ export async function mountOpening(theme: Theme) {
       ringOutlines.push(lines);
     }
     edges.dispose();
+  }
+
+  // One depth-only shell over the whole ring hides the back-side blade lines.
+  let ringShell: THREE.Mesh | null = null;
+  if (bladeMesh && !mask) {
+    const shell = bladeMesh.clone() as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
+    const sm = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide });
+    sm.polygonOffset = true;
+    sm.polygonOffsetFactor = 1;
+    sm.polygonOffsetUnits = 1;
+    shell.material = sm;
+    shell.instanceMatrix = bladeMesh.instanceMatrix;
+    shell.matrixAutoUpdate = false;
+    shell.matrix.copy(bladeMesh.matrix);
+    shell.castShadow = false;
+    shell.receiveShadow = false;
+    shell.renderOrder = -1;
+    bladeMesh.parent!.add(shell);
+    ringShell = shell;
   }
 
   // ---- disc reveal --------------------------------------------------------
@@ -410,20 +437,29 @@ export async function mountOpening(theme: Theme) {
   // ---- blades on the ring -------------------------------------------------
   for (let n = 1; n <= 100; n++) engine.setVisible(bladeId(n), false);
   let shownNow = 0;
+  function solidBlades(t: number) {
+    let n = t >= 7.60 ? 1 : 0;
+    for (let k = 2; k <= 100; k++) if (t + 1e-9 >= bladeStart(k) + outlineFor(k)) n = k;
+    return n;
+  }
+  let solidNow = -1;
   function ringAt(t: number) {
-    if (solo) { engine.setVisible(RING, false); return; }
+    if (solo) { engine.setVisible(RING, false); if (ringShell) ringShell.visible = false; return; }
     const shown = bladesShown(t);
-    if (shown !== shownNow) {
-      for (let n = 1; n <= 100; n++) engine.setVisible(bladeId(n), n <= shown);
+    const solid = solidBlades(t);
+    if (shown !== shownNow || solid !== solidNow) {
+      for (let n = 1; n <= 100; n++) engine.setVisible(bladeId(n), n <= solid);
       shownNow = shown;
+      solidNow = solid;
     }
     for (let n = 1; n <= 100; n++) {
       const outline = ringOutlines[n - 1];
       if (!outline) continue;
       const start = n === 1 ? 7.4 : bladeStart(n);
       const width = n === 1 ? 0 : outlineFor(n);
-      outline.visible = n <= shown && t < start + width;
+      outline.visible = n <= shown && t < start + width && !noLines;
     }
+    if (ringShell) ringShell.visible = t < 8.75;
   }
 
   // ---- flash --------------------------------------------------------------
@@ -568,7 +604,10 @@ export async function mountOpening(theme: Theme) {
     const m = new THREE.Matrix4();
     const v = new THREE.Vector3();
     for (let k = 0; k < count; k++) {
-      if (inst.isInstancedMesh) inst.getMatrixAt(k, m); else m.identity();
+      if (inst.isInstancedMesh) {
+        const snap = instanceSnapshots.get(inst);
+        if (snap) m.fromArray(snap, k * 16); else inst.getMatrixAt(k, m);
+      } else m.identity();
       for (let i = 0; i < pos.count; i++) {
         v.fromBufferAttribute(pos, i).applyMatrix4(m);
         out.push(v.x, v.y, v.z);
@@ -890,7 +929,9 @@ export async function mountOpening(theme: Theme) {
     // Touch blade 001 only while it is changing, so the resulting engine state
     // is the same however the playhead got here.
     const bladeState = t < 7.30 ? 'hidden' : fade >= 0.999 ? 'solid' : 'fading';
-    if (bladeState === 'fading') {
+    if ((solo || partMask) && bladeState !== 'hidden') {
+      engine.setVisible(bladeId(1), false);
+    } else if (bladeState === 'fading') {
       engine.setVisible(bladeId(1), true);
       engine.setOpacity(bladeId(1), fade);
     } else if (bladeState !== lastBladeState) {
@@ -976,7 +1017,7 @@ export async function mountOpening(theme: Theme) {
         }
         return [x0 - 8, y0 - 8, x1 + 8, y1 + 8];
       })(),
-      blades: { count: shownNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
+      blades: { count: shownNow, solid: solidNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
       graph: { nodes, ids: lastGraphNodes, pulse: lastPulse, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
