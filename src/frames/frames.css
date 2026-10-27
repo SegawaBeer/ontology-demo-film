@@ -205,6 +205,21 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .inset-tag b { font-size: 12px; font-weight: 500; }
 .inset-tag span { font-family: var(--mono); font-size: 11px; }
 
+/* Main timeline (frame=film-a): one 1280-wide canvas under the dialog and
+   model columns; the dialog is a panel that slides in over its left part. */
+.frame.layout-film { grid-template-columns: 1280px 640px; }
+.layout-film .col-dialog { position: absolute; left: 0; top: 0; width: 560px; z-index: 3; }
+.layout-film .col-dialog::after {
+  content: ''; position: absolute; left: 560px; top: 0; width: 1px; height: 1080px;
+  background: linear-gradient(var(--rule), var(--rule)), var(--bg);
+}
+.layout-film .col-model { border-left: 0; }
+.layout-film #model { width: 1280px; left: 0; }
+.layout-film .callouts { left: 561px; width: 720px; }
+.layout-film .callout-labels { left: 561px; }
+.model-caption .xf { display: grid; justify-items: end; }
+.model-caption .xf > span { grid-area: 1 / 1; letter-spacing: inherit; }
+
 /* Browser preview: scale the 1920×1080 frame down to fit the window. */
 html.fit, html.fit body { width: 100vw; height: 100vh; overflow: hidden; }
 html.fit body { background: #d8dcdc; }

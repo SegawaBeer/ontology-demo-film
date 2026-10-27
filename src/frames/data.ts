@@ -114,6 +114,10 @@ export type GraphState = {
   onlyEdges?: [string, string][];
   /** Match the drawing head's thickness so completion does not pop. */
   edgeWidth?: number;
+  /** 0 = the net's strong link style, 1 = the soft three-column style; blends in between. */
+  relMix?: number;
+  /** 0..1: lit nodes, lit links, chips and timings fade back to their unlit look. */
+  release?: number;
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.

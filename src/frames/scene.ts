@@ -3,7 +3,13 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { loadEngineAssets, Engine } from '../model';
 
 export type Theme = 'dark' | 'light';
-export type Shell = { solid?: string[]; ghost?: string[]; ghostAmount?: number };
+/**
+ * `layered`: every component outside `solid` can also be ghosted on its own
+ * with setGhostOf (one amount and one fade per component). The cut plane still
+ * applies only to the `ghost` list.
+ */
+export type Shell = { solid?: string[]; ghost?: string[]; ghostAmount?: number; layered?: boolean };
+type Layer = { materials: THREE.MeshStandardMaterial[]; meshes: THREE.Mesh[]; parts: string[]; amount: number; fade: number };
 export type Pose = { position: THREE.Vector3; target: THREE.Vector3 };
 
 const palette = {
@@ -88,7 +94,73 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     }
     ghosts.set(engine, entry);
     setGhost(engine, shell.ghostAmount ?? 1);
+    if (shell.layered) {
+      const map = new Map<string, Layer>();
+      for (const module of engine.modules) {
+        for (const component of module.components) {
+          if (solid.has(component.meta.id) || component.meta.id === 'turbine.hero-blade') continue;
+          const layer: Layer = { materials: [], meshes: [], parts: engine.listParts(component.meta.id), amount: -1, fade: -1 };
+          component.group.traverse(object => {
+            const mesh = object as THREE.Mesh;
+            if (!mesh.isMesh) return;
+            const material = mesh.material as THREE.MeshStandardMaterial;
+            material.userData.base ??= { metalness: material.metalness, roughness: material.roughness, env: material.envMapIntensity };
+            layer.materials.push(material);
+            layer.meshes.push(mesh);
+          });
+          map.set(component.meta.id, layer);
+        }
+      }
+      layers.set(engine, map);
+    }
     return engine;
+  }
+
+  const layers = new Map<Engine, Map<string, Layer>>();
+  /** Component ids that setGhostOf can drive on a `layered` engine. */
+  const layerIds = (engine: Engine) => [...(layers.get(engine)?.keys() ?? [])];
+
+  /**
+   * Per-component ghost, same look as setGhost. `fade` 1 takes the component
+   * down to opacity 0 on top of the ghost (used to clear a path for a moving part).
+   */
+  function setGhostOf(engine: Engine, ids: string[], amount: number, fade = 0) {
+    const map = layers.get(engine);
+    if (!map) return;
+    const color = new THREE.Color();
+    for (const id of ids) {
+      const layer = map.get(id);
+      if (!layer || (Math.abs(layer.amount - amount) < 1e-4 && Math.abs(layer.fade - fade) < 1e-4)) continue;
+      layer.amount = amount;
+      layer.fade = fade;
+      for (const pid of layer.parts) {
+        const state = engine.parts.get(pid);
+        if (state) engine.setColor(pid, color.copy(state.baseColor).lerp(ghostColor, amount));
+      }
+      const transparent = amount > 0.001 || fade > 0.001;
+      const depthWrite = amount < 0.6 && fade < 0.001;
+      for (const material of layer.materials) {
+        const base = material.userData.base;
+        material.metalness = lerp(base.metalness, 0.15, amount);
+        material.roughness = lerp(base.roughness, 0.75, amount);
+        material.envMapIntensity = lerp(base.env, 0.4, amount);
+        material.opacity = lerp(1, look.ghostOpacity, 1 - (1 - amount) ** 2) * (1 - fade);
+        if (material.transparent !== transparent || material.depthWrite !== depthWrite) {
+          material.transparent = transparent;
+          material.depthWrite = depthWrite;
+          material.needsUpdate = true;
+        }
+      }
+      for (const mesh of layer.meshes) { mesh.castShadow = amount < 0.5 && fade < 0.5; mesh.receiveShadow = amount < 0.5 && fade < 0.5; }
+    }
+  }
+
+  /** Opacity a part is drawn with right now (0 when hidden). */
+  function partOpacity(engine: Engine, id: string) {
+    const state = engine.parts.get(id);
+    if (!state || !state.visible) return 0;
+    const material = (state.promoted?.material ?? state.group.material) as THREE.MeshStandardMaterial;
+    return material.transparent ? material.opacity : 1;
   }
 
   /** 0 = original metal, 1 = faint matte ghost. Cheap to call every frame. */
@@ -213,7 +285,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
 
   return {
     scene, camera, renderer, width, height,
-    addEngine, setGhost, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
+    addEngine, setGhost, setGhostOf, layerIds, partOpacity, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
     render: () => renderer.render(scene, camera),
   };
 }

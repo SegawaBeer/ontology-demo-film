@@ -276,6 +276,33 @@ async function clip() {
   requestAnimationFrame(loop);
 }
 
-const frames: Record<string, () => Promise<void>> = { q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
+// Main timeline part one, global t 30–64. Same driving as clip: `&t=` holds a
+// moment, `&play=0` holds the start, otherwise it previews in real time until
+// something (the exporter) calls window.__seek.
+async function filmA() {
+  const { mountFilmA, START, DURATION } = await import('./clip-q12');
+  const player = await mountFilmA(theme);
+  const w = window as unknown as Record<string, unknown>;
+  let driven = false;
+  w.__seek = (t: number) => { driven = true; player.seek(t); };
+  w.__duration = DURATION;
+  w.__start = START;
+  w.__events = player.events;
+  w.__filmProbe = player.probe;
+  w.__filmDebug = player.debug;
+  const hold = params.get('t');
+  if (hold !== null) { player.seek(Number(hold)); return; }
+  player.seek(START);
+  if (params.get('play') === '0') return;
+  const start = performance.now();
+  const loop = (now: number) => {
+    if (driven) return;
+    player.seek(START + ((now - start) / 1000) % (DURATION - START + 1.5));
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+const frames: Record<string, () => Promise<void>> = { 'film-a': filmA, q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
 await (frames[frameName] ?? questionThree)();
 document.documentElement.dataset.ready = '1';
