@@ -1,6 +1,6 @@
 """Checks 29-38 for opening milestone three A."""
 import json, math, os, sys, time
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageChops
 from playwright.sync_api import sync_playwright
 
 ROOT = '<项目目录>'
@@ -49,6 +49,13 @@ def share(a, b, region, tol=8):
                 bad += 1
     return bad / max(1, total)
 
+
+def column(path):
+    """Left column and its distance from the background, as pictures."""
+    im = Image.open(path).convert('RGB').crop((0, 0, 1280, 1080))
+    d = ImageChops.difference(im, Image.new('RGB', im.size, BG)).convert('L')
+    return im, d
+
 PIECES = [
     ('combustor', ['combustor.cans', 'combustor.casing', 'combustor.injectors', 'combustor.inner-shell'], 17.00, 0.20, 0.60),
     ('core', ['core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles', 'turbine.band', 'turbine.inner-cone'], 17.80, 0.20, 0.70),
@@ -79,10 +86,12 @@ with sync_playwright() as pw:
         return page.evaluate('window.__openingProbe()')
 
     # ---- 29 join with a15ba3a ----
-    # 17.00 is when the combustor and its graph node appear, so the counter goes
-    # from 13 to 14 by design; the last picture moment is 16.98.
+    # The depth shells were reordered, so from 9.6 s on metal that used to be
+    # erased may come back; nothing else may change. 3.0 and 8.0 must still match
+    # exactly. 17.00 is the combustor's first frame, so 16.98 is compared and
+    # 17.00 only for the camera.
     worst = ('', 0.0); cam_ok = True
-    for tt in ('3.0', '8.0', '12.0', '15.0', '16.98'):
+    for tt in ('3.0', '8.0'):
         go(f'frame=opening&theme=light&t={tt}')
         page.screenshot(path=f'{TMP}/j-now.png')
         cam_now = probe()['camera']
@@ -93,13 +102,37 @@ with sync_playwright() as pw:
                 share(f'{TMP}/j-now.png', f'{TMP}/j-base.png', (1280, 0, 1920, 1080)))
         if s > worst[1]: worst = (tt, s)
         cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
+    excused_rows = []
+    for tt in ('12.0', '15.0', '16.98'):
+        go(f'frame=opening&theme=light&t={tt}')
+        page.screenshot(path=f'{TMP}/j-now.png')
+        cam_now = probe()['camera']
+        go(f'frame=opening&theme=light&t={tt}', base=True)
+        page.screenshot(path=f'{TMP}/j-base.png')
+        cam_base = probe()['camera']
+        cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
+        right = share(f'{TMP}/j-now.png', f'{TMP}/j-base.png', (1280, 0, 1920, 1080))
+        if right > worst[1]: worst = (tt + ' right', right)
+        now, now_d = column(f'{TMP}/j-now.png')
+        base, base_d = column(f'{TMP}/j-base.png')
+        changed = ImageChops.difference(now, base).convert('L').point(lambda v: 255 if v > 8 else 0)
+        # Only metal that a15ba3a had erased may appear: base near background and
+        # the new picture clearly not.
+        returnable = ImageChops.multiply(base_d.point(lambda v: 255 if v < 15 else 0),
+                                         now_d.point(lambda v: 255 if v > 25 else 0))
+        rest = ImageChops.subtract(changed, returnable)
+        rest_share = rest.histogram()[255] / (1280 * 1080)
+        excused_rows.append((tt, changed.histogram()[255], returnable.histogram()[255], round(rest_share * 100, 4)))
+        if rest_share > 0.0005: worst = (tt + ' left', rest_share)
     go('frame=opening&theme=light&t=17.0')
     cam_now = probe()['camera']
     go('frame=opening&theme=light&t=17.0', base=True)
     cam_base = probe()['camera']
     cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
-    check('29 join', worst[1] < 0.0001 and cam_ok, f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok} (17.0 camera only)',
-          '< 0.01%, identical camera')
+    joined = (worst[1] < 0.0001 and cam_ok)
+    check('29 join', joined,
+          f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok}, allowed {excused_rows}',
+          '3.0/8.0 < 0.01%, later frames only returning metal < 0.05%, right < 0.01%, identical camera')
 
     # ---- 30 parts arrive ----
     schedule = {}
@@ -421,6 +454,44 @@ with sync_playwright() as pw:
           f'{bad38[:1]} pure {pure}, fan {fan_px}, cowl {moved}/{len(rest)} = {cowl_share*100:.2f}% '
           f'(exact rotor mask {moved_tight}/{len(rest_tight)} = {share_tight*100:.2f}%)',
           'rotor matches the formula, pure of t, fan turns, cowl region <= 1% moved')
+
+    # ---- 39 no metal erased by the depth shells ----
+    # The shells exist to hide a part's own back lines, so the picture to compare
+    # against has the shells and the outlines both off: what shows there and not
+    # in the real picture is metal the shell turned into background. (Hiding only
+    # the shells also uncovers back lines, and those would count as metal.)
+    bare = go('frame=opening&theme=light&t=9.6&noshells=1&nolines=1', which=extra[0])
+    shellsonly = go('frame=opening&theme=light&t=9.6&noshells=1', which=extra[1])
+    wiped = []
+    for i in range(int((23.0 - 9.6) / 0.05) + 1):
+        tt = round(9.6 + i * 0.05, 2)
+        page.evaluate(f'window.__seek({tt})')
+        bare.evaluate(f'window.__seek({tt})')
+        page.screenshot(path=f'{TMP}/n39.png')
+        bare.screenshot(path=f'{TMP}/b39.png')
+        _, now_d = column(f'{TMP}/n39.png')
+        _, bare_d = column(f'{TMP}/b39.png')
+        n = ImageChops.multiply(now_d.point(lambda v: 255 if v < 15 else 0),
+                                bare_d.point(lambda v: 255 if v > 40 else 0)).histogram()[255]
+        wiped.append([tt, n])
+    worst5 = sorted(wiped, key=lambda r: -r[1])[:5]
+    # For the record: the same count with only the shells hidden, which also
+    # shows the back lines the shells are there to hide.
+    literal = []
+    for tt in (12.78, 13.54, 17.85, 20.30):
+        page.evaluate(f'window.__seek({tt})')
+        shellsonly.evaluate(f'window.__seek({tt})')
+        page.screenshot(path=f'{TMP}/n39.png')
+        shellsonly.screenshot(path=f'{TMP}/b39.png')
+        _, now_d = column(f'{TMP}/n39.png')
+        _, bare_d = column(f'{TMP}/b39.png')
+        n = ImageChops.multiply(now_d.point(lambda v: 255 if v < 15 else 0),
+                                bare_d.point(lambda v: 255 if v > 40 else 0)).histogram()[255]
+        literal.append([tt, n])
+    with open(f'{OUT}/m3-wiped.json', 'w') as f:
+        json.dump({'worst': worst5, 'frames': wiped, 'only_shells_hidden': literal}, f)
+    check('39 no metal erased', all(n <= 150 for _, n in wiped),
+          f'worst {worst5}; shells only {literal}', 'every frame <= 150 pixels of metal turned into background')
 
     check('14c console during milestone three', not console, console[:2] or 'none', 'no error / pageerror')
     browser.close()

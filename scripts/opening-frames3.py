@@ -55,11 +55,16 @@ with sync_playwright() as pw:
         return (sum(xs) // len(xs), sum(ys) // len(ys)) if xs else (640, 540)
 
     # Five rows as specified: combustor, core casing, fan blades, cowl, exhaust.
+    # The blades go solid one by one, so their row samples the fifth and the
+    # eleventh blade instead of a material sweep that would reach into the cowl.
     rows = [PIECES[0], PIECES[1], (FAN, [FAN], 19.10, 0.12, 0.12 * 16), PIECES[3], PIECES[5]]
     zoom = Image.new('RGB', (4 * 480, len(rows) * 360), '#ffffff')
     for r, (name, ids, start, o0, sweep) in enumerate(rows):
         key = ",".join(ids)
-        moments = [start + o0 * 0.5, start + o0 + (sweep - o0) / 3, start + o0 + 2 * (sweep - o0) / 3, start + sweep + 0.05]
+        if name == FAN:
+            moments = [19.16, 19.47, 19.77, 19.92]
+        else:
+            moments = [start + o0 * 0.5, start + o0 + (sweep - o0) / 3, start + o0 + 2 * (sweep - o0) / 3, start + sweep + 0.05]
         for c, t in enumerate(moments):
             cx, cy = centre(key, t)
             path = shot(f'frame=opening&theme=light&t={t:.3f}', f'/tmp/z3-{r}-{c}.png')

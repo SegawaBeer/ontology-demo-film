@@ -49,6 +49,9 @@ export async function mountOpening(theme: Theme) {
   const diskMode = maskMode === 'disk' || maskMode === 'disk-solid';
   const partMask = maskMode && maskMode.startsWith('part:') ? maskMode.slice(5).split(',') : null;
   const solo = params.get('solo') ? params.get('solo')!.split(',') : null;
+  // Debug: hide the depth-only shells ('1' or 'all' for every kind).
+  const noShells = params.get('noshells') ?? '';
+  const hideShell = (kind: string) => noShells === '1' || noShells === 'all' || noShells === kind;
   const open = await createOpenScene(theme, mask);
   const { view, scene, camera, hero, tilt, spin, center, Y3 } = open;
 
@@ -401,7 +404,7 @@ export async function mountOpening(theme: Theme) {
     shell.matrix.copy(bladeMesh.matrix);
     shell.castShadow = false;
     shell.receiveShadow = false;
-    shell.renderOrder = -1;
+    shell.renderOrder = 10;
     bladeMesh.parent!.add(shell);
     ringShell = shell;
   }
@@ -485,7 +488,7 @@ export async function mountOpening(theme: Theme) {
       const width = n === 1 ? 0 : outlineFor(n);
       outline.visible = n <= shown && t < start + width && !noLines;
     }
-    if (ringShell) ringShell.visible = t < 8.75;
+    if (ringShell) ringShell.visible = t < 8.75 && !hideShell('ring');
   }
 
   // ---- flash --------------------------------------------------------------
@@ -688,7 +691,7 @@ export async function mountOpening(theme: Theme) {
           twin.matrix.copy(mesh.matrix);
           twin.castShadow = false;
           twin.receiveShadow = false;
-          twin.renderOrder = -1;
+          twin.renderOrder = 10;
           mesh.parent!.add(twin);
           shells.push(twin);
         }
@@ -780,7 +783,7 @@ export async function mountOpening(theme: Theme) {
     shell.matrix.copy(fanMesh.matrix);
     shell.castShadow = false;
     shell.receiveShadow = false;
-    shell.renderOrder = -1;
+    shell.renderOrder = 10;
     fanMesh.parent!.add(shell);
     fanShell = shell;
   }
@@ -800,7 +803,7 @@ export async function mountOpening(theme: Theme) {
     }
     const tips = components.find(c => c.meta.id === 'fan.blade-tips');
     if (tips) engine.setVisible('fan.blade-tips', t >= fanStart(1) + fanOutline);
-    if (fanShell) fanShell.visible = t < 21.0;
+    if (fanShell) fanShell.visible = t < 21.0 && !hideShell('fan');
   }
   engineGroup.matrix.copy(Qinv);
   engineGroup.updateMatrixWorld(true);
@@ -821,7 +824,7 @@ export async function mountOpening(theme: Theme) {
       mat.clippingPlanes = [p.linePlane];
     }
     for (const sh of p.shells) {
-      sh.visible = linesOn;
+      sh.visible = linesOn && !hideShell('piece');
       (sh.material as THREE.Material).clippingPlanes = [p.linePlane];
     }
     if (p.axis === 'y') {
@@ -1180,6 +1183,9 @@ export async function mountOpening(theme: Theme) {
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       rotor: rotorNow,
+      shellsOn: [...pieces.filter(p => p.shells.some(sh => sh.visible)).map(p => p.ids[0]),
+        ...(ringShell && ringShell.visible ? ['ring'] : []),
+        ...(fanShell && fanShell.visible ? ['fan'] : [])],
       rotorIds: components.filter(c => c.rotor).map(c => c.meta.id),
       fit: { position: m3FitPos.toArray(), target: m3FitTarget.toArray() },
       boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
