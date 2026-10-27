@@ -10,7 +10,7 @@ import { renderGraph } from './graph';
 import type { GraphState } from './data';
 import type { Theme } from './scene';
 
-export const DURATION = 17.0;
+export const DURATION = 23.0;
 
 const RING = 'turbine.stage-1-blades';
 const DISC = 'turbine.stage-1-disk';
@@ -588,7 +588,7 @@ export async function mountOpening(theme: Theme) {
 
   type Piece = {
     ids: string[]; meshes: THREE.Mesh[]; mats: THREE.Material[]; lines: LineSegments2[];
-    box: THREE.Box3; plane: THREE.Plane; linePlane: THREE.Plane; shells: THREE.Mesh[]; start: number; dur: number; axis: 'y' | 'x';
+    box: THREE.Box3; plane: THREE.Plane; linePlane: THREE.Plane; shells: THREE.Mesh[]; start: number; dur: number; axis: 'y' | 'xp' | 'xm';
     outlineTo: number; sweepFrom: number; sweepTo: number;
     flash: THREE.Color; idle: number; tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[];
   };
@@ -620,7 +620,7 @@ export async function mountOpening(theme: Theme) {
     return lines;
   }
 
-  function addPiece(ids: string[], start: number, dur: number, axis: 'y' | 'x', outlineTo: number, sweepFrom: number, sweepTo: number) {
+  function addPiece(ids: string[], start: number, dur: number, axis: 'y' | 'xp' | 'xm', outlineTo: number, sweepFrom: number, sweepTo: number) {
     const mats: THREE.Material[] = [];
     const meshes: THREE.Mesh[] = [];
     const tints: { mat: HeroMat; base: THREE.Color; metal: number; rough: number; env: number }[] = [];
@@ -688,8 +688,18 @@ export async function mountOpening(theme: Theme) {
   engineGroup.matrix.identity();
   engineGroup.updateMatrixWorld(true);
   const stagePieces = STAGE_GROUPS.map(g => addPiece(g.ids, g.start, 0.6, 'y', 0.10, 0.20, 0.55));
-  const shaftPiece = addPiece(['shaft.main'], 12.70, 1.0, 'x', 0.10, 0.25, 1.00);
+  const shaftPiece = addPiece(['shaft.main'], 12.70, 1.0, 'xp', 0.10, 0.25, 1.00);
   const compPieces = COMP_ORDER.map((id, i) => addPiece([id], compStart(i), 0.4, 'y', 0.08, 0.14, 0.40));
+  const M3_PIECES: { ids: string[]; start: number; axis: 'y' | 'xp' | 'xm'; outlineTo: number; sweepTo: number; node: string }[] = [
+    { ids: ['combustor.cans', 'combustor.casing', 'combustor.injectors', 'combustor.inner-shell'], start: 17.00, axis: 'y', outlineTo: 0.20, sweepTo: 0.60, node: 'm-comb' },
+    { ids: ['core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles', 'turbine.band', 'turbine.inner-cone'], start: 17.80, axis: 'y', outlineTo: 0.20, sweepTo: 0.70, node: 'm-core' },
+    { ids: ['fan.hub', 'fan.inner-shroud'], start: 18.70, axis: 'y', outlineTo: 0.15, sweepTo: 0.55, node: 'm-fan' },
+    { ids: ['fan-cowl.aft', 'fan-cowl.lip', 'fan-cowl.shell'], start: 20.20, axis: 'xm', outlineTo: 0.20, sweepTo: 0.90, node: 'm-cowl' },
+    { ids: ['nacelle.duct'], start: 20.20, axis: 'xp', outlineTo: 0.20, sweepTo: 0.90, node: 'm-nac' },
+    { ids: ['exhaust.bolts', 'exhaust.fittings', 'exhaust.nozzle', 'exhaust.tail-cone'], start: 21.30, axis: 'xm', outlineTo: 0.15, sweepTo: 0.60, node: 'm-exh' },
+    { ids: ['fan.spinner'], start: 21.30, axis: 'xm', outlineTo: 0.15, sweepTo: 0.60, node: '' },
+  ];
+  const m3Pieces = M3_PIECES.map(m => ({ ...m, piece: addPiece(m.ids, m.start, m.sweepTo, m.axis, m.outlineTo, m.outlineTo, m.sweepTo) }));
   engineGroup.matrix.copy(Qinv);
   engineGroup.updateMatrixWorld(true);
 
@@ -716,10 +726,14 @@ export async function mountOpening(theme: Theme) {
       const h = lerp(p.box.max.y + 0.02, p.box.min.y - 0.02, u);
       p.plane.set(new THREE.Vector3(0, 1, 0), -h);
       p.linePlane.set(new THREE.Vector3(0, -1, 0), h);
-    } else {
+    } else if (p.axis === 'xp') {
       const h = lerp(p.box.min.x - 0.02, p.box.max.x + 0.02, u);
       p.plane.set(new THREE.Vector3(-1, 0, 0), h);
       p.linePlane.set(new THREE.Vector3(1, 0, 0), -h);
+    } else {
+      const h = lerp(p.box.max.x + 0.02, p.box.min.x - 0.02, u);
+      p.plane.set(new THREE.Vector3(1, 0, 0), -h);
+      p.linePlane.set(new THREE.Vector3(-1, 0, 0), h);
     }
     if (u >= 0.999) {
       for (const m of p.mats) m.clippingPlanes = null;

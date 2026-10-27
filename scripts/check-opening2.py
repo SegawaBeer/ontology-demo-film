@@ -300,7 +300,9 @@ with sync_playwright() as pw:
             col = [d[ch] for d in ds]
             if not col:
                 continue
-            worst_step = max(worst_step, max(abs(col[i + 1] - col[i]) for i in range(len(col) - 1)))
+            step_max = max(abs(col[i + 1] - col[i]) for i in range(len(col) - 1))
+            allowed = 0.15 * max(abs(v) for v in col) + 0.5
+            worst_step = max(worst_step, step_max / allowed)
             if name == 'm-turb':
                 continue
             sm3 = [(col[max(0, i - 1)] + col[i] + col[min(len(col) - 1, i + 1)]) / 3 for i in range(len(col))]
@@ -320,8 +322,8 @@ with sync_playwright() as pw:
                       if max(abs(pf[x, y][i] - pfo[x, y][i]) for i in range(3)) > 8)
         pulse = name in probe()['graph'].get('pulse', [])
         lines_report.append([name, round(T, 2), round(b1 - b0, 1), round(jump * 100, 2), round(worst_step, 2), visible, pulse])
-        if b1 - b0 < 10 or (jump >= 0.005 and name != 'm-turb') or worst_step > 4 or not peaks_ok or visible < 1000 or not pulse:
-            weak.append(f'{name} d={b1-b0:+.0f} jump={jump*100:.2f}% step={worst_step:.1f} onePeak={peaks_ok} vis={visible} pulse={pulse}')
+        if b1 - b0 < 10 or (jump >= 0.005 and name != 'm-turb') or worst_step > 1.0 or not peaks_ok or visible < 1000 or not pulse:
+            weak.append(f'{name} d={b1-b0:+.0f} jump={jump*100:.2f}% step={worst_step*100:.0f}% onePeak={peaks_ok} vis={visible} pulse={pulse}')
     quiet = [4.0, 7.9, 11.6, 13.3, 15.2]
     quiet_worst = 0.0
     for tt in quiet:
@@ -334,7 +336,7 @@ with sync_playwright() as pw:
     with open(f'{OUT}/m2-flash.json', 'w') as f:
         json.dump(lines_report, f)
     check('24 flash', ok24, '; '.join(weak[:3]) if weak else f'quiet frames {quiet_worst*100:.4f}%',
-          'each node: +10 blue-red, first frame < 0.5%, D steps <= 4 with one peak, >= 1000 px visible, pulse')
+          'each node: +10 blue-red, first frame < 0.5%, D step <= 0.15 x peak + 0.5, one peak, >= 1000 px, pulse')
 
     # ---- 25 second thread fades out ----
     go('frame=opening&theme=light&t=9.85')
