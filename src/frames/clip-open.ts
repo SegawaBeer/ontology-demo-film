@@ -196,6 +196,11 @@ export async function mountOpening(theme: Theme) {
   let m2Target = new THREE.Vector3();
   let m2Distance = 6;
 
+  const m3FitPos = new THREE.Vector3();
+  const m3FitTarget = new THREE.Vector3();
+  let m3Distance = 1;
+
+
   function cameraAt(t: number) {
     if (t <= 5.0) {
       camera.position.copy(camStart);
@@ -225,6 +230,15 @@ export async function mountOpening(theme: Theme) {
         camera.position.copy(moveTarget).addScaledVector(moveDir, moveDistance);
         camera.lookAt(moveTarget);
         camTargetNow = moveTarget;
+      }
+      if (t > 17.0) {
+        const u3 = seg(t, 17.0, 21.9);
+        const k3 = 1 - Math.pow(1 - u3, 3) * (1 + 3 * u3);
+        const target3 = m2Target.clone().lerp(m3FitTarget, k3);
+        const dist3 = Math.exp(lerp(Math.log(m2Distance), Math.log(m3Distance), k3));
+        camera.position.copy(target3).addScaledVector(m2Dir, dist3);
+        camera.lookAt(target3);
+        camTargetNow = target3;
       }
     }
     if (t <= 5) camTargetNow = targetStart.clone();
@@ -532,7 +546,7 @@ export async function mountOpening(theme: Theme) {
     const nodes: string[] = ['blade'];
     const appearMap: Record<string, number> = { blade: appear };
     if (two) { nodes.push('c-t1'); appearMap['c-t1'] = smootherAt(t, 8.8, 9.2); }
-    for (const node of M2_NODES) {
+    for (const node of [...M2_NODES, ...M3_NODES]) {
       if (t < node.time) continue;
       nodes.push(node.id);
       appearMap[node.id] = smootherAt(t, node.time, node.time + 0.4);
@@ -546,9 +560,9 @@ export async function mountOpening(theme: Theme) {
       if (p >= 0.999) { litEdges.push(['c-t1', 'blade']); doneEdges.push(['c-t1', 'blade']); drawn++; }
       else drawing.push({ from: 'blade', to: 'c-t1', progress: p });
     }
-    for (const e of M2_EDGES) {
+    for (const e of [...M2_EDGES, ...M3_EDGES]) {
       if (t < e.time || !nodes.includes(e.from) || !nodes.includes(e.to)) continue;
-      const p = smootherAt(t, e.time, e.time + 0.3);
+      const p = smootherAt(t, e.time, e.time + ((e as { dur?: number }).dur ?? 0.3));
       if (p >= 0.999) { litEdges.push([e.from, e.to]); doneEdges.push([e.from, e.to]); drawn++; }
       else drawing.push({ from: e.from, to: e.to, progress: p });
     }
@@ -558,7 +572,7 @@ export async function mountOpening(theme: Theme) {
     lastGraphNodes = nodes;
     const pulse: Record<string, number> = {};
     for (const f of M2_FLASH) {
-      const v = seg(t, f.time, f.time + 0.4);
+      const v = seg(t, f.time, f.time + (f.dur ?? 0.4));
       if (v > 0 && v < 1) pulse[f.id] = v;
     }
     lastPulse = Object.keys(pulse);
@@ -700,6 +714,78 @@ export async function mountOpening(theme: Theme) {
     { ids: ['fan.spinner'], start: 21.30, axis: 'xm', outlineTo: 0.15, sweepTo: 0.60, node: '' },
   ];
   const m3Pieces = M3_PIECES.map(m => ({ ...m, piece: addPiece(m.ids, m.start, m.sweepTo, m.axis, m.outlineTo, m.outlineTo, m.sweepTo) }));
+
+  // Fan blades fill in one at a time, outline first, like the first-stage ring.
+  const FAN = 'fan.blades';
+  const fanStart = (k: number) => 19.10 + 0.05 * (k - 1);
+  const fanOutline = 0.12;
+  const fanComp = components.find(c => c.meta.id === FAN);
+  const fanMesh = (() => {
+    let found: THREE.InstancedMesh | null = null;
+    fanComp?.group.traverse(o => { const m = o as THREE.InstancedMesh; if (m.isInstancedMesh && !found) found = m; });
+    return found as THREE.InstancedMesh | null;
+  })();
+  const fanOutlines: LineSegments2[] = [];
+  const fanMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
+  fanMat.resolution.set(1280, 1080);
+  let fanShell: THREE.Mesh | null = null;
+  if (fanMesh && !mask) {
+    const edges = new THREE.EdgesGeometry(fanMesh.geometry, 25);
+    const base = new LineSegmentsGeometry().fromEdgesGeometry(edges);
+    const snap = instanceSnapshots.get(fanMesh)!;
+    const matrix = new THREE.Matrix4();
+    const src = (base.attributes.instanceStart as THREE.InterleavedBufferAttribute).data.array as Float32Array;
+    const segments = base.attributes.instanceStart.count;
+    const v = new THREE.Vector3();
+    for (let k = 0; k < fanMesh.count; k++) {
+      matrix.fromArray(snap, k * 16);
+      const arr: number[] = [];
+      for (let i = 0; i < segments; i++) {
+        for (const off of [i * 3, (i + 1) * 3]) {
+          v.set(src[off], src[off + 1], src[off + 2]).applyMatrix4(matrix);
+          arr.push(v.x, v.y, v.z);
+        }
+      }
+      const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(arr), fanMat);
+      lines.computeLineDistances();
+      lines.visible = false;
+      scene.add(lines);
+      fanOutlines.push(lines);
+    }
+    edges.dispose();
+    const shell = fanMesh.clone() as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
+    const sm = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, side: THREE.DoubleSide });
+    sm.polygonOffset = true;
+    sm.polygonOffsetFactor = 1;
+    sm.polygonOffsetUnits = 1;
+    shell.material = sm;
+    shell.instanceMatrix = fanMesh.instanceMatrix;
+    shell.matrixAutoUpdate = false;
+    shell.matrix.copy(fanMesh.matrix);
+    shell.castShadow = false;
+    shell.receiveShadow = false;
+    shell.renderOrder = -1;
+    fanMesh.parent!.add(shell);
+    fanShell = shell;
+  }
+  let fanSolidNow = -1;
+  function fanAt(t: number) {
+    if (solo || partMask || !fanMesh) return;
+    const total = fanMesh.count;
+    let solid = 0;
+    for (let k = 1; k <= total; k++) if (t + 1e-9 >= fanStart(k) + fanOutline) solid = k;
+    if (solid !== fanSolidNow) {
+      for (let k = 1; k <= total; k++) engine.setVisible(`${FAN}.${String(k).padStart(3, '0')}`, k <= solid);
+      fanSolidNow = solid;
+    }
+    for (let k = 1; k <= total; k++) {
+      const line = fanOutlines[k - 1];
+      if (line) line.visible = t >= fanStart(k) && t < fanStart(k) + fanOutline && !noLines;
+    }
+    const tips = components.find(c => c.meta.id === 'fan.blade-tips');
+    if (tips) engine.setVisible('fan.blade-tips', t >= fanStart(1) + fanOutline);
+    if (fanShell) fanShell.visible = t < 21.0;
+  }
   engineGroup.matrix.copy(Qinv);
   engineGroup.updateMatrixWorld(true);
 
@@ -756,6 +842,21 @@ export async function mountOpening(theme: Theme) {
     { id: 'c-comp1', time: compStart(5), pieces: [compPieces[5]] },
     { id: 'm-comp', time: 16.30, pieces: compPieces },
   ];
+  const M3_NODES: { id: string; time: number; pieces: Piece[] }[] = [
+    { id: 'm-comb', time: 17.00, pieces: [] },
+    { id: 'm-core', time: 17.80, pieces: [] },
+    { id: 'm-fan', time: 18.70, pieces: [] },
+    { id: 'c-fan', time: 19.10, pieces: [] },
+    { id: 'm-nac', time: 20.20, pieces: [] },
+    { id: 'm-cowl', time: 20.20, pieces: [] },
+    { id: 'm-exh', time: 21.30, pieces: [] },
+    { id: 'e7', time: 22.00, pieces: [] },
+  ];
+  const MODULE_ORDER = ['m-fan', 'm-cowl', 'm-comp', 'm-comb', 'm-turb', 'm-exh', 'm-core', 'm-nac', 'm-shaft'];
+  const M3_EDGES: { from: string; to: string; time: number; dur?: number }[] = [
+    { from: 'c-fan', to: 'm-fan', time: 19.10 },
+    ...MODULE_ORDER.map((id, i) => ({ from: id, to: 'e7', time: 22.00 + i * 0.01, dur: 0.18 })),
+  ];
   const M2_EDGES: { from: string; to: string; time: number }[] = [
     ...['c-t1', 'c-t2', 'c-t3', 'c-t4', 'c-t5'].map((id, i) => ({ from: id, to: 'm-turb', time: 12.60 + i * 0.05 })),
     ...['c-comp1', 'c-comp2', 'c-comp3', 'c-comp4'].map((id, i) => ({ from: id, to: 'm-comp', time: 16.30 + i * 0.06 })),
@@ -781,7 +882,9 @@ export async function mountOpening(theme: Theme) {
     }
   }
   const flashOf = (piece: Piece) => piece.start + piece.sweepTo;
-  const M2_FLASH: { id: string; time: number; pieces: Piece[] }[] = [
+  const M2_FLASH: { id: string; time: number; pieces: Piece[]; amp?: number; dur?: number }[] = [
+    ...m3Pieces.filter(m => m.node).map(m => ({ id: m.node, time: m.piece.start + m.piece.sweepTo, pieces: [m.piece] })),
+    { id: 'e7', time: 22.00, pieces: [...stagePieces, ...compPieces, ...m3Pieces.map(m => m.piece)], amp: 0.15, dur: 0.5 },
     ...STAGE_GROUPS.map((g, i) => ({ id: g.node, time: flashOf(stagePieces[i]), pieces: [stagePieces[i]] })),
     { id: 'm-turb', time: 12.60, pieces: stagePieces },
     { id: 'm-shaft', time: flashOf(shaftPiece), pieces: [shaftPiece] },
@@ -823,13 +926,14 @@ export async function mountOpening(theme: Theme) {
       if (solo && !p.ids.some(id => solo.includes(id))) continue;
       pieceAt(p, t);
     }
+    fanAt(t);
     // Flash strength is a pure function of t; a piece shared by two nodes takes
     // the stronger one, and each part's colour is written once per frame.
     const amounts = new Map<Piece, number>();
     for (const node of M2_FLASH) {
-      const p = seg(t, node.time, node.time + 0.4);
+      const p = seg(t, node.time, node.time + (node.dur ?? 0.4));
       if (p <= 0 || p >= 1 || noFlash) continue;
-      const a = Math.sin(Math.PI * p) * 0.25;
+      const a = Math.sin(Math.PI * p) * (node.amp ?? 0.25);
       for (const piece of node.pieces) amounts.set(piece, Math.max(amounts.get(piece) ?? 0, a));
     }
     for (let pi = 0; pi < pieces.length; pi++) {
@@ -849,6 +953,29 @@ export async function mountOpening(theme: Theme) {
     }
   }
 
+  function computeM3Fit() {
+    const detached: { obj: THREE.Object3D; parent: THREE.Object3D }[] = [];
+    const take = (obj: THREE.Object3D | null) => {
+      if (obj && obj.parent) { detached.push({ obj, parent: obj.parent }); obj.removeFromParent(); }
+    };
+    for (const p of pieces) { for (const l of p.lines) take(l); for (const sh of p.shells) take(sh); }
+    for (const l of ringOutlines) take(l);
+    take(ringShell);
+    for (const l of fanOutlines) take(l);
+    take(fanShell);
+    const pos = camera.position.clone();
+    const quat = camera.quaternion.clone();
+    const pose = view.fit([engine], new THREE.Vector3(0.78, 0.34, 0.92), { x: 0.78, y: 0.70 }, new THREE.Vector2(-0.06, 0.02));
+    camera.position.copy(pos);
+    camera.quaternion.copy(quat);
+    camera.updateMatrixWorld();
+    for (const d of detached) d.parent.add(d.obj);
+    m3FitPos.copy(pose.position);
+    m3FitTarget.copy(pose.target);
+    m3Distance = m3FitPos.distanceTo(m3FitTarget);
+  }
+  computeM3Fit();
+
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
   let appliedT = 0;
@@ -859,6 +986,22 @@ export async function mountOpening(theme: Theme) {
     discAt(t);
     ringAt(t);
   }
+  const OMEGA = 360 / 5.4;
+  const rotorIntegral = (u: number) => u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
+  function rotorDegrees(t: number) {
+    if (t <= 22.0) return 0;
+    const ramp = Math.min(1, (t - 22.0) / 1.2);
+    const after = Math.max(0, t - 23.2);
+    return OMEGA * (1.2 * rotorIntegral(ramp) + after);
+  }
+  const rotorGroups = engine.modules.flatMap(m => m.components).filter(c => c.rotor).map(c => c.group);
+  let rotorNow = 0;
+  function rotorAt(t: number) {
+    const deg = rotorDegrees(t);
+    rotorNow = deg;
+    for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg);
+  }
+
   function apply(t: number, render = true) {
     appliedT = t;
     if (t < 5.0 && !diskMode) {
@@ -956,6 +1099,7 @@ export async function mountOpening(theme: Theme) {
     }
     lastBladeState = bladeState;
     if (t >= 9.6) m2At(t);
+    rotorAt(t);
     graphAt(t);
     if (!mask) {
       const first = firstBladeTip();
@@ -1032,12 +1176,16 @@ export async function mountOpening(theme: Theme) {
         return [x0 - 8, y0 - 8, x1 + 8, y1 + 8];
       })(),
       blades: { count: shownNow, solid: solidNow, ids: Array.from({ length: shownNow }, (_, i) => bladeId(i + 1)) },
-      graph: { nodes, ids: lastGraphNodes, pulse: lastPulse, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
+      graph: { nodes: lastGraphNodes.length, ids: lastGraphNodes, pulse: lastPulse, counter: gtexts.find(x => x.includes('个节点')) ?? '', sub: gtexts.find(x => x.startsWith('×')) ?? '', texts: gtexts },
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
+      rotor: rotorNow,
+      fit: { position: m3FitPos.toArray(), target: m3FitTarget.toArray() },
       boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
       components: Object.fromEntries(pieces.flatMap(p => p.ids.map(id => [id, appliedT >= p.start]))),
       visibleParts: engine.listParts(RING).length + engine.listParts(DISC).length
+        + (fanSolidNow > 0 ? fanSolidNow : 0)
+        + (appliedT >= 19.10 + fanOutline ? 16 : 0)
         + pieces.reduce((n, p) => (appliedT >= p.start ? n + p.ids.reduce((k, id) => k + engine.listParts(id).length, 0) : n), 0),
       seat: view.project(seatPos.clone()),
       seatMatrix: seatMatrix.elements.slice(),
