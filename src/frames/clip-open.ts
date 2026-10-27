@@ -898,8 +898,10 @@ export async function mountOpening(theme: Theme) {
     }
   }
   const flashOf = (piece: Piece) => piece.start + piece.sweepTo;
+  // Every piece flashes as it finishes laying metal. The spinner has no node of
+  // its own (it belongs to the fan), so its pulse lands on a name no node has.
   const M2_FLASH: { id: string; time: number; pieces: Piece[]; amp?: number; dur?: number }[] = [
-    ...m3Pieces.filter(m => m.node).map(m => ({ id: m.node, time: m.piece.start + m.piece.sweepTo, pieces: [m.piece] })),
+    ...m3Pieces.map(m => ({ id: m.node ?? 'fan-spinner', time: m.piece.start + m.piece.sweepTo, pieces: [m.piece] })),
     { id: 'e7', time: 22.00, pieces: [...stagePieces, ...compPieces, ...m3Pieces.map(m => m.piece)], amp: 0.15, dur: 0.5 },
     ...STAGE_GROUPS.map((g, i) => ({ id: g.node, time: flashOf(stagePieces[i]), pieces: [stagePieces[i]] })),
     { id: 'm-turb', time: 12.60, pieces: stagePieces },
