@@ -235,8 +235,8 @@ export async function mountOpening(theme: Theme) {
         const u3 = seg(t, 17.0, 21.9);
         const k3 = 1 - Math.pow(1 - u3, 3) * (1 + 3 * u3);
         const target3 = m2Target.clone().lerp(m3FitTarget, k3);
-        const dist3 = Math.exp(lerp(Math.log(m2Distance), Math.log(m3Distance), k3));
-        camera.position.copy(target3).addScaledVector(m2Dir, dist3);
+        const from = m2Target.clone().addScaledVector(m2Dir, m2Distance);
+        camera.position.copy(from.lerp(m3FitPos, k3));
         camera.lookAt(target3);
         camTargetNow = target3;
       }
