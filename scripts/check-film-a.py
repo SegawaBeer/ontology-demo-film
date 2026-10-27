@@ -302,7 +302,7 @@ def f6(browser):
     page.close()
     ok = all(r['drawn'] == 2027 for r in rows.values()) and rows[33.0]['shown'] == 2027 and lines == 0
     record('F6', ok, rows={str(k): v for k, v in rows.items()}, outline_objects_in_scene=lines,
-           note='2,027 = manifest = opening 23 s. At 45 s the parts on the pulled blade\'s path are drawn at opacity 0 (section 六.4); 55/63 s belong to question two')
+           note='2,027 = manifest = opening 23 s. At 45 s only the two solid neighbour blades are at opacity 0 (section 十一.3); 55/63 s belong to question two')
 
 
 # ---------------------------------------------------------------- F8
@@ -337,14 +337,17 @@ F8_STEP = r"""() => {
   const now = F.section(F.bladePts, ax, F.ry * rad, F.rz * rad);
   const ov = (a, b, i) => Math.max(0, Math.min(a.hi[i], b.hi[i]) - Math.max(a.lo[i], b.lo[i]));
   const bad = []; let worst = 0;
+  const ghostOf = window.__filmDebug.ghostOf; let ghosts = 0;
   for (const c of F.cands) { const op = view.partOpacity(e7, c.id); if (op <= 0.02) continue;
+    // Section 十一.3: only solid parts must give way; a part with any ghosting is see-through.
+    if (ghostOf(c.id) > 0.001) { ghosts++; continue; }
     // Assembled position (ax = rad = 0) is the opening's own state: only overlap beyond it counts.
     const home = ax === 0 && rad === 0;
     const exempt = home || c.comp === 'turbine.stage-1-blades' || (c.comp === 'turbine.stage-1-disk' && rad === 0);
     for (let i = 0; i < F.NB; i++) { const o = ov(now, c.sec, i) - (exempt ? ov(F.rest, c.sec, i) : 0);
       if (o > worst) worst = o;
       if (o > 0.003) bad.push([c.id, +(F.X0 + i * F.W).toFixed(3), +o.toFixed(4), +op.toFixed(3)]); } }
-  return { ax, rad, worst, bad: bad.slice(0, 6) };
+  return { ax, rad, worst, ghosts, bad: bad.slice(0, 6) };
 }"""
 FADED_JS = """() => { const { e7, view } = window.__filmDebug; return [...e7.parts.keys()].filter(id => e7.parts.get(id).visible && view.partOpacity(e7, id) <= 0.02); }"""
 
@@ -372,7 +375,8 @@ def f8(browser):
     page.close()
     ok = all(not v['violations'] for v in out.values())
     record('F8', ok, pulled=pulled, faded_while_out=faded, bins=out,
-           note='ring blades: overlap already present in the assembled ring is not counted; disk: its slot overlap is allowed only while the blade slides along the slot (no radial offset); with the blade back in its assembled place nothing beyond the assembled overlap counts')
+           note='section 十一.3: only solid parts (ghost amount 0) with opacity > 0.02 are checked; ghosted parts may be passed through. '
+                'Overlap already present with the blade in its assembled place is not counted; the disk slot overlap only while the blade slides along the slot (no radial offset)')
 
 
 # ---------------------------------------------------------------- F9
@@ -423,53 +427,54 @@ F10_JS = r"""() => {
   for (const el of document.querySelectorAll('#callouts rect')) { const r = el.getBoundingClientRect(); rects.push(['window', '', r.left, r.top, r.right, r.bottom]); }
   return { left, right: 1280, rects };
 }"""
-SOLID_JS = r"""() => { const { e7, colCam, ringParts, PULLED } = window.__filmDebug; const T = window.__filmDebug.THREE;
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; const v = new T.Vector3();
-  for (const id of [...ringParts, 'turbine.stage-1-disk.001']) { const P = e7.partWorldPoints(id); if (!P) continue;
-    for (let i = 0; i < P.length; i += 9) { v.set(P[i], P[i+1], P[i+2]).project(colCam); const x = 561 + (v.x * 0.5 + 0.5) * 720, y = (-v.y * 0.5 + 0.5) * 1080;
+SOLID_JS = r"""() => { const { e7, colCam, view, ghostOf } = window.__filmDebug; const T = window.__filmDebug.THREE;
+  // Solid parts as drawn: visible, opacity > 0.02 and not ghosted (section 十一.1: ghosts do not count).
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ghosts = 0; const v = new T.Vector3();
+  for (const [id, s] of e7.parts) { if (!s.visible || view.partOpacity(e7, id) <= 0.02) continue; if (ghostOf(id) > 0.001) { ghosts++; continue; }
+    const P = e7.partWorldPoints(id); if (!P) continue;
+    for (let i = 0; i < P.length; i += 3) { v.set(P[i], P[i+1], P[i+2]).project(colCam); const x = 561 + (v.x * 0.5 + 0.5) * 720, y = (-v.y * 0.5 + 0.5) * 1080;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
-  return [x0, y0, x1, y1]; }"""
+  return [x0, y0, x1, y1, ghosts]; }"""
 
 
-def f10(browser):
+def f10(browser, t0=30.0, t1=64.0):
     page = new_page(browser, 'f10')
     load(page, FILM + '&play=0')
     page.add_style_tag(content='#callouts, #callout-labels, .model-caption { visibility: hidden !important; }')
     bg = (0xee, 0xf0, 0xee)
-    worst_all, worst_solid, worst_over = [], [], []
-    t = 30.0
-    while t <= 49.0001:
+    worst_pix, worst_solid, worst_over, ghost_times = [], [], [], []
+    t = t0
+    while t <= t1 + 1e-4:
         seek(page, round(t, 2))
         info = page.evaluate(F10_JS)
         left, right = info['left'], info['right']
-        img = shot(page)
-        # Parts as drawn: canvas pixels that differ from the background, outside the close-up window.
-        col = img.crop((int(math.ceil(left)) + 1, 0, right, 1080))
-        diff = ImageChops.difference(col, Image.new('RGB', col.size, bg))
-        r, g, b = diff.split(); m = ImageChops.lighter(ImageChops.lighter(r, g), b).point(lambda v: 255 if v > 3 else 0)
-        for kind, _, x0, y0, x1, y1 in info['rects']:
-            if kind == 'window':
-                from PIL import ImageDraw
-                ImageDraw.Draw(m).rectangle([x0 - left - 3, y0 - 3, x1 - left + 3, y1 + 3], fill=0)
-        box = m.getbbox()
-        if box:
-            margin = min(box[0] + 1, box[1], col.size[0] - box[2], 1080 - box[3])
-            worst_all.append((margin, round(t, 2)))
-        for kind, name, x0, y0, x1, y1 in info['rects']:
-            margin = min(x0 - left, y0, right - x1, 1080 - y1)
-            worst_over.append((round(margin, 1), round(t, 2), kind, name))
+        x0, y0, x1, y1, ghosts = page.evaluate(SOLID_JS) if t >= 33.0 else (0, 0, 0, 0, 1)
         if t >= 33.0:
-            x0, y0, x1, y1 = page.evaluate(SOLID_JS)
             worst_solid.append((round(min(x0 - 560, y0, 1280 - x1, 1080 - y1), 1), round(t, 2)))
+        for kind, name, a, b, c, d in info['rects']:
+            worst_over.append((round(min(a - left, b, right - c, 1080 - d), 1), round(t, 2), kind, name))
+        # On the real picture: every non-background canvas pixel outside the close-up window.
+        # It decides wherever nothing is ghosted, and 30-33 s (column width changes, F10 counts the net's shell there).
+        if t < 33.0 or not ghosts:
+            img = shot(page)
+            col = img.crop((int(math.ceil(left)) + 1, 0, right, 1080))
+            diff = ImageChops.difference(col, Image.new('RGB', col.size, bg))
+            r, g, b = diff.split(); m = ImageChops.lighter(ImageChops.lighter(r, g), b).point(lambda v: 255 if v > 3 else 0)
+            from PIL import ImageDraw
+            for kind, _, a, b2, c, d in info['rects']:
+                if kind == 'window': ImageDraw.Draw(m).rectangle([a - left - 3, b2 - 3, c - left + 3, d + 3], fill=0)
+            box = m.getbbox()
+            if box: worst_pix.append((min(box[0] + 1, box[1], col.size[0] - box[2], 1080 - box[3]), round(t, 2)))
+        else:
+            ghost_times.append(round(t, 2))
         t += 0.1
     page.close()
-    wa, ws, wo = min(worst_all), min(worst_solid), min(worst_over) if worst_over else (999,)
-    below = sorted({x[1] for x in worst_all if x[0] < 24})
-    ok = wa[0] >= 24 and ws[0] >= 24 and wo[0] >= 24
-    record('F10', ok, worst_any_part_px=wa, worst_ring_disk_blade_px=ws, worst_overlay_px=wo,
-           times_parts_under_24px=[below[0], below[-1], len(below)] if below else [],
-           note='any_part = every non-background canvas pixel outside the close-up window, ghosts included; '
-                'ring_disk_blade = the solid first-stage ring, disk and pulled blade, projected')
+    wp, ws, wo = min(worst_pix), min(worst_solid), min(worst_over) if worst_over else (999,)
+    ok = wp[0] >= 24 and ws[0] >= 24 and wo[0] >= 24
+    record('F10', ok, worst_picture_px=wp, worst_solid_parts_px=ws, worst_overlay_px=wo,
+           ghosted_span=[ghost_times[0], ghost_times[-1], len(ghost_times)] if ghost_times else [],
+           note='section 十一.1: ghosts do not count. picture = non-background pixels of the real frame, used at 30-33 s and wherever '
+                'no part is ghosted; solid_parts = every visible, unghosted part projected (33 s on); overlay = labels and close-up window')
 
 
 # ---------------------------------------------------------------- F11

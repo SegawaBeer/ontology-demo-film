@@ -29,7 +29,7 @@ const Q1_ASK = '第一级涡轮叶片的冷却孔缩小 0.1 毫米，会影响�
 const Q1_QUERY = 36.2;                    // typing end + 0.3
 const GHOST_IN = [36.2, 37.2] as const;
 const DIM_IN = [36.2, 37.0] as const;
-const CLEAR_PATH = [36.4, 36.95] as const; // parts on the blade's way fade to 0 before it moves
+const CLEAR_PATH = [36.4, 36.95] as const; // the two solid neighbour blades fade to 0 before it moves
 const STEP_AT = [36.8, 40.8, 43.9] as const;
 const PULL = [37.0, 38.2] as const;       // along the slot (axial) to about 37.6, then radial
 const CAM_IN = [37.0, 38.2] as const;
@@ -78,10 +78,9 @@ const COL_W = 720;
 const LIFT = 1.05;         // clip-q3 keeps 7 号发动机 at (0, 1.05, 0)
 const RING = 'turbine.stage-1-blades';
 const DISK = 'turbine.stage-1-disk';
-// Parts whose radius range the pulled blade's path shares in the axial-section
-// check (0.02 bins, forward pull): faded to opacity 0 before it moves. Pulling
-// rearwards would add turbine.stage-2-tip-ring, so the blade comes out forwards.
-const PATH_PARTS = ['turbine.inner-cone', 'shaft.main', 'turbine.stage-1-tip-ring', 'turbine.stage-2-hub'];
+// Ghosted parts on the pulled blade's way (inner cone, shaft, stage-1 tip ring,
+// stage-2 hub) stay as they are: a blade passing through a ghost reads as being
+// inside it (supervisor decision, task section 十一.3). Only the solid neighbours fade.
 // Pull path: forward (+x) along the slot, then outward. The root (x -1.3785…-1.3315)
 // clears the disk rim (x -1.340) after 0.0385; plus 20 % of the root length that is
 // PULL_MIN. The axial slide runs on to PULL_AXIAL so the radial move can start the
@@ -325,7 +324,8 @@ export async function mountFilmA(theme: Theme) {
   const ringParts = e7.listParts(RING);
   const layerIds = view.layerIds(e7);
   const netShell = new Set(e7.modules.filter(m => NET_VIEW.ghost.includes(m.meta.id)).flatMap(m => m.components.map(c => c.meta.id)));
-  const pathSet = new Set(PATH_PARTS);
+  // Ghost amount each component was last given, for the checks (solid = 0).
+  const ghostNow = new Map<string, number>();
 
   // Poses. The net pose is net-end's own fit (1280-wide camera, engine at the origin).
   // P0 is clip-q3's fit (720-wide camera, engine at y 1.05); the canvas then shows
@@ -427,7 +427,8 @@ export async function mountFilmA(theme: Theme) {
     const clear = ease(seg(t, CLEAR_PATH[0], CLEAR_PATH[1])) * (1 - ease(seg(t, UNCLEAR[0], UNCLEAR[1])));
     for (const id of layerIds) {
       const amount = netShell.has(id) ? Math.max(1 - unshell, ghostIn) : ghostIn;
-      view.setGhostOf(e7, [id], amount, pathSet.has(id) ? clear : 0);
+      view.setGhostOf(e7, [id], amount);
+      ghostNow.set(id, amount);
     }
     setNeighbours(1 - clear);
     // Ring colour: its own metal in the net picture, clip-q3's grey in the three columns.
@@ -551,6 +552,7 @@ export async function mountFilmA(theme: Theme) {
   };
 
   // For the checks: section profiles and opacities come from the live engine.
-  const debug = { view, e7, colCam, PULLED, PATH_PARTS, NEIGHBOURS, ringParts, project, THREE };
+  const ghostOf = (partId: string) => ghostNow.get(e7.getPart(partId)?.component ?? '') ?? 0;
+  const debug = { view, e7, colCam, PULLED, NEIGHBOURS, ringParts, project, ghostOf, THREE };
   return { seek, probe: filmProbe, events: buildEvents(), debug };
 }
