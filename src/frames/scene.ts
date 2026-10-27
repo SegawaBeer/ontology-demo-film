@@ -218,7 +218,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     // Second pass onto the picture already on screen: depth starts over, colour
     // stays. Lets depth-only shells be drawn first without losing the metal a
     // first pass already painted.
-    renderOver: () => {
+    renderSecond: () => {
       // A colour background makes the renderer clear every frame even with
       // autoClear off, so it is taken away for this pass and put back after.
       const background = scene.background;

@@ -42,6 +42,10 @@ function bladesShown(t: number) {
 // Integral of the decaying spin rate, so the landing starts at 8°/s exactly.
 const spinIntegral = (u: number) => u - u ** 6 + 3 * u ** 5 - 2.5 * u ** 4;
 
+// Depth shells and outlines are also drawn in the second pass; everything else
+// is already on screen by then.
+const SECOND = 1;
+
 export async function mountOpening(theme: Theme) {
   const params = new URLSearchParams(location.search);
   const maskMode = params.get('mask');
@@ -385,6 +389,7 @@ export async function mountOpening(theme: Theme) {
       lines.computeLineDistances();
       lines.visible = false;
       scene.add(lines);
+      lines.layers.enable(SECOND);
       ringOutlines.push(lines);
     }
     edges.dispose();
@@ -406,6 +411,7 @@ export async function mountOpening(theme: Theme) {
     shell.receiveShadow = false;
     shell.renderOrder = -1;
     bladeMesh.parent!.add(shell);
+    shell.layers.enable(SECOND);
     ringShell = shell;
   }
 
@@ -425,6 +431,7 @@ export async function mountOpening(theme: Theme) {
       const lines = new LineSegments2(new LineSegmentsGeometry().fromEdgesGeometry(edges), ringLineMat);
       lines.computeLineDistances();
       lines.visible = false;
+      lines.layers.enable(SECOND);
       mesh.add(lines);
       discLines.push(lines);
       edges.dispose();
@@ -644,6 +651,7 @@ export async function mountOpening(theme: Theme) {
     }
     edges.dispose();
     const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(out), mat);
+    lines.layers.enable(SECOND);
     lines.computeLineDistances();
     lines.visible = false;
     return lines;
@@ -681,6 +689,7 @@ export async function mountOpening(theme: Theme) {
         if (!mask) {
           const l = buildEdges(mesh, lineMat);
           mesh.add(l);
+          l.layers.enable(SECOND);
           lines.push(l);
           // Depth-only twin of the unswept half, so interior lines stay hidden.
           const twin = mesh.clone() as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
@@ -693,6 +702,7 @@ export async function mountOpening(theme: Theme) {
           twin.receiveShadow = false;
           twin.renderOrder = -1;
           mesh.parent!.add(twin);
+          twin.layers.enable(SECOND);
           shells.push(twin);
         }
       }
@@ -766,6 +776,7 @@ export async function mountOpening(theme: Theme) {
         }
       }
       const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(arr), fanMat);
+      lines.layers.enable(SECOND);
       lines.computeLineDistances();
       lines.visible = false;
       scene.add(lines);
@@ -785,6 +796,7 @@ export async function mountOpening(theme: Theme) {
     shell.receiveShadow = false;
     shell.renderOrder = -1;
     fanMesh.parent!.add(shell);
+    shell.layers.enable(SECOND);
     fanShell = shell;
   }
   let fanSolidNow = -1;
@@ -981,17 +993,20 @@ export async function mountOpening(theme: Theme) {
   // first and clip the outlines exactly as before, while the metal colour from
   // the first pass stays on screen.
   function drawFrame() {
-    if (mask) { view.render(); return; }
+    // Before milestone two the picture has to stay exactly what frame=open
+    // draws, so the first 9.6 seconds keep the single pass.
+    if (mask || appliedT < 9.6) { view.render(); return; }
     const hidden: THREE.Object3D[] = [];
     const hide = (o: THREE.Object3D | null) => { if (o && o.visible) { hidden.push(o); o.visible = false; } };
     for (const p of pieces) { for (const l of p.lines) hide(l); for (const sh of p.shells) hide(sh); }
     for (const l of ringOutlines) hide(l);
+    for (const l of discLines) hide(l);
     for (const l of fanOutlines) hide(l);
     hide(ringShell);
     hide(fanShell);
     view.render();
     for (const o of hidden) o.visible = true;
-    view.renderOver();
+    view.renderSecond();
   }
 
   // ---- frame --------------------------------------------------------------
