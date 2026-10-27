@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
 NOW = 'http://127.0.0.1:5192/frames.html'
-BEFORE = 'http://127.0.0.1:5194/frames.html'
+BEFORE = 'http://127.0.0.1:5291/frames.html'
 OUT = '<项目目录>/review/opening/m3'
 TIMES = ['17.85', '20.30', '12.78', '13.54']
 W, H = 640, 540
