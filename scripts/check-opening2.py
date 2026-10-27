@@ -112,9 +112,11 @@ with sync_playwright() as pw:
             if cid not in firsts and comps.get(cid):
                 firsts[cid] = tt
     late = [(c, firsts.get(c), s) for c, s in schedule.items() if firsts.get(c) is None or abs(firsts[c] - s) > 1 / 60 + 1e-6]
-    go('frame=opening&theme=light&t=17.0')
+    # 17.00 is when the combustor appears in milestone three, so the milestone-two
+    # total is read one frame earlier.
+    go('frame=opening&theme=light&t=16.98')
     parts = probe()['visibleParts']
-    check('19 parts arrive', not late and parts == 1406, f'{len(late)} mismatches, visible parts {parts}',
+    check('19 parts arrive', not late and parts == 1406, f'{len(late)} mismatches, visible parts {parts} (16.98s)',
           'schedule within a frame, 1406 parts')
 
     # ---- 20 outline first, measured in the solo picture ----
@@ -209,7 +211,9 @@ with sync_playwright() as pw:
           'angle <= 1deg, steps and jerks <= 4x median')
 
     # ---- 23 graph ----
-    go('frame=opening&theme=light&t=17.0')
+    # 17.00 now belongs to milestone three (the combustor node appears there),
+    # so the milestone-two end state is read one frame earlier.
+    go('frame=opening&theme=light&t=16.98')
     g = probe()['graph']
     texts = ' '.join(g['texts'])
     edges = page.evaluate("() => [...document.querySelectorAll('#graph path')].filter(p => p.getAttribute('stroke') === 'var(--lit)').length")
@@ -324,7 +328,9 @@ with sync_playwright() as pw:
         lines_report.append([name, round(T, 2), round(b1 - b0, 1), round(jump * 100, 2), round(worst_step, 2), visible, pulse])
         if b1 - b0 < 10 or (jump >= 0.005 and name != 'm-turb') or worst_step > 1.0 or not peaks_ok or visible < 1000 or not pulse:
             weak.append(f'{name} d={b1-b0:+.0f} jump={jump*100:.2f}% step={worst_step*100:.0f}% onePeak={peaks_ok} vis={visible} pulse={pulse}')
-    quiet = [4.0, 7.9, 11.6, 13.3, 15.2]
+    # 11.6 and 15.2 sit inside flash windows and differ the same way in a15ba3a
+    # (13,678 and 6,615 pixels), so they were the wrong samples, not a regression.
+    quiet = [4.0, 7.9, 10.4, 13.3, 14.4]
     quiet_worst = 0.0
     for tt in quiet:
         go(f'frame=opening&theme=light&t={tt}', which=page)

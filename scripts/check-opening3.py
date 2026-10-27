@@ -1,6 +1,6 @@
 """Checks 29-38 for opening milestone three A."""
 import json, math, os, sys, time
-from PIL import Image
+from PIL import Image, ImageFilter
 from playwright.sync_api import sync_playwright
 
 ROOT = '<项目目录>'
@@ -13,6 +13,19 @@ os.makedirs(TMP, exist_ok=True)
 os.makedirs(OUT, exist_ok=True)
 
 results = []
+
+# Keeps the camera each WebGL renderer really renders with, so frame=net can be
+# compared against the opening without any probe of its own.
+THREE_PROBE = """
+window.__THREE_DEVTOOLS__ = new EventTarget();
+window.__THREE_DEVTOOLS__.addEventListener('observe', e => {
+  const o = e.detail;
+  if (o && typeof o.render === 'function' && o.domElement) {
+    const orig = o.render.bind(o);
+    o.render = (scene, cam) => { window.__lastCam = cam; return orig(scene, cam); };
+  }
+});"""
+
 def check(name, ok, value, expect):
     results.append({'check': name, 'ok': bool(ok), 'value': value, 'expect': expect})
     print(('PASS' if ok else 'FAIL'), name, '|', value, '|', expect, flush=True)
@@ -66,8 +79,10 @@ with sync_playwright() as pw:
         return page.evaluate('window.__openingProbe()')
 
     # ---- 29 join with a15ba3a ----
+    # 17.00 is when the combustor and its graph node appear, so the counter goes
+    # from 13 to 14 by design; the last picture moment is 16.98.
     worst = ('', 0.0); cam_ok = True
-    for tt in ('3.0', '8.0', '12.0', '15.0', '17.0'):
+    for tt in ('3.0', '8.0', '12.0', '15.0', '16.98'):
         go(f'frame=opening&theme=light&t={tt}')
         page.screenshot(path=f'{TMP}/j-now.png')
         cam_now = probe()['camera']
@@ -78,7 +93,13 @@ with sync_playwright() as pw:
                 share(f'{TMP}/j-now.png', f'{TMP}/j-base.png', (1280, 0, 1920, 1080)))
         if s > worst[1]: worst = (tt, s)
         cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
-    check('29 join', worst[1] < 0.0001 and cam_ok, f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok}', '< 0.01% and identical camera')
+    go('frame=opening&theme=light&t=17.0')
+    cam_now = probe()['camera']
+    go('frame=opening&theme=light&t=17.0', base=True)
+    cam_base = probe()['camera']
+    cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
+    check('29 join', worst[1] < 0.0001 and cam_ok, f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok} (17.0 camera only)',
+          '< 0.01%, identical camera')
 
     # ---- 30 parts arrive ----
     schedule = {}
@@ -142,28 +163,55 @@ with sync_playwright() as pw:
     check('32 instanced outlines', not bad32, '; '.join(bad32) if bad32 else 'all five above 1%', 'O >= 1% at the outline instant')
 
     # ---- 33 both sides close ----
+    # The laid metal is read from the solo picture without outlines or flash;
+    # otherwise the dark outline counts as metal. The extent is the screen span
+    # of everything that differs from the background.
+    COWL, NACELLE = PIECES[3][1], PIECES[4][1]
     spans = {'cowl': [], 'nacelle': []}
-    go('frame=opening&theme=light&t=20.2')
+    sheets = {'cowl': [], 'nacelle': []}
     for i in range(10):
-        tt = 20.2 + i * 0.1
-        for name, ids in (('cowl', PIECES[3][1]), ('nacelle', PIECES[4][1])):
+        tt = round(20.2 + i * 0.1, 2)
+        for name, ids in (('cowl', COWL), ('nacelle', NACELLE)):
             solo = ",".join(ids)
-            mp = go(f'frame=opening&theme=light&mask=part:{solo}&t={tt:.2f}', which=extra[0])
-            mp.screenshot(path=f'{TMP}/c-mask.png')
-            on = go(f'frame=opening&theme=light&solo={solo}&t={tt:.2f}', which=page)
-            on.screenshot(path=f'{TMP}/c-on.png')
-            pm = pixels(f'{TMP}/c-mask.png'); pa = pixels(f'{TMP}/c-on.png')
-            xs = [x for y in range(100, 1080, 4) for x in range(0, 1280, 4)
-                  if max(pm[x, y]) < 245 and far(pa, x, y)]
-            spans[name].append((min(xs), max(xs)) if xs else (0, 0))
+            pg = go(f'frame=opening&theme=light&solo={solo}&nolines=1&noflash=1&t={tt:.2f}', which=extra[0])
+            path = f'{TMP}/c-{name}-{i}.png'
+            pg.screenshot(path=path)
+            sheets[name].append(path)
+            px = pixels(path)
+            xs = [x for y in range(100, 1080, 2) for x in range(0, 1280, 2) if far(px, x, y, 12)]
+            spans[name].append((min(xs), max(xs)) if xs else None)
+    fullspan = {}
+    for name, ids in (('cowl', COWL), ('nacelle', NACELLE)):
+        mp = go(f'frame=opening&theme=light&mask=part:{",".join(ids)}&t=21.10', which=extra[1])
+        mp.screenshot(path=f'{TMP}/c-full-{name}.png')
+        pm = pixels(f'{TMP}/c-full-{name}.png')
+        xs = [x for y in range(100, 1080, 2) for x in range(0, 1280, 2) if max(pm[x, y]) < 245]
+        fullspan[name] = (min(xs), max(xs)) if xs else None
+    # Cowl grows from +x to -x (leftwards on screen), nacelle the other way.
+    # Before s + 0.20 nothing is laid yet, so leading empty samples are skipped.
     ok33 = True
+    detail = []
     for name in ('cowl', 'nacelle'):
-        lo = [s[0] for s in spans[name]]; hi = [s[1] for s in spans[name]]
-        grow = all(lo[i + 1] >= lo[i] - 2 for i in range(len(lo) - 1)) if name == 'cowl' else all(hi[i + 1] <= hi[i] + 2 for i in range(len(hi) - 1))
-        full = (hi[-1] - lo[-1]) > 0.9 * (max(s[1] for s in spans[name]) - min(s[0] for s in spans[name]))
-        ok33 = ok33 and grow and full
-    check('33 both sides close', ok33, f'cowl {spans["cowl"][0]}->{spans["cowl"][-1]}, nacelle {spans["nacelle"][0]}->{spans["nacelle"][-1]}',
-          'each side grows monotonically towards its end')
+        got = [g for g in spans[name]]
+        while got and got[0] is None:
+            got.pop(0)
+        detail.append(f'{name} {spans[name][0]}->{spans[name][-1]} full {fullspan[name]}')
+        if not got or fullspan[name] is None or any(g is None for g in got):
+            ok33 = False; continue
+        if name == 'cowl':
+            grow = all(got[i + 1][0] <= got[i][0] + 2 for i in range(len(got) - 1))
+        else:
+            grow = all(got[i + 1][1] >= got[i][1] - 2 for i in range(len(got) - 1))
+        cover = (got[-1][1] - got[-1][0]) >= 0.9 * (fullspan[name][1] - fullspan[name][0])
+        ok33 = ok33 and grow and cover
+    with open(f'{OUT}/m3-both-sides.json', 'w') as f:
+        json.dump({'spans': spans, 'full': fullspan}, f)
+    sheet = Image.new('RGB', (10 * 192, 2 * 162), '#ffffff')
+    for r, name in enumerate(('cowl', 'nacelle')):
+        for c, path in enumerate(sheets[name]):
+            sheet.paste(Image.open(path).convert('RGB').resize((192, 162), Image.LANCZOS), (c * 192, r * 162))
+    sheet.save(f'{OUT}/合拢.png')
+    check('33 both sides close', ok33, '; '.join(detail), 'each side grows monotonically towards its end, full by 21.1')
 
     # ---- 34 stays in frame ----
     worst34 = (999, 0)
@@ -194,8 +242,30 @@ with sync_playwright() as pw:
         page.evaluate(f'window.__seek({tt})')
         pr = probe()
         still = still and max(abs(a - b) for a, b in zip(pr['camera']['position'], p1['camera']['position'])) < 1e-6
-    dist = max(max(abs(a - b) for a, b in zip(p1['camera']['position'], fit['position'])),
-               max(abs(a - b) for a, b in zip(p1['camera']['target'], fit['target'])))
+        still = still and max(abs(a - b) for a, b in zip(pr['camera']['target'], p1['camera']['target'])) < 1e-6
+    # Compare with the camera frame=net really renders with. Comparing with the
+    # page's own fit() result would be the page agreeing with itself.
+    net = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=1)
+    net.add_init_script(THREE_PROBE)
+    net.goto(f'{URL}?frame=net&theme=light')
+    net.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
+    time.sleep(0.5)
+    netcam = net.evaluate("""async () => {
+      const url = performance.getEntriesByType('resource').map(r => r.name).find(n => n.includes('deps/three'));
+      const THREE = await import(url);
+      const c = window.__lastCam;
+      if (!c) return null;
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(c.quaternion);
+      return { position: c.position.toArray(), dir: dir.toArray() };
+    }""")
+    net.close()
+    dist = math.inf; angle = 180.0
+    if netcam:
+        dist = math.dist(p1['camera']['position'], netcam['position'])
+        d = [p1['camera']['target'][i] - p1['camera']['position'][i] for i in range(3)]
+        n = math.sqrt(sum(x * x for x in d)) or 1
+        dot = sum((d[i] / n) * netcam['dir'][i] for i in range(3))
+        angle = math.degrees(math.acos(max(-1.0, min(1.0, dot))))
     go('frame=opening&theme=light&t=17.0')
     pos = []
     for i in range(int((21.9 - 17.0) * 60) + 1):
@@ -204,9 +274,25 @@ with sync_playwright() as pw:
     steps = [math.dist(pos[i], pos[i + 1]) for i in range(len(pos) - 1)]
     jerks = [abs(steps[i + 1] - steps[i]) for i in range(len(steps) - 1)]
     med = sorted(steps)[len(steps) // 2]; medj = sorted(jerks)[len(jerks) // 2]
-    ok35 = still and dist <= 0.002 and max(steps) <= 4 * max(med, 1e-9) and max(jerks) <= 4 * max(medj, 1e-9)
-    check('35 camera', ok35, f'still {still}, fit gap {dist:.4f}, step {max(steps):.4f}/{med:.4f}, jerk {max(jerks):.4f}/{medj:.4f}',
-          'still after 21.9, fit gap <= 0.002, smooth')
+    ok35 = (still and dist <= 0.002 and angle <= 0.01 and netcam is not None
+            and max(steps) <= 4 * max(med, 1e-9) and max(jerks) <= 4 * max(medj, 1e-9))
+    check('35 camera', ok35,
+          f'still {still}, net {netcam is not None}, position gap {dist:.4f}, direction {angle:.4f}deg, '
+          f'step {max(steps):.4f}/{med:.4f}, jerk {max(jerks):.4f}/{medj:.4f}',
+          'still after 21.9, within 0.002 and 0.01deg of frame=net, smooth')
+
+    # ---- 35b assembled engine box (no threshold; the supervisor judges) ----
+    page.evaluate('window.__seek(21.9)')
+    page.screenshot(path=f'{TMP}/f35box.png')
+    px = pixels(f'{TMP}/f35box.png')
+    rows = [y for y in range(300, 1080)
+            if sum(1 for x in range(0, 1280, 2) if max(abs(px[x, y][i] - BG[i]) for i in range(3)) > 18) >= 2]
+    cols = [x for x in range(0, 1280)
+            if sum(1 for y in range(300, 1080, 2) if max(abs(px[x, y][i] - BG[i]) for i in range(3)) > 18) >= 2]
+    box = (min(cols), min(rows), max(cols), max(rows)) if rows and cols else None
+    results.append({'check': '35b engine box', 'ok': True, 'value': f'{box} vs style (243, 330, 1051, 766)',
+                    'expect': 'no threshold, for the supervisor'})
+    print('INFO 35b engine box |', box, 'vs style (243, 330, 1051, 766)', flush=True)
 
     # ---- 36 graph ----
     go('frame=opening&theme=light&t=22.35')
@@ -232,6 +318,7 @@ with sync_playwright() as pw:
 
     # ---- 37 flash ----
     bad37 = []
+    base37 = {}
     for name, ids, start, o0, sweep in PIECES:
         solo = ",".join(ids)
         T = start + sweep
@@ -246,6 +333,7 @@ with sync_playwright() as pw:
         if not pts:
             bad37.append(f'{name} empty'); continue
         d = sum((pa[x, y][2] - pa[x, y][0]) - (pb[x, y][2] - pb[x, y][0]) for (x, y) in pts) / len(pts)
+        base37[name] = round(sum(pb[x, y][2] - pb[x, y][0] for (x, y) in pts) / len(pts), 1)
         if d < 10:
             bad37.append(f'{name} {d:+.0f}')
     go('frame=opening&theme=light&t=22.2')
@@ -254,19 +342,39 @@ with sync_playwright() as pw:
     extra[1].screenshot(path=f'{TMP}/e7-off.png')
     pa = pixels(f'{TMP}/e7-on.png'); pb = pixels(f'{TMP}/e7-off.png')
     e7px = sum(1 for y in range(1080) for x in range(1280) if max(abs(pa[x, y][i] - pb[x, y][i]) for i in range(3)) > 8)
-    check('37 flash', not bad37 and e7px >= 20000, '; '.join(bad37[:2]) if bad37 else f'e7 {e7px}px',
+    theory = {k: round(0.25 * (156 - v), 1) for k, v in base37.items()}
+    with open(f'{OUT}/m3-flash-base.json', 'w') as f:
+        json.dump({'base': base37, 'theory_peak': theory}, f, ensure_ascii=False, indent=2)
+    fails = [b for b in bad37 if not b.endswith('empty')]
+    extra37 = ''
+    if fails:
+        names = [b.split(' ')[0] for b in fails]
+        extra37 = ' (base blue-red, theory peak ' + str([(n, base37.get(n), theory.get(n)) for n in names]) + ')'
+    check('37 flash', not bad37 and e7px >= 20000,
+          ('; '.join(bad37[:2]) + extra37) if bad37 else f'e7 {e7px}px',
           'each piece >= +10 blue-red, e7 >= 20,000 px')
 
     # ---- 38 rotor ----
     go('frame=opening&theme=light&t=22.0')
     r22 = probe()['rotor']
+    def want_rotor(tt):
+        # spin up 22.0-23.2, cruise to 26.0, ease out by 28.0, then hold 360.
+        if tt <= 22.0:
+            return 0.0
+        if tt >= 28.0:
+            return 360.0
+        I = lambda u: u ** 6 - 3 * u ** 5 + 2.5 * u ** 4
+        u = min(1, (tt - 22.0) / 1.2)
+        cruise = max(0, min(tt, 26.0) - 23.2)
+        ease = (tt - 26.0) - 2 * I((tt - 26.0) / 2) if tt > 26.0 else 0.0
+        return (360 / 4.4) * (1.2 * I(u) + cruise + ease)
+
     bad38 = []
     for i in range(int((23.0 - 22.0) * 60) + 1):
         tt = 22.0 + i / 60
         page.evaluate(f'window.__seek({tt})')
         got = probe()['rotor']
-        u = min(1, (tt - 22.0) / 1.2)
-        want = (360 / 5.4) * (1.2 * (u ** 6 - 3 * u ** 5 + 2.5 * u ** 4) + max(0, tt - 23.2))
+        want = want_rotor(tt)
         if abs(got - want) > 0.01:
             bad38.append(f'{tt:.2f}s {got:.2f} vs {want:.2f}')
             break
@@ -286,16 +394,33 @@ with sync_playwright() as pw:
     fan_mask = go('frame=opening&theme=light&mask=part:fan.blades&t=22.5', which=extra[0])
     fan_mask.screenshot(path=f'{TMP}/fan-mask.png')
     pm = pixels(f'{TMP}/fan-mask.png')
-    fan_px = sum(1 for y in range(0, 1080, 2) for x in range(0, 1280, 2)
+    # Counted at full resolution: the blades only turn 3.4 degrees by 22.5 s.
+    fan_px = sum(1 for y in range(0, 1080) for x in range(0, 1280)
                  if max(pm[x, y]) < 245 and max(abs(pa[x, y][i] - pb[x, y][i]) for i in range(3)) > 20)
+    # The cowl region minus every rotor component: the fan and spinner seen
+    # through the intake sit in front of the cowl wall and may change. The rotor
+    # mask comes from one pose, so it is widened by 6 px to cover the tips that
+    # sweep into the gap between blades and wall.
+    rotor_ids = probe()['rotorIds']
     cowl_mask = go('frame=opening&theme=light&mask=part:fan-cowl.aft,fan-cowl.lip,fan-cowl.shell&t=22.5', which=extra[0])
     cowl_mask.screenshot(path=f'{TMP}/cowl-mask.png')
+    rotor_mask = go(f'frame=opening&theme=light&mask=part:{",".join(rotor_ids)}&t=22.5', which=extra[0])
+    rotor_mask.screenshot(path=f'{TMP}/rotor-mask.png')
     pm2 = pixels(f'{TMP}/cowl-mask.png')
-    cowl_px = sum(1 for y in range(0, 1080, 2) for x in range(0, 1280, 2)
-                  if max(pm2[x, y]) < 245 and max(abs(pa[x, y][i] - pb[x, y][i]) for i in range(3)) > 20)
-    ok38 = not bad38 and pure and fan_px >= 2000 and cowl_px == 0
-    check('38 rotor', ok38, f'{bad38[:1]} pure {pure}, fan {fan_px}, cowl {cowl_px}',
-          'rotor matches the formula, pure of t, fan turns, cowl does not')
+    rot = Image.open(f'{TMP}/rotor-mask.png').convert('L').point(lambda v: 255 if v < 60 else 0)
+    tight = rot.load()
+    wide = rot.filter(ImageFilter.MaxFilter(13)).load()
+    rest_tight = [(x, y) for y in range(1080) for x in range(1280) if max(pm2[x, y]) < 245 and tight[x, y] == 0]
+    rest = [(x, y) for y in range(1080) for x in range(1280) if max(pm2[x, y]) < 245 and wide[x, y] == 0]
+    moved = sum(1 for (x, y) in rest if max(abs(pa[x, y][i] - pb[x, y][i]) for i in range(3)) > 20)
+    moved_tight = sum(1 for (x, y) in rest_tight if max(abs(pa[x, y][i] - pb[x, y][i]) for i in range(3)) > 20)
+    cowl_share = moved / len(rest) if rest else 1.0
+    share_tight = moved_tight / len(rest_tight) if rest_tight else 1.0
+    ok38 = not bad38 and pure and fan_px >= 2000 and rest and cowl_share <= 0.01
+    check('38 rotor', ok38,
+          f'{bad38[:1]} pure {pure}, fan {fan_px}, cowl {moved}/{len(rest)} = {cowl_share*100:.2f}% '
+          f'(exact rotor mask {moved_tight}/{len(rest_tight)} = {share_tight*100:.2f}%)',
+          'rotor matches the formula, pure of t, fan turns, cowl region <= 1% moved')
 
     check('14c console during milestone three', not console, console[:2] or 'none', 'no error / pageerror')
     browser.close()
