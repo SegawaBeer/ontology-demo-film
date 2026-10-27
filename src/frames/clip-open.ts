@@ -997,7 +997,7 @@ export async function mountOpening(theme: Theme) {
   const rotorGroups = engine.modules.flatMap(m => m.components).filter(c => c.rotor).map(c => c.group);
   let rotorNow = 0;
   function rotorAt(t: number) {
-    const deg = rotorDegrees(t);
+    const deg = params.get('norotor') === '1' ? 0 : rotorDegrees(t);
     rotorNow = deg;
     for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg);
   }
