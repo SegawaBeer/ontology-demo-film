@@ -215,6 +215,20 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     scene, camera, renderer, width, height,
     addEngine, setGhost, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
     render: () => renderer.render(scene, camera),
+    // Second pass onto the picture already on screen: depth starts over, colour
+    // stays. Lets depth-only shells be drawn first without losing the metal a
+    // first pass already painted.
+    renderOver: () => {
+      // A colour background makes the renderer clear every frame even with
+      // autoClear off, so it is taken away for this pass and put back after.
+      const background = scene.background;
+      scene.background = null;
+      renderer.autoClear = false;
+      renderer.clearDepth();
+      renderer.render(scene, camera);
+      renderer.autoClear = true;
+      scene.background = background;
+    },
   };
 }
 

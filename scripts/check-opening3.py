@@ -22,9 +22,22 @@ window.__THREE_DEVTOOLS__.addEventListener('observe', e => {
   const o = e.detail;
   if (o && typeof o.render === 'function' && o.domElement) {
     const orig = o.render.bind(o);
-    o.render = (scene, cam) => { window.__lastCam = cam; return orig(scene, cam); };
+    o.render = (scene, cam) => {
+      window.__lastCam = cam; window.__scene = scene; window.__renderer = o;
+      return orig(scene, cam);
+    };
   }
 });"""
+
+# a15ba3a has no parameter for the depth shells, so they are switched off in the
+# page and the scene is drawn once more.
+HIDE_SHELLS = """() => {
+  window.__scene.traverse(o => {
+    const m = o.material;
+    if (o.isMesh && m && m.colorWrite === false) o.visible = false;
+  });
+  window.__renderer.render(window.__scene, window.__lastCam);
+}"""
 
 def check(name, ok, value, expect):
     results.append({'check': name, 'ok': bool(ok), 'value': value, 'expect': expect})
@@ -74,6 +87,8 @@ with sync_playwright() as pw:
     page.on('console', lambda m: console.append(m.text) if m.type == 'error' else None)
     page.on('pageerror', lambda e: console.append(f'pageerror: {e}'))
     extra = [browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=1) for _ in range(2)]
+    base3 = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=1)
+    base3.add_init_script(THREE_PROBE)
 
     def go(query, base=False, which=None):
         pg = which or page
@@ -102,7 +117,11 @@ with sync_playwright() as pw:
                 share(f'{TMP}/j-now.png', f'{TMP}/j-base.png', (1280, 0, 1920, 1080)))
         if s > worst[1]: worst = (tt, s)
         cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
-    excused_rows = []
+    # The metal layer is the same on both sides once a15ba3a's depth shells are
+    # switched off in the page: it has no parameter for that, so they are hidden
+    # and the scene is drawn again. Then the normal-frame differences are split
+    # into metal (the nolines pair changed there too) and line-only changes.
+    rows29 = []
     for tt in ('12.0', '15.0', '16.98'):
         go(f'frame=opening&theme=light&t={tt}')
         page.screenshot(path=f'{TMP}/j-now.png')
@@ -113,17 +132,31 @@ with sync_playwright() as pw:
         cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
         right = share(f'{TMP}/j-now.png', f'{TMP}/j-base.png', (1280, 0, 1920, 1080))
         if right > worst[1]: worst = (tt + ' right', right)
-        now, now_d = column(f'{TMP}/j-now.png')
-        base, base_d = column(f'{TMP}/j-base.png')
+        go(f'frame=opening&theme=light&t={tt}&nolines=1')
+        page.screenshot(path=f'{TMP}/m-now.png')
+        base3.goto(f'{BASE_URL}?frame=opening&theme=light&t={tt}&nolines=1')
+        base3.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
+        time.sleep(0.3)
+        base3.screenshot(path=f'{TMP}/m-base-asis.png')
+        base3.evaluate(HIDE_SHELLS)
+        time.sleep(0.2)
+        base3.screenshot(path=f'{TMP}/m-base.png')
+        metal_share = share(f'{TMP}/m-now.png', f'{TMP}/m-base.png', (0, 0, 1280, 1080))
+        now, _ = column(f'{TMP}/j-now.png')
+        base, _ = column(f'{TMP}/j-base.png')
+        nowm, _ = column(f'{TMP}/m-now.png')
+        basem, _ = column(f'{TMP}/m-base.png')
         changed = ImageChops.difference(now, base).convert('L').point(lambda v: 255 if v > 8 else 0)
-        # Only metal that a15ba3a had erased may appear: base near background and
-        # the new picture clearly not.
-        returnable = ImageChops.multiply(base_d.point(lambda v: 255 if v < 15 else 0),
-                                         now_d.point(lambda v: 255 if v > 25 else 0))
-        rest = ImageChops.subtract(changed, returnable)
-        rest_share = rest.histogram()[255] / (1280 * 1080)
-        excused_rows.append((tt, changed.histogram()[255], returnable.histogram()[255], round(rest_share * 100, 4)))
-        if rest_share > 0.0005: worst = (tt + ' left', rest_share)
+        # What the metal layer gained: the new build without outlines against
+        # a15ba3a without outlines, shells still doing their erasing there.
+        gained = column(f'{TMP}/m-base-asis.png')[0]
+        metal = ImageChops.difference(nowm, gained).convert('L').point(lambda v: 255 if v > 8 else 0)
+        line_only = ImageChops.subtract(changed, metal)
+        line_share = line_only.histogram()[255] / (1280 * 1080)
+        rows29.append([tt, round(metal_share * 100, 4), changed.histogram()[255],
+                       metal.histogram()[255], round(line_share * 100, 4)])
+        if metal_share > 0.0001: worst = (tt + ' metal', metal_share)
+        if line_share > 0.0001: worst = (tt + ' lines', line_share)
     go('frame=opening&theme=light&t=17.0')
     cam_now = probe()['camera']
     go('frame=opening&theme=light&t=17.0', base=True)
@@ -131,8 +164,8 @@ with sync_playwright() as pw:
     cam_ok = cam_ok and max(abs(x - y) for x, y in zip(cam_now['position'], cam_base['position'])) < 1e-6
     joined = (worst[1] < 0.0001 and cam_ok)
     check('29 join', joined,
-          f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok}, allowed {excused_rows}',
-          '3.0/8.0 < 0.01%, later frames only returning metal < 0.05%, right < 0.01%, identical camera')
+          f'worst {worst[0]}s {worst[1]*100:.4f}%, camera {cam_ok}, rows {rows29}',
+          '3.0/8.0 < 0.01%, metal layer < 0.01%, line-only < 0.01%, right < 0.01%, identical camera')
 
     # ---- 30 parts arrive ----
     schedule = {}

@@ -404,7 +404,7 @@ export async function mountOpening(theme: Theme) {
     shell.matrix.copy(bladeMesh.matrix);
     shell.castShadow = false;
     shell.receiveShadow = false;
-    shell.renderOrder = 10;
+    shell.renderOrder = -1;
     bladeMesh.parent!.add(shell);
     ringShell = shell;
   }
@@ -691,7 +691,7 @@ export async function mountOpening(theme: Theme) {
           twin.matrix.copy(mesh.matrix);
           twin.castShadow = false;
           twin.receiveShadow = false;
-          twin.renderOrder = 10;
+          twin.renderOrder = -1;
           mesh.parent!.add(twin);
           shells.push(twin);
         }
@@ -783,7 +783,7 @@ export async function mountOpening(theme: Theme) {
     shell.matrix.copy(fanMesh.matrix);
     shell.castShadow = false;
     shell.receiveShadow = false;
-    shell.renderOrder = 10;
+    shell.renderOrder = -1;
     fanMesh.parent!.add(shell);
     fanShell = shell;
   }
@@ -975,6 +975,25 @@ export async function mountOpening(theme: Theme) {
     }
   }
 
+  // Metal first, with the shells and outlines out of the way, so a depth shell
+  // can never erase a part that is already solid. The second pass starts the
+  // depth buffer over and draws the whole scene again: the shells fill depth
+  // first and clip the outlines exactly as before, while the metal colour from
+  // the first pass stays on screen.
+  function drawFrame() {
+    if (mask) { view.render(); return; }
+    const hidden: THREE.Object3D[] = [];
+    const hide = (o: THREE.Object3D | null) => { if (o && o.visible) { hidden.push(o); o.visible = false; } };
+    for (const p of pieces) { for (const l of p.lines) hide(l); for (const sh of p.shells) hide(sh); }
+    for (const l of ringOutlines) hide(l);
+    for (const l of fanOutlines) hide(l);
+    hide(ringShell);
+    hide(fanShell);
+    view.render();
+    for (const o of hidden) o.visible = true;
+    view.renderOver();
+  }
+
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
   let appliedT = 0;
@@ -1026,7 +1045,7 @@ export async function mountOpening(theme: Theme) {
       discAt(t);
       ringAt(t);
       if (!mask) { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     {
@@ -1054,7 +1073,7 @@ export async function mountOpening(theme: Theme) {
       cameraAt(t);
       lightsAt(t);
       appliedT = t;
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     if (diskMode) {
@@ -1064,7 +1083,7 @@ export async function mountOpening(theme: Theme) {
       cameraAt(t);
       lightsAt(t);
       discAt(t);
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     cameraAt(t);
@@ -1114,7 +1133,7 @@ export async function mountOpening(theme: Theme) {
       if (tip && threadFade > 0.002) line(secondPath, secondDot, tip, { x: 1573, y: 330 }, 6, seg(t, 8.8, 9.2), 0.85 * threadFade);
       else { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
     }
-    if (render) view.render();
+    if (render) drawFrame();
   }
 
   function firstBladeTip() {
