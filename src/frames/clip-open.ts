@@ -980,13 +980,17 @@ export async function mountOpening(theme: Theme) {
     discAt(t);
     ringAt(t);
   }
-  const OMEGA = 360 / 5.4;
+  // Spin up 22.0-23.2, cruise to 26.0, ease out by 28.0: the integral is
+  // 0.6 + 2.8 + 1.0 = 4.4 turns at omega, so the blades stop on 360 degrees.
+  const OMEGA = 360 / 4.4;
   const rotorIntegral = (u: number) => u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
   function rotorDegrees(t: number) {
     if (t <= 22.0) return 0;
+    if (t >= 28.0) return 360;
     const ramp = Math.min(1, (t - 22.0) / 1.2);
-    const after = Math.max(0, t - 23.2);
-    return OMEGA * (1.2 * rotorIntegral(ramp) + after);
+    const cruise = Math.max(0, Math.min(t, 26.0) - 23.2);
+    const easeOut = t > 26.0 ? (t - 26.0) - 2 * rotorIntegral((t - 26.0) / 2) : 0;
+    return OMEGA * (1.2 * rotorIntegral(ramp) + cruise + easeOut);
   }
   const rotorGroups = engine.modules.flatMap(m => m.components).filter(c => c.rotor).map(c => c.group);
   let rotorNow = 0;
