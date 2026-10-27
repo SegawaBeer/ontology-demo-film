@@ -1,5 +1,5 @@
 // Ontology graph and dialog content for the style frames. Values follow
-// 脚本/本体结构清单-v1.1 (demo data, no live platform).
+// 脚本/本体结构清单-v1.2 (demo data, no live platform).
 
 export type Anchor = 'below' | 'above' | 'left' | 'right';
 export type Tone = 'red' | 'amber' | 'green';
@@ -13,7 +13,8 @@ export type GraphNode = {
   group?: 'rd' | 'mfg' | 'qa' | 'scm';
   sub?: string;
 };
-export type GraphEdge = { from: string; to: string; kind: 'tree' | 'rel'; bend?: number };
+/** `via` gives a cubic route (two control points, from → to) instead of the quadratic `bend`. */
+export type GraphEdge = { from: string; to: string; kind: 'tree' | 'rel'; bend?: number; via?: [number, number, number, number] };
 
 const moduleNames: [string, string][] = [
   ['m-fan', '风扇'], ['m-cowl', '进气罩'], ['m-comp', '压气机'], ['m-comb', '燃烧室'],
@@ -74,6 +75,9 @@ export const edges: GraphEdge[] = [
   { from: 'powder', to: 'supplier', kind: 'rel', bend: -0.1 },
   { from: 'po', to: 'supplier', kind: 'rel', bend: 0.2 },
   { from: 'po', to: 'm-comb', kind: 'rel', bend: -0.3 },
+  // No single bend clears every label in the net, q3 and stale frames, so this
+  // link takes a cubic route around the right side of the production group.
+  { from: 'po', to: 'blade', kind: 'rel', via: [644, 960, 670, 480] },
   { from: 'stock', to: 'blade', kind: 'rel', bend: -0.06 },
   { from: 'blade', to: 'e3', kind: 'rel', bend: -0.3 },
 ];
