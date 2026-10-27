@@ -721,10 +721,14 @@ export async function mountOpening(theme: Theme) {
   const fanOutline = 0.12;
   const fanComp = components.find(c => c.meta.id === FAN);
   const fanMesh = (() => {
-    let found: THREE.InstancedMesh | null = null;
-    fanComp?.group.traverse(o => { const m = o as THREE.InstancedMesh; if (m.isInstancedMesh && !found) found = m; });
-    return found as THREE.InstancedMesh | null;
+    let best: THREE.InstancedMesh | null = null;
+    fanComp?.group.traverse(o => {
+      const m = o as THREE.InstancedMesh;
+      if (m.isInstancedMesh && (!best || m.count > best.count)) best = m;
+    });
+    return best as THREE.InstancedMesh | null;
   })();
+  const fanTotal = engine.listParts(FAN).length;
   const fanOutlines: LineSegments2[] = [];
   const fanMat = new LineMaterial({ color: 0x4e5e6b, linewidth: 1.2, transparent: true, opacity: 1, depthWrite: false });
   fanMat.resolution.set(1280, 1080);
@@ -771,7 +775,7 @@ export async function mountOpening(theme: Theme) {
   let fanSolidNow = -1;
   function fanAt(t: number) {
     if (solo || partMask || !fanMesh) return;
-    const total = fanMesh.count;
+    const total = fanTotal;
     let solid = 0;
     for (let k = 1; k <= total; k++) if (t + 1e-9 >= fanStart(k) + fanOutline) solid = k;
     if (solid !== fanSolidNow) {
