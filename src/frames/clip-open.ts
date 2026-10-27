@@ -64,6 +64,23 @@ export async function mountOpening(theme: Theme) {
     const inst = o as THREE.InstancedMesh;
     if (inst.isInstancedMesh) instanceSnapshots.set(inst, Float32Array.from(inst.instanceMatrix.array));
   });
+  // The assembled-engine framing is measured here, while every part still sits
+  // visible in assembly position and nothing hangs under the engine: that is the
+  // box treeToNet() frames, and it has to be measured in engine space, not in the
+  // opening rig's scaled space.
+  const m3FitPos = new THREE.Vector3();
+  const m3FitTarget = new THREE.Vector3();
+  {
+    engine.root.updateMatrixWorld(true);
+    const pos = camera.position.clone();
+    const quat = camera.quaternion.clone();
+    const pose = view.fit([engine], new THREE.Vector3(0.78, 0.34, 0.92), { x: 0.78, y: 0.70 }, new THREE.Vector2(-0.06, 0.02));
+    camera.position.copy(pos);
+    camera.quaternion.copy(quat);
+    camera.updateMatrixWorld();
+    m3FitPos.copy(pose.position);
+    m3FitTarget.copy(pose.target);
+  }
   engine.setVisible(allComponentIds, false);
   engine.root.updateMatrixWorld(true);
 
@@ -195,11 +212,6 @@ export async function mountOpening(theme: Theme) {
   const m2Cam = new THREE.PerspectiveCamera(24, 1280 / 1080, 0.01, 100);
   let m2Target = new THREE.Vector3();
   let m2Distance = 6;
-
-  const m3FitPos = new THREE.Vector3();
-  const m3FitTarget = new THREE.Vector3();
-  let m3Distance = 1;
-
 
   function cameraAt(t: number) {
     if (t <= 5.0) {
@@ -908,7 +920,8 @@ export async function mountOpening(theme: Theme) {
       tint.mat.color.copy(colour);
     }
   }
-  for (const p of pieces) m2Box.union(p.box);
+  // Only the milestone-two pieces, so the aim matches a15ba3a.
+  for (const p of [...stagePieces, shaftPiece, ...compPieces]) m2Box.union(p.box);
   m2Target = m2Box.getCenter(new THREE.Vector3());
   for (const x of [m2Box.min.x, m2Box.max.x]) for (const y of [m2Box.min.y, m2Box.max.y]) for (const z of [m2Box.min.z, m2Box.max.z]) m2Corners.push(new THREE.Vector3(x, y, z));
   for (let i = 0; i < 10; i++) {
@@ -956,29 +969,6 @@ export async function mountOpening(theme: Theme) {
       }
     }
   }
-
-  function computeM3Fit() {
-    const detached: { obj: THREE.Object3D; parent: THREE.Object3D }[] = [];
-    const take = (obj: THREE.Object3D | null) => {
-      if (obj && obj.parent) { detached.push({ obj, parent: obj.parent }); obj.removeFromParent(); }
-    };
-    for (const p of pieces) { for (const l of p.lines) take(l); for (const sh of p.shells) take(sh); }
-    for (const l of ringOutlines) take(l);
-    take(ringShell);
-    for (const l of fanOutlines) take(l);
-    take(fanShell);
-    const pos = camera.position.clone();
-    const quat = camera.quaternion.clone();
-    const pose = view.fit([engine], new THREE.Vector3(0.78, 0.34, 0.92), { x: 0.78, y: 0.70 }, new THREE.Vector2(-0.06, 0.02));
-    camera.position.copy(pos);
-    camera.quaternion.copy(quat);
-    camera.updateMatrixWorld();
-    for (const d of detached) d.parent.add(d.obj);
-    m3FitPos.copy(pose.position);
-    m3FitTarget.copy(pose.target);
-    m3Distance = m3FitPos.distanceTo(m3FitTarget);
-  }
-  computeM3Fit();
 
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
@@ -1184,6 +1174,7 @@ export async function mountOpening(theme: Theme) {
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       rotor: rotorNow,
+      rotorIds: components.filter(c => c.rotor).map(c => c.meta.id),
       fit: { position: m3FitPos.toArray(), target: m3FitTarget.toArray() },
       boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
       components: Object.fromEntries(pieces.flatMap(p => p.ids.map(id => [id, appliedT >= p.start]))),
