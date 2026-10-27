@@ -114,10 +114,11 @@ function q1Steps(t: number) {
   if (t >= STEP_AT[0]) steps.push(`<div class="step" style="${appear(t, STEP_AT[0])}"><span class="n">01</span><span class="line">设计版本 v3.2 → 第一级涡轮叶片</span></div>`);
   if (t >= STEP_AT[1]) steps.push(`<div class="step" style="${appear(t, STEP_AT[1])}"><span class="n">02</span><span class="line">打孔程序 <em>${num(t, N2[0])}</em> 套 · 检验标准 <em>${num(t, N2[1])}</em> 份</span></div>`);
   if (t >= STEP_AT[2]) {
-    // 16 characters: folded after the second count, as clip-q3 folds its long lines.
+    // 16 characters: folded after the second count (the separator stays at the end
+    // of the first line), as clip-q3 folds its long lines.
     const second = t >= N3[2][1]
       ? `<br><span style="${appear(t, N3[2][1])};display:inline-block">涉及发动机 <em>${num(t, N3[2])}</em> 台</span>` : '';
-    steps.push(`<div class="step" style="${appear(t, STEP_AT[2])}"><span class="n">03</span><span class="line">在制叶片 <em>${num(t, N3[0])}</em> 枚 · 在途铸件 <em>${t < N3[1][1] ? 0 : num(t, N3[1])}</em> 件${second}</span></div>`);
+    steps.push(`<div class="step" style="${appear(t, STEP_AT[2])}"><span class="n">03</span><span class="line">在制叶片 <em>${num(t, N3[0])}</em> 枚 · 在途铸件 <em>${t < N3[1][1] ? 0 : num(t, N3[1])}</em> 件${second ? ' ·' : ''}${second}</span></div>`);
   }
   return steps;
 }
@@ -188,6 +189,12 @@ function graphAt(t: number): GraphState {
 }
 
 // ------------------------------------------------------------------ sound events
+/** First 60 fps frame from which a ticking number stays on its final value (small numbers land early). */
+function settleAt([final, at, dur]: [number, number, number]) {
+  let last = Math.ceil(at * 60);
+  for (let f = Math.ceil(at * 60); f <= Math.ceil((at + dur) * 60); f++) if (tick(final, f / 60, at, dur) !== final) last = f + 1;
+  return last / 60;
+}
 export type FilmEvent = { t: number; kind: 'type' | 'line' | 'tick' | 'path' | 'slide' | 'part' | 'swap' | 'alert'; gain: number };
 function buildEvents(): FilmEvent[] {
   const out: FilmEvent[] = [];
@@ -196,7 +203,7 @@ function buildEvents(): FilmEvent[] {
   for (const at of typedTimes(Q1_ASK, Q1_TYPE, Q1_PER_CHAR, Q1_SEED)) out.push({ t: at, kind: 'type', gain: 0.32 });
   for (const h of hops) out.push({ t: h.a, kind: 'path', gain: 0.5 });
   for (const at of STEP_AT) out.push({ t: at, kind: 'line', gain: 0.7 });
-  for (const [, at, dur] of [...N2, ...N3]) out.push({ t: at + dur, kind: 'tick', gain: 0.5 });
+  for (const n of [...N2, ...N3]) out.push({ t: settleAt(n), kind: 'tick', gain: 0.5 });
   out.push({ t: CAM_IN[0], kind: 'slide', gain: 0.45 }, { t: CAM_OUT[0], kind: 'slide', gain: 0.45 });
   out.push({ t: PULL[0], kind: 'part', gain: 0.6 }, { t: PULL_JOINT, kind: 'part', gain: 0.4 });
   out.push({ t: RETURN[0], kind: 'part', gain: 0.4 }, { t: RETURN[1], kind: 'part', gain: 0.6 });
@@ -356,6 +363,20 @@ export async function mountFilmA(theme: Theme) {
   const radial = new THREE.Vector3(0, pulledMeta.center[1], pulledMeta.center[2]).normalize();
   // Promote it now, so its mesh is the same whatever was shown before.
   e7.setTransform(PULLED, { position: [0, 0, 0] });
+  // The two neighbours: the blades are staggered wider than the pitch, so on the
+  // way out the pulled aerofoil and platform pass through theirs (tangential
+  // overlap up to 0.0114 near the platform). They fade out with the path parts.
+  const pulledNo = Number(PULLED.slice(-3));
+  const NEIGHBOURS = [-1, 1].map(k => `${RING}.${String(((pulledNo - 1 + k + 100) % 100) + 1).padStart(3, '0')}`);
+  e7.setOpacity(NEIGHBOURS, 1);
+  const neighbourMats = NEIGHBOURS.map(id => e7.parts.get(id)!.promoted!.material as THREE.MeshStandardMaterial);
+  function setNeighbours(opacity: number) {
+    const transparent = opacity < 0.999;
+    for (const m of neighbourMats) {
+      m.opacity = opacity;
+      if (m.transparent !== transparent || m.depthWrite !== !transparent) { m.transparent = transparent; m.depthWrite = !transparent; m.needsUpdate = true; }
+    }
+  }
 
   const ringBase = new THREE.Color(), ringGrey = new THREE.Color(ink.ring), probeBlue = new THREE.Color(ink.probe);
   const smooth = (p: number) => p * p * (3 - 2 * p);
@@ -408,6 +429,7 @@ export async function mountFilmA(theme: Theme) {
       const amount = netShell.has(id) ? Math.max(1 - unshell, ghostIn) : ghostIn;
       view.setGhostOf(e7, [id], amount, pathSet.has(id) ? clear : 0);
     }
+    setNeighbours(1 - clear);
     // Ring colour: its own metal in the net picture, clip-q3's grey in the three columns.
     const grey = ease(seg(t, UNSHELL[0], UNSHELL[1]));
     const toProbe = 0.5 * ease(seg(t, PULL[0], PULL[1])) * (1 - ease(seg(t, RETURN[0], RETURN[1])));
@@ -488,6 +510,10 @@ export async function mountFilmA(theme: Theme) {
     const pose = applyCamera(t);
     view.cutaway(e7, 1 - ease(seg(t, UNSHELL[0], UNSHELL[1])));
     setCanvas(slide >= 1);
+    // After a jump some material and shadow state only lands on the next draw,
+    // so the first draw can differ from a page opened at t. Drawing twice makes
+    // every seek give the same picture as opening at t.
+    view.render();
     view.render();
     const turn = ease(seg(t, TURN[0], TURN[1]));
     const rows = FILM_ROWS.map((_, i) => ease(seg(t, ROWS_AT + i * ROW_STEP, ROWS_AT + (i + 1) * ROW_STEP)));
@@ -525,6 +551,6 @@ export async function mountFilmA(theme: Theme) {
   };
 
   // For the checks: section profiles and opacities come from the live engine.
-  const debug = { view, e7, colCam, PULLED, PATH_PARTS, ringParts, project, THREE };
+  const debug = { view, e7, colCam, PULLED, PATH_PARTS, NEIGHBOURS, ringParts, project, THREE };
   return { seek, probe: filmProbe, events: buildEvents(), debug };
 }
