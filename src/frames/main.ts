@@ -6,6 +6,7 @@ import { fleetBlocks, type GraphState } from './data';
 import { createModelView, type Theme } from './scene';
 import { mountOpen } from './open';
 import { mountOpening } from './clip-open';
+import { NET_GRAPH, NET_VIEW } from './net';
 
 const params = new URLSearchParams(location.search);
 const theme: Theme = params.get('theme') === 'dark' ? 'dark' : 'light';
@@ -243,6 +244,20 @@ async function treeToNet() {
   caption('实物', '7 号发动机 · 总装中');
 }
 
+// 0:30 hand-off: every link laid, nothing highlighted, combustor in its own colour.
+async function netEnd() {
+  document.querySelector('#frame')!.classList.add('layout-split');
+  renderGraph(document.querySelector('#graph')!, NET_GRAPH);
+  const width = 1280;
+  svg.setAttribute('viewBox', `0 0 ${width} 1080`);
+  const view = await createModelView(document.querySelector('#model')!, theme, width);
+  const e7 = view.addEngine({ ghost: NET_VIEW.ghost }, new THREE.Vector3(0, 0, 0), 1);
+  view.frame([e7], NET_VIEW.direction, NET_VIEW.limits, NET_VIEW.shift);
+  view.cutaway(e7);
+  view.render();
+  caption(...NET_VIEW.caption);
+}
+
 // Timed clip: `?frame=clip` previews in real time (or holds `&t=`), and the
 // exporter drives it through window.__seek one frame at a time.
 async function clip() {
@@ -261,6 +276,6 @@ async function clip() {
   requestAnimationFrame(loop);
 }
 
-const frames: Record<string, () => Promise<void>> = { q3: questionThree, stale: staleAnswer, net: treeToNet, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
+const frames: Record<string, () => Promise<void>> = { q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
 await (frames[frameName] ?? questionThree)();
 document.documentElement.dataset.ready = '1';
