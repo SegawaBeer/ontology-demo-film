@@ -1158,7 +1158,10 @@ export async function mountOpening(theme: Theme) {
     return a.x >= b.x ? a : b;
   }
 
-  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => apply(t);
+  // A seek is the exporter driving the picture; the live loop must get out of
+  // its way from then on, even if the address forgot play=0.
+  let seeked = false;
+  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => { seeked = true; apply(t); };
   (window as unknown as { __duration: number }).__duration = DURATION;
   if (mask) {
     document.querySelector<HTMLElement>('.col-graph')!.style.visibility = 'hidden';
@@ -1287,6 +1290,7 @@ export async function mountOpening(theme: Theme) {
   } else {
     const start = performance.now();
     const loop = (now: number) => {
+      if (seeked) return;
       apply(((now - start) / 1000) % (DURATION + 1.5));
       requestAnimationFrame(loop);
     };
