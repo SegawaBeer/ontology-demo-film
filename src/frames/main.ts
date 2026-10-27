@@ -225,7 +225,7 @@ async function treeToNet() {
       { from: 'po', to: 'm-comb', progress: 1 },
       { from: 'stock', to: 'blade', progress: num('progress', 0.42) },
     ],
-    counter: '34 个节点 · 32 / 34 条关系',
+    counter: '34 个节点 · 33 / 35 条关系',
   };
   renderGraph(document.querySelector('#graph')!, graph);
 

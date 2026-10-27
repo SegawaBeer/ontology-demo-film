@@ -1,4 +1,4 @@
-import { nodes, edges, groups, captions, fleetBlocks, type GraphNode, type GraphState, type Tone } from './data';
+import { nodes, edges, groups, captions, fleetBlocks, type GraphEdge, type GraphNode, type GraphState, type Tone } from './data';
 
 const NS = 'http://www.w3.org/2000/svg';
 const toneVar: Record<Tone, string> = { red: 'var(--red)', amber: 'var(--amber)', green: 'var(--green)' };
@@ -24,6 +24,13 @@ function relPath(a: { x: number; y: number }, b: { x: number; y: number }, bend 
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   const dx = b.x - a.x, dy = b.y - a.y;
   return `M${a.x} ${a.y} Q${mx - dy * bend} ${my + dx * bend} ${b.x} ${b.y}`;
+}
+
+// A link walked from `a` to `b`; `forward` is false when `a` is the edge's own `to` end.
+function linkPath(e: GraphEdge, a: { x: number; y: number }, b: { x: number; y: number }, forward: boolean) {
+  if (!e.via) return relPath(a, b, forward ? e.bend : -(e.bend ?? 0));
+  const [x1, y1, x2, y2] = e.via;
+  return forward ? `M${a.x} ${a.y} C${x1} ${y1} ${x2} ${y2} ${b.x} ${b.y}` : `M${a.x} ${a.y} C${x2} ${y2} ${x1} ${y1} ${b.x} ${b.y}`;
 }
 
 // The same polyline walked from the other end, so a tree edge can be drawn upward.
@@ -116,7 +123,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const on = same(e.from, e.to, state.litEdges) || same(e.from, e.to, spawnedPairs);
     const relStroke = strong ? 'var(--tree)' : 'var(--rel)';
     const path = el('path', {
-      d: e.kind === 'tree' ? treePath(a, b) : relPath(a, b, e.bend), fill: 'none',
+      d: e.kind === 'tree' ? treePath(a, b) : linkPath(e, a, b, true), fill: 'none',
       stroke: on ? 'var(--lit)' : e.kind === 'tree' ? 'var(--tree)' : relStroke,
       'stroke-width': on ? litWidth : 1,
       'stroke-dasharray': e.kind === 'rel' && !on ? (strong ? '3 3' : '2 4') : 'none',
@@ -133,7 +140,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const forward = e.from === d.from;
     const dpath = e.kind === 'tree'
       ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
-      : relPath(a, b, forward ? e.bend : -(e.bend ?? 0));
+      : linkPath(e, a, b, forward);
     const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
     const length = path.getTotalLength();
     const p = Math.min(1, d.progress);
