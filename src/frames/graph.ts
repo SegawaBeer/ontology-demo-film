@@ -118,9 +118,10 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     if (shown !== undefined && shown < 1) t.style.opacity = String(shown);
   }
   for (const c of only ? captions.filter(x => (state.captions ?? []).includes(x.text)) : captions) {
+    if (state.captionAppear !== undefined && state.captionAppear <= 0) continue;
     const t = el('text', { x: c.x, y: c.y + 12, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--ink-3)' }, svg);
     t.textContent = c.text;
-    t.style.opacity = dim;
+    t.style.opacity = state.captionAppear !== undefined && state.captionAppear < 1 ? String(+dim * state.captionAppear) : dim;
   }
 
   const dimLayer = el('g', {}, svg);
@@ -130,6 +131,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   const release = state.release ?? 0;
   const releasing = state.release !== undefined;
   for (const e of shownEdges) {
+    if ((state.edgeAlpha?.[`${e.from}>${e.to}`] ?? 1) <= 0) continue;
     const a = byId.get(e.from)!, b = byId.get(e.to)!;
     const lit = same(e.from, e.to, state.litEdges) || same(e.from, e.to, spawnedPairs);
     // While releasing, a lit link is drawn unlit underneath and lit on top, fading out.
@@ -153,6 +155,8 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       const appear = Math.min(appearOf.get(e.from) ?? 1, appearOf.get(e.to) ?? 1);
       if (appear < 1) path.style.opacity = String(Math.max(0, appear));
       if (releasing && lit && on) path.style.opacity = String(1 - release);
+      const ea = state.edgeAlpha?.[`${e.from}>${e.to}`];
+      if (ea !== undefined && ea < 1) path.style.opacity = String(Math.max(0, ea) * +(path.style.opacity || 1));
     }
   }
 
@@ -165,16 +169,25 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const dpath = e.kind === 'tree'
       ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
       : linkPath(e, a, b, forward);
-    const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
+    const ink = d.tone ? toneVar[d.tone] : 'var(--lit)';
+    const path = el('path', { d: dpath, fill: 'none', stroke: ink, 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
     path.setAttribute('data-draw', `${d.from}>${d.to}`);
     const length = path.getTotalLength();
     const p = Math.min(1, d.progress);
     path.setAttribute('stroke-dasharray', `${length * p} ${length}`);
     if (p < 1) {
       const head = path.getPointAtLength(length * p);
-      el('circle', { cx: head.x, cy: head.y, r: 6, fill: 'var(--lit)', opacity: 0.16 }, litLayer);
-      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: 'var(--lit)' }, litLayer).setAttribute('data-head', `${d.from}>${d.to}`);
+      el('circle', { cx: head.x, cy: head.y, r: 6, fill: ink, opacity: 0.16 }, litLayer);
+      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: ink }, litLayer).setAttribute('data-head', `${d.from}>${d.to}`);
     }
+  }
+  for (const te of state.toneEdges ?? []) {
+    const e = allEdges.find(x => same(x.from, x.to, [[te.from, te.to]]));
+    if (!e) continue;
+    const a = byId.get(te.from)!, b = byId.get(te.to)!;
+    const forward = e.from === te.from;
+    const d = e.kind === 'tree' ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a))) : linkPath(e, a, b, forward);
+    el('path', { d, fill: 'none', stroke: toneVar[te.tone], 'stroke-width': litWidth }, litLayer).setAttribute('data-edge', `${te.from}>${te.to}`);
   }
 
   // Finished edges whose lit stroke is fading back to the resting look.
@@ -225,18 +238,24 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const chip = extras && !(releasing && lit.has(n.id) && !on) ? state.chip[n.id] : undefined;
     if (chip) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';
-      let text: SVGTextElement;
+      let text!: SVGTextElement;
       if (n.kind === 'engine') {
         text = el('text', { x: n.x + (chip.dx ?? 0), y: n.y + r + 20 + (chip.dy ?? 0), 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': chip.anchor ?? 'middle', fill }, g);
         text.textContent = chip.text;
       } else {
         const toLeft = n.anchor === 'left';
         const below = n.anchor === 'below';
-        text = el('text', {
-          x: (below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10) + (chip.dx ?? 0), y: (below ? n.y + r + 34 : n.y + 22) + (chip.dy ?? 0),
-          'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': chip.anchor ?? (below ? 'middle' : toLeft ? 'end' : 'start'), fill,
-        }, g);
-        text.textContent = chip.text;
+        // A chip text with a line break is drawn as one text element per line, 15 px apart.
+        const rows = chip.text.split('\n');
+        rows.forEach((row, i) => {
+          text = el('text', {
+            x: (below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10) + (chip.dx ?? 0), y: (below ? n.y + r + 34 : n.y + 22) + (chip.dy ?? 0) + 15 * i,
+            'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': chip.anchor ?? (below ? 'middle' : toLeft ? 'end' : 'start'), fill,
+          }, g);
+          text.textContent = row;
+          const k = state.chipAmount?.[n.id];
+          if (i < rows.length - 1 && k !== undefined && k < 1) text.style.opacity = String(Math.max(0, k));
+        });
       }
       const k = state.chipAmount?.[n.id];
       if (k !== undefined && k < 1) text.style.opacity = String(Math.max(0, k));

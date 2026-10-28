@@ -4,7 +4,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { createHeroBlade, bladePoint, outwardNormal, HERO_COMPONENT } from '../hero-blade';
 import { renderGraph } from './graph';
-import { createModelView, type Theme } from './scene';
+import { createModelView, type Theme, type ModelView } from './scene';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smoothstep = (a: number, b: number, x: number) => {
@@ -37,12 +37,16 @@ function samplePoints(root: THREE.Object3D, stride = 1) {
   return new Float32Array(out);
 }
 
-export async function createOpenScene(theme: Theme, mask: boolean) {
+/**
+ * `host`: draw into a view that already exists (frame=film's ending) instead of
+ * making one; the page layout and the model caption are then left to the host.
+ */
+export async function createOpenScene(theme: Theme, mask: boolean, host?: { view: ModelView }) {
   const params = new URLSearchParams(location.search);
   const frame = document.querySelector<HTMLElement>('#frame')!;
-  frame.classList.add('layout-split');
+  if (!host) frame.classList.add('layout-split');
 
-  const view = await createModelView(document.querySelector<HTMLCanvasElement>('#model')!, theme, 1280);
+  const view = host?.view ?? await createModelView(document.querySelector<HTMLCanvasElement>('#model')!, theme, 1280);
   const { scene, camera } = view;
   scene.background = new THREE.Color(mask ? '#ffffff' : '#eef0ee');
 
@@ -312,7 +316,7 @@ export async function createOpenScene(theme: Theme, mask: boolean) {
     thread.style.display = 'none';
   } else {
     const column = document.querySelector<HTMLElement>('.col-model')!;
-    column.insertAdjacentHTML('beforeend', '<div class="model-caption"><span>实物</span><span>第一级涡轮叶片</span></div>');
+    if (!host) column.insertAdjacentHTML('beforeend', '<div class="model-caption"><span>实物</span><span>第一级涡轮叶片</span></div>');
     thread.setAttribute('viewBox', '0 0 1920 1080');
     nodePath.setAttribute('fill', 'none');
     nodePath.setAttribute('stroke', 'var(--lit)');

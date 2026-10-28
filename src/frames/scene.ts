@@ -266,6 +266,33 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     if (fresh) attachPlanes(engine);
   }
 
+  /**
+   * The same half-section cut as cutaway(), on every component of a `layered`
+   * engine (cutaway() only cuts the `ghost` list). Its own plane, added to the
+   * planes the materials already have; call cutaway() once before the first use.
+   */
+  const layerCuts = new Map<Engine, THREE.Plane>();
+  function cutLayers(engine: Engine, amount: number) {
+    const map = layers.get(engine);
+    if (!map) return;
+    engine.root.updateMatrixWorld(true);
+    const axis = new THREE.Vector3(1, 0, 0).transformDirection(engine.root.matrixWorld);
+    const origin = new THREE.Vector3().setFromMatrixPosition(engine.root.matrixWorld);
+    const toCamera = camera.position.clone().sub(origin);
+    const normal = toCamera.sub(axis.clone().multiplyScalar(toCamera.dot(axis))).normalize().negate();
+    let plane = layerCuts.get(engine);
+    if (!plane) {
+      plane = new THREE.Plane();
+      layerCuts.set(engine, plane);
+      for (const layer of map.values()) for (const m of layer.materials) {
+        m.clippingPlanes = [...(m.clippingPlanes ?? []), plane];
+        m.clipShadows = true;
+      }
+    }
+    plane.setFromNormalAndCoplanarPoint(normal, origin);
+    plane.constant += (1 - amount) * 1.4 * engine.root.scale.x;
+  }
+
   /** Reveal an engine from its rear up to world x; null shows all of it. */
   function setSweep(engine: Engine, x: number | null) {
     let plane = sweeps.get(engine);
@@ -324,7 +351,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
 
   return {
     scene, camera, renderer, width, height,
-    addEngine, setGhost, setGhostOf, setGlassOf, layerIds, partOpacity, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
+    addEngine, setGhost, setGhostOf, setGlassOf, layerIds, partOpacity, cutaway, cutLayers, setSweep, worldOf, project, fit, applyPose, frame,
     ghostMaterial, ghostColor: ghostColor.clone(),
     render: () => renderer.render(scene, camera),
     // Second pass onto the picture already on screen: depth starts over, colour
