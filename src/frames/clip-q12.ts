@@ -128,7 +128,7 @@ const traceKeys: [number, number][] = [
 const W = 1280;            // one canvas under the dialog and model columns
 const COL_X = 561;         // first canvas pixel of the 720-wide model column (clip-q3's canvas pixel 0)
 const COL_W = 720;
-const LIFT = 1.05;         // clip-q3 keeps 7 号发动机 at (0, 1.05, 0)
+export const LIFT = 1.05;         // clip-q3 keeps 7 号发动机 at (0, 1.05, 0)
 const RING = 'turbine.stage-1-blades';
 const DISK = 'turbine.stage-1-disk';
 // Ghosted parts on the pulled blade's way (inner cone, shaft, stage-1 tip ring,
@@ -443,7 +443,7 @@ async function createInset(renderer: THREE.WebGLRenderer, theme: Theme, canvasWi
 // ------------------------------------------------------------------ camera helpers
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 /** Turn along a slerp, distance and target along the same curve; distance in log space, so no pull-back. */
-function blendPose(a: Pose, b: Pose, p: number): Pose {
+export function blendPose(a: Pose, b: Pose, p: number): Pose {
   if (p <= 0) return { position: a.position.clone(), target: a.target.clone() };
   if (p >= 1) return { position: b.position.clone(), target: b.target.clone() };
   const da = a.position.clone().sub(a.target), db = b.position.clone().sub(b.target);
@@ -453,7 +453,7 @@ function blendPose(a: Pose, b: Pose, p: number): Pose {
   const target = a.target.clone().lerp(b.target, p);
   return { target, position: target.clone().addScaledVector(dir, Math.exp(THREE.MathUtils.lerp(Math.log(la), Math.log(lb), p))) };
 }
-const shiftPose = (pose: Pose, by: THREE.Vector3): Pose => ({ position: pose.position.clone().add(by), target: pose.target.clone().add(by) });
+export const shiftPose = (pose: Pose, by: THREE.Vector3): Pose => ({ position: pose.position.clone().add(by), target: pose.target.clone().add(by) });
 // ------------------------------------------------------------------ mount
 export async function mountFilmA(theme: Theme) {
   const params = new URLSearchParams(location.search);

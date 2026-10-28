@@ -187,7 +187,10 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const a = byId.get(te.from)!, b = byId.get(te.to)!;
     const forward = e.from === te.from;
     const d = e.kind === 'tree' ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a))) : linkPath(e, a, b, forward);
-    el('path', { d, fill: 'none', stroke: toneVar[te.tone], 'stroke-width': litWidth }, litLayer).setAttribute('data-edge', `${te.from}>${te.to}`);
+    if ((te.amount ?? 1) <= 0) continue;
+    const tp = el('path', { d, fill: 'none', stroke: toneVar[te.tone], 'stroke-width': litWidth }, litLayer);
+    tp.setAttribute('data-edge', `${te.from}>${te.to}`);
+    if (te.amount !== undefined && te.amount < 1) tp.style.opacity = String(te.amount);
   }
 
   // Finished edges whose lit stroke is fading back to the resting look.
@@ -266,9 +269,12 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
     if (appear !== undefined && appear <= 0) continue;
     // While releasing, a lit node is drawn plain underneath and lit on top, fading out.
+    // A fading status colour: plain underneath, the coloured node on top.
+    const sk = state.statusAmount?.[n.id];
+    const statusFade = sk !== undefined && sk < 1 && !!state.status[n.id] && !(releasing && on);
     const layers: [boolean, number | undefined, boolean][] = releasing && on
       ? (release < 1 ? [[false, 1, true], [true, 1 - release, false]] : [[false, 1, true]])
-      : [[on, undefined, false]];
+      : statusFade ? [[on, undefined, true]] : [[on, undefined, false]];
     let g!: SVGGElement;
     for (const [o, overlay, plain] of layers) {
       g = el('g', {}, svg);
@@ -281,6 +287,13 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
         g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
       }
       drawNode(n, o, g, true, plain);
+    }
+    if (statusFade && sk! > 0) {
+      const top = el('g', {}, svg);
+      const base = dimming && !on ? (state.nodeAlpha?.[n.id] !== undefined ? Math.max(dimValue, state.nodeAlpha[n.id]) : dimValue) : 1;
+      top.style.opacity = String(sk! * base * (appear ?? 1));
+      if (appear !== undefined) top.setAttribute('transform', g.getAttribute('transform')!);
+      drawNode(n, on, top, false);
     }
     // A lit copy on top, for a node crossing between lit and resting.
     const k = state.litAmount?.[n.id];

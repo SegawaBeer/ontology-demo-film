@@ -233,3 +233,17 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 html.fit, html.fit body { width: 100vw; height: 100vh; overflow: hidden; }
 html.fit body { background: #d8dcdc; }
 html.fit .frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+/* frame=film: question four's two plans, the pointer, the closing line. */
+.plans { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-left: 18px; }
+.plan { border: 1px solid var(--node-ring); border-radius: 4px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--bg-col); }
+.plan b { font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.45; }
+.plan span { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.plans .pointer { position: absolute; width: 14px; height: 20px; pointer-events: none; }
+.turn.changing .answer .now.struck { background: linear-gradient(currentColor, currentColor) no-repeat 0 55%; }
+.turn.changing .answer .now.green { color: var(--green); }
+.tag.tone-green .tag-count { color: var(--green); }
+.film-subtitle {
+  position: absolute; left: 0; right: 0; bottom: 96px; text-align: center; pointer-events: none;
+  font-family: var(--mono); font-size: 26px; letter-spacing: 0.14em; color: var(--ink-2);
+}

@@ -97,9 +97,11 @@ export type GraphState = {
   /** `tone`: draw the head and stroke in a status colour instead of the lit blue. */
   drawing?: { from: string; to: string; progress: number; tone?: Tone }[];
   /** Finished links drawn in a status colour on top of their normal look. */
-  toneEdges?: { from: string; to: string; tone: Tone }[];
+  toneEdges?: { from: string; to: string; tone: Tone; amount?: number }[];
   /** Per-link opacity factor, keyed 'from>to' as in data.ts (absent = 1). */
   edgeAlpha?: Record<string, number>;
+  /** Per-node strength of its status colour, 0..1 (absent = 1): below 1 the node is drawn plain with the coloured one on top. */
+  statusAmount?: Record<string, number>;
   /** Opacity factor of the two ring captions (absent = 1). */
   captionAppear?: number;
   spawned?: { node: GraphNode; edges: [string, string, number][]; appear?: number }[];
