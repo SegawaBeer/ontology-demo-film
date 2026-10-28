@@ -31,6 +31,7 @@ type Ctx = {
 export function createQ4Model(c: Ctx) {
   const { e7, e3 } = c;
   const ringParts = e7.listParts('turbine.stage-1-blades');
+  const others = ringParts.filter(id => !c.hit7.includes(id));
   // 3 号: every material's own opacity, so the fade can multiply it and put it back exactly.
   const e3Mats: { m: THREE.MeshStandardMaterial; opacity: number; transparent: boolean; depthWrite: boolean }[] = [];
   e3.root.traverse(o => {
@@ -101,6 +102,14 @@ export function createQ4Model(c: Ctx) {
     return o.radial.clone().multiplyScalar(rad).add(new THREE.Vector3(ax, 0, 0)).addScaledVector(o.fromDir, FAR * fly);
   };
 
+  // engine.setVisible(true) puts an instanced part back in its slot even while it has its
+  // own mesh, which would draw a second copy there; a part with its own mesh is shown or
+  // hidden on that mesh only.
+  function showPart(id: string, on: boolean) {
+    const st = e7.parts.get(id)!;
+    if (st.promoted) { st.visible = on; st.promoted.visible = on; return; }
+    e7.setVisible(id, on);
+  }
   const green = new THREE.Color(c.green);
   let seatedAll = false;
   /** Engine state for any t ≥ 64; below 86 it only puts back what question four changes. */
@@ -112,20 +121,27 @@ export function createQ4Model(c: Ctx) {
     const tint = c.ring.clone().lerp(green, 0.4 * (1 - back));
     // Seated blades go back into the ring's own instanced mesh: from the first landing on,
     // the whole ring is put back every frame and only the blades still in the air are lifted out.
-    if (t >= landAt(0)) { e7.setOpacity(ringParts, 1); e7.setVisible(c.hit7, true); }
+    if (t >= landAt(0)) {
+      e7.setOpacity(ringParts, 1);
+      e7.setVisible(c.hit7, true);
+      // A part put back keeps whatever instance colour it had before it was lifted out;
+      // write the ring grey again so the picture does not depend on what was shown before.
+      e7.setColor(others, c.ring);
+    }
     seatedAll = t >= landAt(15);
     for (const o of order) {
       const f = frames[o.slot];
       f.mat.opacity = framesIn * (1 - ease(seg(t, landAt(o.k) - 0.15, landAt(o.k))));
       f.lines.visible = f.mat.opacity > 0.002;
       if (t >= landAt(o.k)) { e7.setColor(o.id, tint); continue; }
-      if (t < RED_OUT[0]) { promotedOpacity(o.id, 1); e7.setVisible(o.id, true); continue; }
-      if (t < FLY_AT + FLY_GAP * o.k) { promotedOpacity(o.id, 1 - redOut); e7.setVisible(o.id, redOut < 1); continue; }
+      if (t < RED_OUT[0]) { promotedOpacity(o.id, 1); showPart(o.id, true); continue; }
+      if (t < FLY_AT + FLY_GAP * o.k) { promotedOpacity(o.id, 1 - redOut); showPart(o.id, redOut < 1); continue; }
       const off = offsetAt(o, t);
+      e7.setColor(o.id, tint);
       e7.setTransform(o.id, { position: [off.x, off.y, off.z] });
       // Comes in out of nothing at the far end of its flight.
       promotedOpacity(o.id, ease(seg(t, FLY_AT + FLY_GAP * o.k, FLY_AT + FLY_GAP * o.k + 0.1)));
-      e7.setVisible(o.id, true);
+      showPart(o.id, true);
       e7.setColor(o.id, tint);
     }
   }

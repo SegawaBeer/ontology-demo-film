@@ -4,7 +4,7 @@
 import { dialogParts } from './clip-q3';
 import type { GraphState } from './data';
 import { foldHTML } from './fold';
-import { clamp, seg, ease, tick, typed, typingEnd, appear } from './timing';
+import { clamp, seg, ease, tick, typed, typingEnd, typedTimes as typedTimesOf, appear } from './timing';
 
 // ------------------------------------------------------------------ timeline
 export const Q4_START = 86.0;
@@ -200,4 +200,26 @@ export function q4GraphAt(t: number, at22: GraphState): GraphState {
     focus: true, dimLevel: 0.22, lit, litEdges, drawing, nodeAlpha, litAmount, fading, pulse, status, statusAmount,
     chip, chipAmount, timing: [], toneEdges, spawned: at22.spawned,
   };
+}
+
+// ------------------------------------------------------------------ sound events
+/** Question four's sound events (主时间轴二 9.7), global time. */
+export function q4Events(settle: (n: [number, number, number]) => number) {
+  type Ev = { t: number; kind: 'type' | 'line' | 'tick' | 'path' | 'slide' | 'part'; gain: number; src: 'dialog' | 'graph' | '3d'; dur?: number };
+  const out: Ev[] = [];
+  const add = (t: number, kind: Ev['kind'], gain: number, src: Ev['src'], dur?: number) => out.push(dur === undefined ? { t, kind, gain, src } : { t, kind, gain, src, dur });
+  add(FOLD3[0], 'line', 0.3, 'dialog');
+  add(86.2, 'slide', 0.45, '3d', 1.2);                     // push-in to the ring (CAM4)
+  add(META, 'line', 0.4, 'dialog');
+  for (const at of typedTimesOf(ASK, TYPE, PER_CHAR, SEED)) add(at, 'type', 0.32, 'dialog');
+  for (const h of hops4) add(h.a, 'path', 0.5, 'graph');
+  add(STEP1, 'line', 0.7, 'dialog');
+  for (const n of N_STOCK) add(settle(n), 'tick', 0.5, 'dialog');
+  add(STEP1, 'line', 0.35, '3d');                          // the two gap tags
+  for (const at of PLANS) add(at, 'line', 0.6, 'dialog');  // one per plan card
+  add(POINTER_MOVE[1], 'line', 0.45, 'dialog');            // plan ① picked
+  for (const h of greenHops) add(h.a, 'path', 0.5, 'graph');
+  for (let k = 0; k < 16; k++) add(landAt(k), 'part', 0.4, '3d');
+  add(GREEN, 'line', 0.7, 'dialog');                       // question two's answer turns green
+  return out;
 }

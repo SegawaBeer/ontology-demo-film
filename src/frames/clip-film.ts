@@ -6,9 +6,9 @@
 // Every frame is a pure function of t; the few checks of engine state below only
 // mirror what the engine already shows.
 import * as THREE from 'three';
-import { mountFilmA, type FilmEvent } from './clip-q12';
+import { mountFilmA, settleAt, type FilmEvent } from './clip-q12';
 import { mountClip, dialogHTML, graphAt as clipGraphAt } from './clip-q3';
-import { q4DialogHTML, q4GraphAt, GAP_TAGS_OUT } from './q4';
+import { q4DialogHTML, q4GraphAt, q4Events, GAP_TAGS_OUT } from './q4';
 import { createQ4Model, TAGS_OUT, GAP_TAGS } from './q4-model';
 import { seg, ease } from './timing';
 import { renderGraph } from './graph';
@@ -64,7 +64,7 @@ export async function mountFilm(theme: Theme) {
     clip.e3.root.visible = false;
     clip.e3.root.scale.setScalar(E3_SCALE);
     // clip-q3 places its 16 blades as separate meshes; part one has them in the ring.
-    if (e7.parts.get(clip.hit7[0])!.promoted) e7.setOpacity(ringParts, 1);
+    if (clip.hit7.some(id => e7.parts.get(id)!.promoted)) e7.setOpacity(ringParts, 1);
     e7.setVisible(clip.hit7, true);
     view.cutLayers(e7, 0);
     q4.apply(CLIP_AT);
@@ -132,7 +132,8 @@ export async function mountFilm(theme: Theme) {
   const events: FilmEvent[] = [
     ...a.events,
     ...clip.events.map(e => ({ ...e, t: e.t + CLIP_AT })),
+    ...q4Events(settleAt),
   ].sort((x, y) => x.t - y.t);
-  const debug = { ...a.debug, clip, film: f };
+  const debug = { ...a.debug, clip, film: f, q4 };
   return { seek, probe, events, debug };
 }
