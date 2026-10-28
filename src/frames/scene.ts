@@ -267,12 +267,12 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
   }
 
   /**
-   * The same half-section cut as cutaway(), on every component of a `layered`
+   * The same half-section cut as cutaway(), on the components of a `layered`
    * engine (cutaway() only cuts the `ghost` list). Its own plane, added to the
-   * planes the materials already have; call cutaway() once before the first use.
+   * planes the materials already have; `except` (first call only) leaves components out.
    */
   const layerCuts = new Map<Engine, THREE.Plane>();
-  function cutLayers(engine: Engine, amount: number) {
+  function cutLayers(engine: Engine, amount: number, except?: Set<string>) {
     const map = layers.get(engine);
     if (!map) return;
     engine.root.updateMatrixWorld(true);
@@ -284,7 +284,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     if (!plane) {
       plane = new THREE.Plane();
       layerCuts.set(engine, plane);
-      for (const layer of map.values()) for (const m of layer.materials) {
+      for (const [id, layer] of map) for (const m of except?.has(id) ? [] : layer.materials) {
         m.clippingPlanes = [...(m.clippingPlanes ?? []), plane];
         m.clipShadows = true;
       }

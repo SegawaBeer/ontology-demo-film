@@ -69,7 +69,7 @@ const CAPTION2_AT = [51.6, 62.4] as const;
 // Exploded view, engine-local x offsets (axis is x, + is forward). Compressor, nacelle,
 // combustor, core casing and shaft interlock and stay; turbine and exhaust move as one
 // rigid group (the tail cone wraps the rear turbine stages).
-const EXPLODE: Record<string, number> = { fan: 0.7, 'fan-cowl': 0.7, turbine: -1.0, exhaust: -1.0 };
+export const EXPLODE: Record<string, number> = { fan: 0.7, 'fan-cowl': 0.7, turbine: -1.0, exhaust: -1.0 };
 // Where the opened engine sits in the column (NDC centre and half extents of its parts).
 const EXP_FRAME = { cx: 0, cy: -0.04, lx: 0.8, ly: 0.6 };
 const COMB_ANCHOR: [number, number, number] = [0.05, 0.62, 0.12];   // engine-local, on the casing top
@@ -155,7 +155,7 @@ const INSET = { x: 380, y: 138, w: 280, h: 400 };
 const TAG_X = 380, TAG_Y = [744, 824, 904];
 
 /** 0 = assembled, 1 = fully exploded. */
-function explodeAt(t: number) {
+export function explodeAt(t: number) {
   return ease(seg(t, EXPLODE_OPEN[0], EXPLODE_OPEN[1])) * (1 - ease(seg(t, EXPLODE_CLOSE[0], EXPLODE_CLOSE[1])));
 }
 /** The flickering see-through combustor, eased in over GLASS_RAMP so it does not jump on one frame. */
@@ -548,10 +548,12 @@ export async function mountFilmA(theme: Theme) {
   const pulledNo = Number(PULLED.slice(-3));
   const NEIGHBOURS = [-1, 1].map(k => `${RING}.${String(((pulledNo - 1 + k + 100) % 100) + 1).padStart(3, '0')}`);
   e7.setOpacity(NEIGHBOURS, 1);
-  const neighbourMats = NEIGHBOURS.map(id => e7.parts.get(id)!.promoted!.material as THREE.MeshStandardMaterial);
+  // Looked up on every call: in frame=film the promoted meshes can be rebuilt later on.
   function setNeighbours(opacity: number) {
     const transparent = opacity < 0.999;
-    for (const m of neighbourMats) {
+    for (const id of NEIGHBOURS) {
+      if (!e7.parts.get(id)!.promoted) e7.setOpacity([id], 1);
+      const m = e7.parts.get(id)!.promoted!.material as THREE.MeshStandardMaterial;
       m.opacity = opacity;
       if (m.transparent !== transparent || m.depthWrite !== !transparent) { m.transparent = transparent; m.depthWrite = !transparent; m.needsUpdate = true; }
     }
@@ -708,7 +710,8 @@ export async function mountFilmA(theme: Theme) {
   let lastGraph: GraphState = NET_GRAPH;
   let lastT = START;
   let last = { pose: cameraAt(START), ax: 0, rad: 0, open: 0, turn: 0, slide: 0, ex: 0, glass: 1 };
-  function seek(input: number) {
+  /** `render` false sets every state and writes the DOM but draws nothing (frame=film builds on it). */
+  function seek(input: number, render = true) {
     const t = clamp(input, START, DURATION);
     lastT = t;
     const slide = slideAt(t);
@@ -719,13 +722,12 @@ export async function mountFilmA(theme: Theme) {
     // After a jump some material and shadow state only lands on the next draw,
     // so the first draw can differ from a page opened at t. Drawing twice makes
     // every seek give the same picture as opening at t.
-    view.render();
-    view.render();
+    if (render) { view.render(); view.render(); }
     const turn = ease(seg(t, TURN[0], TURN[1]));
     const rows = FILM_ROWS.map((_, i) => ease(seg(t, ROWS_AT + i * ROW_STEP, ROWS_AT + (i + 1) * ROW_STEP)));
     const bladeWorld = new THREE.Vector3(pulledMeta.center[0] + ax + EXPLODE.turbine * ex, pulledMeta.center[1] + radial.y * rad, pulledMeta.center[2] + radial.z * rad).applyMatrix4(e7.root.matrixWorld);
     const o = overlays(t, project(bladeWorld));
-    inset.draw(o.open, turn, rows);
+    if (render) inset.draw(o.open, turn, rows);
     overlay.innerHTML = o.svg;
     labels.innerHTML = o.html;
     caption.innerHTML = captionHTML(t, slide);
@@ -760,5 +762,7 @@ export async function mountFilmA(theme: Theme) {
   // For the checks: section profiles and opacities come from the live engine.
   const ghostOf = (partId: string) => ghostNow.get(e7.getPart(partId)?.component ?? '') ?? 0;
   const debug = { view, e7, colCam, PULLED, NEIGHBOURS, ringParts, project, ghostOf, EXPLODE, COMB_COMPS, CORE_COMPS, THREE };
-  return { seek, probe: filmProbe, events: buildEvents(), debug };
+  // What frame=film builds on.
+  const film = { caption, netShell, layerIds, NET, REST, ringGrey, ink, captionHTML, dialogRoot, graphRoot, overlay, labels, panel, setCanvas, applyCamera, cameraAt, setNeighbours, lastPose: () => last.pose };
+  return { seek, probe: filmProbe, events: buildEvents(), debug, film };
 }

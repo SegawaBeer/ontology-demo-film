@@ -90,13 +90,24 @@ const appear = (t: number, at: number, dur = 0.32) => {
 
 const Q3_ASK = '这批粉末都用到哪儿了？';
 const Q3_ASK_AT = 1.8;
-const FOLLOW_ASK = '7 号上的 16 枚拆下停用。3 号发动机还能继续飞吗？';
+export const FOLLOW_ASK = '7 号上的 16 枚拆下停用。3 号发动机还能继续飞吗？';
 const FOLLOW_AT = 14.95;
-const NEW_ANSWER = '暂不能上试车台 · 等待 16 枚叶片';
+export const NEW_ANSWER = '暂不能上试车台 · 等待 16 枚叶片';
 
 function hitsBefore(scan: number, list = allHits) { return list.filter(i => i < scan).length; }
 
-function dialogHTML(t: number) {
+export function dialogHTML(t: number) {
+  const d = dialogParts(t);
+  const layers = `<div class="swap">
+    <div class="layer" style="opacity:${(1 - d.swap).toFixed(3)}">${d.alert}${d.q3}</div>
+    <div class="layer" style="opacity:${d.swap.toFixed(3)}">${d.q3Past}${d.follow}</div></div>`;
+  return `<div class="dialog"><header class="col-head"><span>提问</span><span>4 个部门 · 同一套对象</span></header>
+    <div class="turns">${d.q1}${d.q2}${layers}</div>
+    <div class="trace"><span>${d.trace[0]}</span><span class="spin">${d.trace[1]}</span></div></div>`;
+}
+
+/** The pieces dialogHTML puts together, for frame=film to carry on from 22.0. */
+export function dialogParts(t: number) {
   const blinkOff = Math.floor(t * 2.4) % 2 === 1;
   const cursor = (on: boolean) => on ? ` live${blinkOff ? ' blink-off' : ''}` : '';
 
@@ -167,14 +178,7 @@ function dialogHTML(t: number) {
     : '';
 
   const swap = ease(seg(t, 14.45, 14.85));
-  const layers = `<div class="swap">
-    <div class="layer" style="opacity:${(1 - swap).toFixed(3)}">${alert}${q3}</div>
-    <div class="layer" style="opacity:${swap.toFixed(3)}">${q3Past}${follow}</div></div>`;
-
-  const [left, right] = traceAt(t, scan);
-  return `<div class="dialog"><header class="col-head"><span>提问</span><span>4 个部门 · 同一套对象</span></header>
-    <div class="turns">${q1}${q2}${layers}</div>
-    <div class="trace"><span>${left}</span><span class="spin">${right}</span></div></div>`;
+  return { q1, q2, alert, q3, q3Past, follow, actionsHTML, swap, trace: traceAt(t, scan) };
 }
 
 function cursorClass(blinkOff: boolean, done: boolean) {
@@ -216,7 +220,7 @@ const litAt: [string, number][] = [
   ['coat', 0.7], ['powder', 4.2], ['spray', 5.0], ['blade', 6.0], ['c-t1', 11.16], ['m-turb', 11.3], ['e7', 11.5], ['e3', 11.85], ['awo', 17.2],
 ];
 
-function graphAt(t: number): GraphState {
+export function graphAt(t: number): GraphState {
   const lit = litAt.filter(([, at]) => t >= at).map(([id]) => id);
   const litEdges = hops.filter(h => t >= h.b).map(h => [h.from, h.to] as [string, string]);
   const drawing = hops.filter(h => t > h.a && t < h.b).map(h => ({ from: h.from, to: h.to, progress: ease(seg(t, h.a, h.b)) }));
@@ -457,7 +461,8 @@ export async function mountClip(theme: Theme, host?: ClipHost) {
   }
 
   let moved = false;
-  function seek(t: number) {
+  /** `render` false sets every state but draws nothing (frame=film builds on the 22.0 state); 2 draws twice. */
+  function seek(t: number, render: boolean | 2 = true) {
     t = clamp(t, 0, DURATION);
     // Model state
     ghost7(ease(seg(t, 1.0, 2.6)));
@@ -484,9 +489,10 @@ export async function mountClip(theme: Theme, host?: ClipHost) {
     view.applyPose(cameraAt(t));
     cut7(ease(seg(t, 1.2, 2.8)));
     view.cutaway(e3, 1);
-    view.render();
+    if (render) view.render();
+    if (render === 2) view.render();
     const zoom = insetOverlay(t, partOnScreen(e7, COUPON_BLADE), inset.ceramicOnScreen());
-    inset.draw(zoom.reveal, ease(seg(t, 5.6, 6.25)), ease(seg(t, 6.25, 6.5)));
+    if (render) inset.draw(zoom.reveal, ease(seg(t, 5.6, 6.25)), ease(seg(t, 6.25, 6.5)));
 
     // Overlays
     let svg = '', html = '';
