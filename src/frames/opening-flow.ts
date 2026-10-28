@@ -10,7 +10,7 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 // (axial x, radius) in engine space, front (+x) to back. The air flows that way.
 const BYPASS: [number, number][] = [
   [2.75, 0.50], [2.30, 0.55], [2.00, 0.60], [1.80, 0.63], [1.50, 0.68], [1.10, 0.69],
-  [0.60, 0.69], [0.25, 0.70], [-0.10, 0.79], [-0.50, 0.83], [-0.90, 0.85],
+  [0.60, 0.69], [0.30, 0.71], [0.15, 0.79], [-0.10, 0.83], [-0.50, 0.86], [-0.90, 0.88],
 ];
 const CORE: [number, number][] = [
   [2.75, 0.30], [2.30, 0.32], [2.00, 0.36], [1.70, 0.40], [1.40, 0.44], [1.10, 0.48],
@@ -56,12 +56,10 @@ function build(profile: [number, number][], count: number, phase: number, materi
   return lines;
 }
 
-/** `region` draws solid, opaque, wide black lines for a mask of where flow can show. */
-export function createFlow(parent: THREE.Object3D, region = false) {
+export function createFlow(parent: THREE.Object3D) {
   const material = new LineMaterial({
-    color: region ? 0x000000 : FLOW_COLOR, linewidth: region ? 5 : 1,
-    transparent: !region, opacity: region ? 1 : 0, depthTest: !region, depthWrite: false,
-    dashed: !region, dashSize: DASH, gapSize: GAP,
+    color: FLOW_COLOR, linewidth: 1, transparent: true, opacity: 0, depthTest: true, depthWrite: false,
+    dashed: true, dashSize: DASH, gapSize: GAP,
   });
   material.toneMapped = false;
   material.resolution.set(1280, 1080);
@@ -74,11 +72,12 @@ export function createFlow(parent: THREE.Object3D, region = false) {
     group,
     /** `speed` is the rotor speed as a share of cruise, `degrees` the rotor angle. */
     set(speed: number, degrees: number, off = false) {
-      const opacity = region ? 1 : 0.35 * Math.max(0, speed);
-      group.visible = !off && (region || opacity > 1e-4);
+      const opacity = 0.35 * Math.max(0, speed);
+      group.visible = !off && opacity > 1e-4;
       material.opacity = opacity;
       material.dashOffset = -TRAVEL * degrees;
     },
     opacity: () => (group.visible ? material.opacity : 0),
+    material,
   };
 }

@@ -124,6 +124,8 @@ export type GraphState = {
   chipAmount?: Record<string, number>;
   /** Per-node opacity of the `fresh` ring, 0..1 (absent = 1). */
   freshAmount?: Record<string, number>;
+  /** Like `pulse`, but any number of rings at once per node. */
+  pulses?: Record<string, number[]>;
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.

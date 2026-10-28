@@ -131,6 +131,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       'stroke-width': on ? litWidth : 1,
       'stroke-dasharray': e.kind === 'rel' && !on ? (strong ? '3 3' : '2 4') : 'none',
     }, on ? litLayer : dimLayer);
+    path.setAttribute('data-edge', `${e.from}>${e.to}`);
     const appear = Math.min(appearOf.get(e.from) ?? 1, appearOf.get(e.to) ?? 1);
     if (appear < 1) path.style.opacity = String(Math.max(0, appear));
   }
@@ -145,6 +146,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
       : linkPath(e, a, b, forward);
     const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
+    path.setAttribute('data-draw', `${d.from}>${d.to}`);
     const length = path.getTotalLength();
     const p = Math.min(1, d.progress);
     path.setAttribute('stroke-dasharray', `${length * p} ${length}`);
@@ -174,19 +176,20 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   }
 
   const fresh = new Set(state.fresh ?? []);
-  const drawNode = (n: GraphNode, on: boolean, g: SVGGElement) => {
+  const drawNode = (n: GraphNode, on: boolean, g: SVGGElement, extras = true) => {
     const r = radius[n.kind];
     const tone = state.status[n.id];
     const ring = tone ? toneVar[tone] : on ? 'var(--lit)' : 'var(--node-ring)';
     if (on && n.kind !== 'component') el('circle', { cx: n.x, cy: n.y, r: r + 6, fill: tone ? toneVar[tone] : 'var(--lit)', opacity: 0.12 }, g);
-    if (fresh.has(n.id)) {
+    if (extras && fresh.has(n.id)) {
       const ringEl = el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
       const k = state.freshAmount?.[n.id];
       if (k !== undefined && k < 1) ringEl.setAttribute('opacity', String(0.45 * Math.max(0, k)));
     }
     const pulse = state.pulse?.[n.id];
-    if (pulse !== undefined && pulse > 0 && pulse < 1) {
-      el('circle', { cx: n.x, cy: n.y, r: r + 4 + 18 * pulse, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1.4, opacity: 0.7 * (1 - pulse) }, g);
+    for (const v of extras ? [...(pulse !== undefined ? [pulse] : []), ...(state.pulses?.[n.id] ?? [])] : []) {
+      if (v <= 0 || v >= 1) continue;
+      el('circle', { cx: n.x, cy: n.y, r: r + 4 + 18 * v, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1.4, opacity: 0.7 * (1 - v) }, g);
     }
     if (n.kind === 'biz') {
       el('circle', { cx: n.x, cy: n.y, r, fill: 'var(--bg-col)', stroke: ring, 'stroke-width': on ? 1.6 : 1.1 }, g);
@@ -197,7 +200,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       el('circle', { cx: n.x, cy: n.y, r, fill: on ? ring : 'var(--node)', stroke: ring, 'stroke-width': n.kind === 'engine' ? 1.5 : 1.1 }, g);
     }
     label(n, g, on, state.sub?.[n.id]);
-    const chip = state.chip[n.id];
+    const chip = extras ? state.chip[n.id] : undefined;
     if (chip) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';
       let text: SVGTextElement;
@@ -222,6 +225,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
     if (appear !== undefined && appear <= 0) continue;
     const g = el('g', {}, svg);
+    g.setAttribute('data-node', n.id);
     const floor = state.nodeAlpha?.[n.id];
     if (dimming && !on) g.style.opacity = floor !== undefined ? String(Math.max(dimValue, floor)) : dim;
     if (appear !== undefined) {
@@ -235,7 +239,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       const top = el('g', {}, svg);
       top.style.opacity = String(Math.min(1, k) * (appear ?? 1));
       if (appear !== undefined) top.setAttribute('transform', g.getAttribute('transform')!);
-      drawNode(n, true, top);
+      drawNode(n, true, top, false);
     }
   }
 

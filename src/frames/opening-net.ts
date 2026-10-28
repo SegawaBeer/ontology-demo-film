@@ -77,6 +77,22 @@ export const HIGHLIGHT_OUT: [number, number] = [28.8, 29.4];
 export function highlightAt(t: number) {
   return smootherAt(t, HIGHLIGHT_IN[0], HIGHLIGHT_IN[1]) * (1 - smootherAt(t, HIGHLIGHT_OUT[0], HIGHLIGHT_OUT[1]));
 }
+/** Strength of a flash train at t: the strongest of the flashes under way. */
+export function flashAt(times: number[], spec: { amp: number; dur: number }, t: number) {
+  let a = 0;
+  for (const T of times) {
+    const p = seg(t, T, T + spec.dur);
+    if (p > 0 && p < 1) a = Math.max(a, Math.sin(Math.PI * p) * spec.amp);
+  }
+  return a;
+}
+/** Rotor speed as a share of cruise: the derivative of the 21.6 angle formula. */
+export function rotorSpeed(t: number) {
+  if (t <= 22.0 || t >= 28.0) return 0;
+  if (t < 23.2) return smoother((t - 22.0) / 1.2);
+  if (t <= 26.0) return 1;
+  return 1 - smoother((t - 26.0) / 2);
+}
 /** A line landing on the first-stage blade flashes the ring; on engine seven, the whole engine. */
 export const RING_FLASHES = REL_PLAN.filter(r => r.to === 'blade').map(r => r.end);
 export const ENGINE_FLASHES = REL_PLAN.filter(r => r.to === 'e7').map(r => r.end);
@@ -95,7 +111,7 @@ export function netGraph(t: number) {
   const drawing: NonNullable<GraphState['drawing']> = [];
   const appear: Record<string, number> = {};
   const groupAppear: Record<string, number> = {};
-  const pulse: Record<string, number> = {};
+  const pulses: Record<string, number[]> = {};
   const progress: Record<string, number> = {};
   const shownNodes = [...TREE_NODES];
 
@@ -142,13 +158,12 @@ export function netGraph(t: number) {
     if (a >= 1) lit.push(id);
     else if (a > 0) litAmount[id] = Math.max(litAmount[id] ?? 0, a);
   }
-  for (const T of RING_FLASHES) {
-    const v = seg(t, T, T + RING_FLASH.dur);
-    if (v > 0 && v < 1) pulse.blade = v;
-  }
-  for (const T of ENGINE_FLASHES) {
-    const v = seg(t, T, T + ENGINE_FLASH.dur);
-    if (v > 0 && v < 1) pulse.e7 = v;
+  // Two lines can land on the blade less than a flash apart; each gets its ring.
+  for (const [id, times, spec] of [['blade', RING_FLASHES, RING_FLASH], ['e7', ENGINE_FLASHES, ENGINE_FLASH]] as const) {
+    for (const T of times) {
+      const v = seg(t, T, T + spec.dur);
+      if (v > 0 && v < 1) (pulses[id] ??= []).push(v);
+    }
   }
 
   const n = shownNodes.length;
@@ -169,7 +184,7 @@ export function netGraph(t: number) {
     groupAppear,
     litAmount,
     fading,
-    pulse,
+    pulses,
   };
   if (h > 0 && h < 1) { state.chipAmount = { po: h }; state.freshAmount = { 'm-comb': h }; }
   return { state, nodes: shownNodes, progress, done };
