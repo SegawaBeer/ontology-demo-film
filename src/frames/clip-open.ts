@@ -1395,6 +1395,12 @@ export async function mountOpening(theme: Theme) {
       d.setAttribute('r', '2.5'); d.setAttribute('fill', 'var(--lit)'); d.setAttribute('opacity', '0.85');
     }
   }
+  // For the cross-section check: drawn flow segments and the parts on screen.
+  (window as unknown as { __flowGeometry: () => unknown }).__flowGeometry = () => ({
+    segments: flow.segments(engine.root),
+    visible: [...engine.parts.entries()].filter(([, st]) => st.visible).map(([id]) => id),
+    ghost: ghostNow,
+  });
   (window as unknown as { __openingProbe: () => unknown }).__openingProbe = () => {
     const threads = [firstPath, secondPath].map(p => {
       const d = p.getAttribute('d');
