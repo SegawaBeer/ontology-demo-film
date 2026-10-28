@@ -1042,6 +1042,7 @@ export async function mountOpening(theme: Theme) {
     for (const l of fanOutlines) hide(l);
     hide(ringShell);
     hide(fanShell);
+    if (!hidden.length && blendNow > 0 && blendNow < 1) { drawBlend(); passesNow = 1; return; }
     view.render();
     // With no outline or depth shell on screen the second pass would only draw
     // every translucent surface a second time.
@@ -1148,8 +1149,46 @@ export async function mountOpening(theme: Theme) {
     calloutLabels.insertAdjacentHTML('beforeend',
       `<div class="tag tone-lit" style="left:${lx}px;top:${ly}px${h >= 1 ? '' : `;opacity:${h}`}">${TAG_HTML}</div>`);
   }
+  // setGhost turns shadows off at 0.5 and depth writes off at 0.6. Each switch
+  // alone is a visible jump, so across both the picture is a crossfade of the
+  // frame with the switches still on and the frame with them off.
+  const SWITCH: [number, number] = [0.35, 0.75];
+  let blendNow = 0;
+  let blendTex: THREE.FramebufferTexture | null = null;
+  const blendScene = new THREE.Scene();
+  const blendCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const blendMat = new THREE.ShaderMaterial({
+    uniforms: { map: { value: null }, alpha: { value: 1 } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform float alpha; varying vec2 vUv; void main() { gl_FragColor = vec4(texture2D(map, vUv).rgb, alpha); }',
+    transparent: true, depthTest: false, depthWrite: false, toneMapped: false,
+  });
+  blendScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blendMat));
+  function setSwitches(off: boolean) {
+    for (const m of ghostMats) m.depthWrite = !off;
+    for (const mesh of ghostMeshes) { mesh.castShadow = !off; mesh.receiveShadow = !off; }
+  }
+  function drawBlend() {
+    const r = view.renderer;
+    setSwitches(false);
+    view.render();
+    const size = r.getDrawingBufferSize(new THREE.Vector2());
+    if (!blendTex || blendTex.image.width !== size.x || blendTex.image.height !== size.y) {
+      blendTex?.dispose();
+      blendTex = new THREE.FramebufferTexture(size.x, size.y);
+    }
+    r.copyFramebufferToTexture(blendTex);
+    setSwitches(true);
+    view.render();
+    blendMat.uniforms.map.value = blendTex;
+    blendMat.uniforms.alpha.value = 1 - blendNow;
+    r.autoClear = false;
+    r.render(blendScene, blendCam);
+    r.autoClear = true;
+  }
   function m3bAt(t: number) {
     const g = smootherAt(t, GHOST[0], GHOST[1]);
+    blendNow = mask ? 0 : smoother(clamp01((g - SWITCH[0]) / (SWITCH[1] - SWITCH[0])));
     const c = smootherAt(t, CUT[0], CUT[1]);
     const h = highlightAt(t);
     ghostNow = g; cutNow = c; highlightNow = h;
@@ -1220,6 +1259,8 @@ export async function mountOpening(theme: Theme) {
       open.hero.root.visible = true;
       discAt(t);
       ringAt(t);
+      // So a seek back from 3B leaves no flow, caption or tag behind.
+      m3bAt(t);
       if (!mask) { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
       if (render) drawFrame();
       return;
@@ -1254,7 +1295,8 @@ export async function mountOpening(theme: Theme) {
     if (partMask) {
       hero.root.visible = false;
       open.hero.root.visible = false;
-      engine.setVisible(RING, partMask.includes(RING));
+      // Before 3B a ring mask stays empty, as the 3A checks were measured with.
+      engine.setVisible(RING, t >= M3B && partMask.includes(RING));
       engine.setVisible(DISC, false);
       cameraAt(t);
       lightsAt(t);
@@ -1396,7 +1438,7 @@ export async function mountOpening(theme: Theme) {
       rotor: rotorNow,
       passes: passesNow,
       m3b: {
-        ghost: ghostNow, cut: cutNow, highlight: highlightNow, flow: flow.opacity(),
+        ghost: ghostNow, cut: cutNow, highlight: highlightNow, flow: flow.opacity(), crossfade: blendNow,
         edges: lastEdges,
         caption: captionRight ? captionRight.textContent : null,
         tag: calloutLabels.querySelector('.tag') ? (calloutLabels.querySelector<HTMLElement>('.tag')!.style.opacity || '1') : '0',
