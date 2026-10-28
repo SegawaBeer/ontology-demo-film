@@ -321,35 +321,47 @@ function graphAt(t: number): GraphState {
 
 // ------------------------------------------------------------------ sound events
 /** First 60 fps frame from which a ticking number stays on its final value (small numbers land early). */
-function settleAt([final, at, dur]: [number, number, number]) {
+export function settleAt([final, at, dur]: [number, number, number]) {
   let last = Math.ceil(at * 60);
   for (let f = Math.ceil(at * 60); f <= Math.ceil((at + dur) * 60); f++) if (tick(final, f / 60, at, dur) !== final) last = f + 1;
   return last / 60;
 }
-export type FilmEvent = { t: number; kind: 'type' | 'line' | 'tick' | 'path' | 'slide' | 'part' | 'swap' | 'alert'; gain: number };
+export type FilmEvent = {
+  t: number;
+  kind: 'type' | 'line' | 'tick' | 'path' | 'slide' | 'part' | 'swap' | 'alert' | 'tone';
+  gain: number;
+  /** Which column the sound belongs to (主时间轴二 9.7). */
+  src: 'dialog' | 'graph' | '3d';
+  /** Slides only: length of the move in seconds. */
+  dur?: number;
+};
 function buildEvents(): FilmEvent[] {
   const out: FilmEvent[] = [];
-  out.push({ t: SLIDE[0], kind: 'slide', gain: 0.6 });
-  out.push({ t: Q1_META, kind: 'line', gain: 0.4 });
-  for (const at of typedTimes(Q1_ASK, Q1_TYPE, Q1_PER_CHAR, Q1_SEED)) out.push({ t: at, kind: 'type', gain: 0.32 });
-  for (const h of hops) out.push({ t: h.a, kind: 'path', gain: 0.5 });
-  for (const at of STEP_AT) out.push({ t: at, kind: 'line', gain: 0.7 });
-  for (const n of [...N2, ...N3]) out.push({ t: settleAt(n), kind: 'tick', gain: 0.5 });
-  out.push({ t: CAM_IN[0], kind: 'slide', gain: 0.45 }, { t: CAM_OUT[0], kind: 'slide', gain: 0.45 });
-  out.push({ t: PULL[0], kind: 'part', gain: 0.6 }, { t: PULL_JOINT, kind: 'part', gain: 0.4 });
-  out.push({ t: RETURN[0], kind: 'part', gain: 0.4 }, { t: RETURN[1], kind: 'part', gain: 0.6 });
-  for (const at of TAGS_AT) out.push({ t: at, kind: 'line', gain: 0.35 });
-  out.push({ t: FOLD[0], kind: 'line', gain: 0.3 });
+  const add = (t: number, kind: FilmEvent['kind'], gain: number, src: FilmEvent['src'], dur?: number) => out.push(dur === undefined ? { t, kind, gain, src } : { t, kind, gain, src, dur });
+  add(SLIDE[0], 'slide', 0.6, 'dialog', SLIDE[1] - SLIDE[0]);
+  // Question one
+  add(Q1_META, 'line', 0.4, 'dialog');
+  for (const at of typedTimes(Q1_ASK, Q1_TYPE, Q1_PER_CHAR, Q1_SEED)) add(at, 'type', 0.32, 'dialog');
+  for (const h of hops) add(h.a, 'path', 0.5, 'graph');
+  for (const at of STEP_AT) add(at, 'line', 0.7, 'dialog');
+  for (const n of [...N2, ...N3]) add(settleAt(n), 'tick', 0.5, 'dialog');
+  add(CAM_IN[0], 'slide', 0.45, '3d', CAM_IN[1] - CAM_IN[0]);
+  add(CAM_OUT[0], 'slide', 0.45, '3d', CAM_OUT[1] - CAM_OUT[0]);
+  add(PULL[0], 'part', 0.6, '3d'); add(PULL_JOINT, 'part', 0.4, '3d');
+  add(RETURN[0], 'part', 0.4, '3d'); add(RETURN[1], 'part', 0.6, '3d');
+  for (const at of TAGS_AT) add(at, 'line', 0.35, '3d');
+  add(FOLD[0], 'line', 0.3, 'dialog');
   // Question two
-  out.push({ t: Q2_META, kind: 'line', gain: 0.4 });
-  for (const at of typedTimes(Q2_ASK, Q2_TYPE, Q1_PER_CHAR, Q2_SEED)) out.push({ t: at, kind: 'type', gain: 0.32 });
-  hops2.forEach((h, i) => out.push({ t: h.a, kind: 'path', gain: i < MODULE_NODES.length ? 0.3 : 0.5 }));
-  for (const at of STEP2_AT) out.push({ t: at, kind: 'line', gain: 0.7 });
-  for (const n of [...NQ1, ...NQ2]) out.push({ t: settleAt(n), kind: 'tick', gain: 0.5 });
-  out.push({ t: CAM2_OUT[0], kind: 'slide', gain: 0.45 }, { t: CAM2_BACK[0], kind: 'slide', gain: 0.45 });
-  for (const at of [EXPLODE_OPEN[0], EXPLODE_OPEN[1], EXPLODE_CLOSE[0], EXPLODE_CLOSE[1]]) out.push({ t: at, kind: 'part', gain: 0.55 });
-  out.push({ t: GLASS_AT, kind: 'alert', gain: 0.35 });
-  out.push({ t: TAG2_AT, kind: 'line', gain: 0.35 }, { t: FOLD2[0], kind: 'line', gain: 0.3 });
+  add(Q2_META, 'line', 0.4, 'dialog');
+  for (const at of typedTimes(Q2_ASK, Q2_TYPE, Q1_PER_CHAR, Q2_SEED)) add(at, 'type', 0.32, 'dialog');
+  hops2.forEach((h, i) => add(h.a, 'path', i < MODULE_NODES.length ? 0.3 : 0.5, 'graph'));
+  for (const at of STEP2_AT) add(at, 'line', 0.7, 'dialog');
+  for (const n of [...NQ1, ...NQ2]) add(settleAt(n), 'tick', 0.5, 'dialog');
+  add(CAM2_OUT[0], 'slide', 0.45, '3d', CAM2_OUT[1] - CAM2_OUT[0]);
+  add(CAM2_BACK[0], 'slide', 0.45, '3d', CAM2_BACK[1] - CAM2_BACK[0]);
+  for (const at of [EXPLODE_OPEN[0], EXPLODE_OPEN[1], EXPLODE_CLOSE[0], EXPLODE_CLOSE[1]]) add(at, 'part', 0.55, '3d');
+  add(GLASS_AT, 'alert', 0.35, '3d');
+  add(TAG2_AT, 'line', 0.35, '3d'); add(FOLD2[0], 'line', 0.3, 'dialog');
   return out.sort((a, b) => a.t - b.t);
 }
 // ------------------------------------------------------------------ close-up window
