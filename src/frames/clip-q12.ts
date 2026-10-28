@@ -70,7 +70,7 @@ const EXPLODE: Record<string, number> = { fan: 0.7, 'fan-cowl': 0.7, turbine: -1
 // Where the opened engine sits in the column (NDC centre and half extents of its parts).
 const EXP_FRAME = { cx: 0, cy: -0.04, lx: 0.8, ly: 0.6 };
 const COMB_ANCHOR: [number, number, number] = [0.05, 0.62, 0.12];   // engine-local, on the casing top
-const TAG2_DX = 60, TAG2_DY = -120;                                    // tag offset from the anchor, px
+const TAG2_DX = 60, TAG2_DY = -150;                                    // tag offset from the anchor, px
 
 // Graph query path, same structure as clip-q3.
 const hops = [
@@ -187,8 +187,7 @@ const clock = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(
 function q2Steps(t: number) {
   const steps: string[] = [];
   if (t >= STEP2_AT[0]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[0])}"><span class="n">01</span><span class="line">核对 <em>${num(t, NQ1[0])}</em> 个模块：<em class="green">${num(t, NQ1[1])}</em> 个到位，<em class="amber">${num(t, NQ1[2])}</em> 个缺件</span></div>`);
-  // Folded after the first clause so the big 02:40 keeps its size inside the column.
-  if (t >= STEP2_AT[1]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[1])}"><span class="n">02</span><span class="line">缺燃烧室组件 <em>${num(t, NQ2[0])}</em> 套，<br>采购单在途，<em>${clock(t < NQ2[1][1] ? 0 : num(t, NQ2[1]))}</em> 到厂</span></div>`);
+  if (t >= STEP2_AT[1]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[1])}"><span class="n">02</span><span class="line">缺燃烧室组件 <em>${num(t, NQ2[0])}</em> 套，采购单在途，<em>${clock(t < NQ2[1][1] ? 0 : num(t, NQ2[1]))}</em> 到厂</span></div>`);
   if (t >= STEP2_AT[2]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[2])}"><span class="n">03</span><span class="line ok">可以按时上试车台<span class="state">09:00</span></span></div>`);
   return steps;
 }
