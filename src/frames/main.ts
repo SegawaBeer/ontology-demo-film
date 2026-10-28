@@ -303,6 +303,31 @@ async function filmA() {
   requestAnimationFrame(loop);
 }
 
-const frames: Record<string, () => Promise<void>> = { 'film-a': filmA, q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
+// The whole main timeline, global t 30–120 (主时间轴二). Driven like film-a.
+async function film() {
+  const { mountFilm, START, DURATION } = await import('./clip-film');
+  const player = await mountFilm(theme);
+  const w = window as unknown as Record<string, unknown>;
+  let driven = false;
+  w.__seek = (t: number) => { driven = true; player.seek(t); };
+  w.__duration = DURATION;
+  w.__start = START;
+  w.__events = player.events;
+  w.__filmProbe = player.probe;
+  w.__filmDebug = player.debug;
+  const hold = params.get('t');
+  if (hold !== null) { player.seek(Number(hold)); return; }
+  player.seek(START);
+  if (params.get('play') === '0') return;
+  const start = performance.now();
+  const loop = (now: number) => {
+    if (driven) return;
+    player.seek(START + ((now - start) / 1000) % (DURATION - START + 1.5));
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+const frames: Record<string, () => Promise<void>> = { film, 'film-a': filmA, q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: () => mountOpening(theme) };
 await (frames[frameName] ?? questionThree)();
 document.documentElement.dataset.ready = '1';
