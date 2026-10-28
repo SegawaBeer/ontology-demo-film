@@ -155,6 +155,42 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     }
   }
 
+  /**
+   * Per-component see-through look that keeps the metal (unlike the ghost):
+   * colour mixed `mix` toward `tint`, drawn at `opacity`. It clears the ghost
+   * cache of those components, so the next setGhostOf call puts the ghost (or
+   * plain solid) look back exactly. Only for a `layered` engine.
+   */
+  function setGlassOf(engine: Engine, ids: string[], opacity: number, tint: THREE.Color, mix: number) {
+    const map = layers.get(engine);
+    if (!map) return;
+    const color = new THREE.Color();
+    const transparent = opacity < 0.999;
+    for (const id of ids) {
+      const layer = map.get(id);
+      if (!layer) continue;
+      layer.amount = -1;
+      layer.fade = -1;
+      for (const pid of layer.parts) {
+        const state = engine.parts.get(pid);
+        if (state) engine.setColor(pid, color.copy(state.baseColor).lerp(tint, mix));
+      }
+      for (const material of layer.materials) {
+        const base = material.userData.base;
+        material.metalness = base.metalness;
+        material.roughness = base.roughness;
+        material.envMapIntensity = base.env;
+        material.opacity = transparent ? opacity : 1;
+        if (material.transparent !== transparent || material.depthWrite !== !transparent) {
+          material.transparent = transparent;
+          material.depthWrite = !transparent;
+          material.needsUpdate = true;
+        }
+      }
+      for (const mesh of layer.meshes) { mesh.castShadow = opacity > 0.7; mesh.receiveShadow = opacity > 0.7; }
+    }
+  }
+
   /** Opacity a part is drawn with right now (0 when hidden). */
   function partOpacity(engine: Engine, id: string) {
     const state = engine.parts.get(id);
@@ -285,7 +321,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
 
   return {
     scene, camera, renderer, width, height,
-    addEngine, setGhost, setGhostOf, layerIds, partOpacity, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
+    addEngine, setGhost, setGhostOf, setGlassOf, layerIds, partOpacity, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
     render: () => renderer.render(scene, camera),
   };
 }

@@ -217,6 +217,7 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .layout-film #model { width: 1280px; left: 0; }
 .layout-film .callouts { left: 561px; width: 720px; }
 .layout-film .callout-labels { left: 561px; }
+.step .line .green { color: var(--green); }
 .model-caption .xf { display: grid; justify-items: end; }
 .model-caption .xf > span { grid-area: 1 / 1; letter-spacing: inherit; }
 

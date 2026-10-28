@@ -177,7 +177,8 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   }
 
   const fresh = new Set(state.fresh ?? []);
-  const drawNode = (n: GraphNode, on: boolean, overlay?: number) => {
+  // `plain`: drawn without its status colour (the unlit layer under a releasing node).
+  const drawNode = (n: GraphNode, on: boolean, overlay?: number, plain = false) => {
     const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
     if (appear !== undefined && appear <= 0) return;
     const g = el('g', {}, svg);
@@ -189,7 +190,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
     }
     const r = radius[n.kind];
-    const tone = state.status[n.id];
+    const tone = plain ? undefined : state.status[n.id];
     const ring = tone ? toneVar[tone] : on ? 'var(--lit)' : 'var(--node-ring)';
     if (on && n.kind !== 'component') el('circle', { cx: n.x, cy: n.y, r: r + 6, fill: tone ? toneVar[tone] : 'var(--lit)', opacity: 0.12 }, g);
     if (fresh.has(n.id)) el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
@@ -224,7 +225,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   for (const n of visible) {
     const on = lit.has(n.id);
     if (releasing && on) {
-      drawNode(n, false, 1);
+      drawNode(n, false, 1, true);
       if (release < 1) drawNode(n, true, 1 - release);
     } else drawNode(n, on);
   }
