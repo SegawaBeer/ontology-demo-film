@@ -7,7 +7,8 @@
 // mirror what the engine already shows.
 import * as THREE from 'three';
 import { mountFilmA, type FilmEvent } from './clip-q12';
-import { mountClip } from './clip-q3';
+import { mountClip, dialogHTML } from './clip-q3';
+import { q4DialogHTML } from './q4';
 import type { Theme, Pose } from './scene';
 import { clamp } from './timing';
 
@@ -40,6 +41,7 @@ export async function mountFilm(theme: Theme) {
   view.cutLayers(e7, 0, f.netShell);
   const ringParts = e7.listParts(RING);
   const E3_SCALE = clip.e3.root.scale.x;
+  const clipEnd = dialogHTML(22);
 
   let lastT = START;
   let lastPose: Pose = f.lastPose();
@@ -67,6 +69,9 @@ export async function mountFilm(theme: Theme) {
     colCam.position.copy(view.camera.position);
     colCam.quaternion.copy(view.camera.quaternion);
     colCam.updateMatrixWorld();
+    if (t <= Q4_AT) return;
+    // Question four builds on the clip's 22.0 state.
+    f.dialogRoot.innerHTML = q4DialogHTML(t, clipEnd);
   }
 
   const probe = () => ({
