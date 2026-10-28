@@ -188,9 +188,19 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const forward = e.from === te.from;
     const d = e.kind === 'tree' ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a))) : linkPath(e, a, b, forward);
     if ((te.amount ?? 1) <= 0) continue;
+    if (te.progress !== undefined && te.progress <= 0) continue;
     const tp = el('path', { d, fill: 'none', stroke: toneVar[te.tone], 'stroke-width': litWidth }, litLayer);
     tp.setAttribute('data-edge', `${te.from}>${te.to}`);
     if (te.amount !== undefined && te.amount < 1) tp.style.opacity = String(te.amount);
+    // Being laid over a link that stays as it is underneath: partial stroke and a head.
+    if (te.progress !== undefined && te.progress < 1) {
+      tp.setAttribute('data-draw', `${te.from}>${te.to}`);
+      const length = tp.getTotalLength();
+      tp.setAttribute('stroke-dasharray', `${length * te.progress} ${length}`);
+      const head = tp.getPointAtLength(length * te.progress);
+      el('circle', { cx: head.x, cy: head.y, r: 6, fill: toneVar[te.tone], opacity: 0.16 }, litLayer);
+      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: toneVar[te.tone] }, litLayer).setAttribute('data-head', `${te.from}>${te.to}`);
+    }
   }
 
   // Finished edges whose lit stroke is fading back to the resting look.

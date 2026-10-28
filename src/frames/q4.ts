@@ -2,6 +2,7 @@
 // It carries on from the question-three clip at its local 22.0. This file holds the
 // timeline table and the dialog; the graph and the 3D parts follow the same table.
 import { dialogParts } from './clip-q3';
+import type { GraphState } from './data';
 import { foldHTML } from './fold';
 import { clamp, seg, ease, tick, typed, typingEnd, appear } from './timing';
 
@@ -120,4 +121,76 @@ export function q4DialogHTML(input: number, clipAt22: string) {
   return `<div class="dialog"><header class="col-head"><span>提问</span><span>4 个部门 · 同一套对象</span></header>
     <div class="turns">${d.q1}${q2At(t, d.q2)}${d.q3Past}${follow}${q4Turn(t)}</div>
     <div class="trace"><span>${left}</span><span class="spin">${right}</span></div></div>`;
+}
+
+// ------------------------------------------------------------------ graph
+// 86–87 question three's path fades back to the 0.22 dim; the disposal node and the
+// statuses and chips that still hold (7 号 red, the frozen batch, the disposal) stay.
+const UNLIT = [86.0, 87.0] as const;
+const KEEP = new Set(['e7', 'powder', 'disposal']);
+// Query path, only along relations in the list (第九节 9.4): 7 号 → 涡轮 → 叶环 → 叶片 → 库存,
+// then the stock blades' inspection records and, through the spray orders, their powder.
+export const hops4 = [
+  { from: 'e7', to: 'm-turb', a: 90.0, b: 90.3 },
+  { from: 'm-turb', to: 'c-t1', a: 90.3, b: 90.6 },
+  { from: 'c-t1', to: 'blade', a: 90.6, b: 90.9 },
+  { from: 'blade', to: 'stock', a: 90.9, b: 91.2 },
+  { from: 'blade', to: 'insp', a: 92.0, b: 92.35 },
+  { from: 'blade', to: 'spray', a: 92.1, b: 92.45 },
+  { from: 'spray', to: 'powder', a: 92.45, b: 92.75 },
+];
+// 95.8: the transfer, green, along the same relations back to 7 号, 0.15 s a segment.
+export const greenHops = [['stock', 'blade'], ['blade', 'c-t1'], ['c-t1', 'm-turb'], ['m-turb', 'e7']]
+  .map(([from, to], i) => ({ from, to, a: EXEC + 0.15 * i, b: EXEC + 0.15 * (i + 1) }));
+const litAt4: [string, number][] = [['e7', QUERY], ...hops4.map((h): [string, number] => [h.to, h.b])];
+const pulses4: [string, number, number][] = [['e7', 90.0, 90.7], ['blade', 90.9, 91.6], ['stock', 91.2, 91.9], ['powder', 92.75, 93.45], ['e7', 98.55, 99.25]];
+export const E7_GREEN = [98.4, 98.55, 98.8] as const;   // red out, then green in
+const POWDER_RED_OUT = [92.45, 92.75] as const, POWDER_GREEN = [92.75, 93.0, 93.4, 93.7] as const, POWDER_RED_IN = [93.7, 94.0] as const;
+
+export function q4GraphAt(t: number, at22: GraphState): GraphState {
+  const k = ease(seg(t, UNLIT[0], UNLIT[1]));
+  const lit = litAt4.filter(([, at]) => t >= at).map(([id]) => id);
+  const litSet = new Set(lit);
+  const nodeAlpha: Record<string, number> = {}, litAmount: Record<string, number> = {};
+  // A node lit at 22.0 keeps its full opacity and a lit copy, both easing down to the dim.
+  if (k < 1) for (const id of at22.lit) if (!litSet.has(id)) { nodeAlpha[id] = 0.22 + 0.78 * (1 - k); litAmount[id] = 1 - k; }
+  const fading = k < 1 ? at22.litEdges.map(([from, to]) => ({ from, to, amount: 1 - k })) : [];
+  const litEdges = hops4.filter(h => t >= h.b).map(h => [h.from, h.to] as [string, string]);
+  const drawing = hops4.filter(h => t > h.a && t < h.b).map(h => ({ from: h.from, to: h.to, progress: ease(seg(t, h.a, h.b)) }));
+  const toneEdges = greenHops.filter(h => t > h.a).map(h => ({ from: h.from, to: h.to, tone: 'green' as const, progress: ease(seg(t, h.a, h.b)) }));
+  const pulse: Record<string, number> = {};
+  for (const [id, a, b] of pulses4) if (t > a && t < b) pulse[id] = seg(t, a, b);
+
+  const status: GraphState['status'] = {}, statusAmount: Record<string, number> = {};
+  for (const [id, tone] of Object.entries(at22.status)) {
+    if (KEEP.has(id)) status[id] = tone;
+    else if (k < 1) { status[id] = tone; statusAmount[id] = 1 - k; }
+  }
+  const redOut = 1 - ease(seg(t, E7_GREEN[0], E7_GREEN[1])), greenIn = ease(seg(t, E7_GREEN[1], E7_GREEN[2]));
+  if (t >= E7_GREEN[1]) { status.e7 = 'green'; if (greenIn < 1) statusAmount.e7 = greenIn; }
+  else if (redOut < 1) statusAmount.e7 = redOut;
+
+  const chip: GraphState['chip'] = {}, chipAmount: Record<string, number> = {};
+  const gone = 1 - ease(seg(t, 86.0, 86.4));
+  for (const [id, c] of Object.entries(at22.chip)) {
+    if (KEEP.has(id)) chip[id] = c;
+    else if (gone > 0) { chip[id] = c; chipAmount[id] = gone; }
+  }
+  if (t >= E7_GREEN[1]) { chip.e7 = { ...at22.chip.e7, text: '可以按时上试车台', tone: 'green' }; if (greenIn < 1) chipAmount.e7 = greenIn; }
+  else if (redOut < 1) chipAmount.e7 = redOut;
+  if (t >= 90.9) chip.blade = { text: '缺 16 枚', tone: 'red' };
+  if (t >= STEP1) chip.stock = { text: '本厂成品库 · 6 枚\n二号厂区 · 10 枚' };
+  // Left of its node: on the right the stock and disposal links run past.
+  if (t >= 92.35) chip.insp = { text: '16 枚 · 全部合格', tone: 'green', dx: -32, anchor: 'end' };
+  // The frozen batch's red chip makes way for the two good batches, then comes back.
+  const green = ease(seg(t, POWDER_GREEN[0], POWDER_GREEN[1])) * (1 - ease(seg(t, POWDER_GREEN[2], POWDER_GREEN[3])));
+  const red = t < POWDER_GREEN[0] ? 1 - ease(seg(t, POWDER_RED_OUT[0], POWDER_RED_OUT[1])) : ease(seg(t, POWDER_RED_IN[0], POWDER_RED_IN[1]));
+  if (green > 0) { chip.powder = { text: 'YSZ-2398 · YSZ-2421', tone: 'green' }; if (green < 1) chipAmount.powder = green; }
+  else if (red <= 0) delete chip.powder;
+  else if (red < 1) chipAmount.powder = red;
+
+  return {
+    focus: true, dimLevel: 0.22, lit, litEdges, drawing, nodeAlpha, litAmount, fading, pulse, status, statusAmount,
+    chip, chipAmount, timing: [], toneEdges, spawned: at22.spawned,
+  };
 }
