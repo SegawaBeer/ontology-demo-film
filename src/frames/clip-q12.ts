@@ -11,6 +11,7 @@ import { createModelView, type Theme, type Pose } from './scene';
 import { createHeroBlade, HERO_COMPONENT } from '../hero-blade';
 import { NET_GRAPH, NET_VIEW } from './net';
 import { clamp, seg, ease, noise, bump, tick, typed, typingEnd, typedTimes, appear } from './timing';
+import { foldHTML } from './fold';
 
 export const START = 30;
 export const DURATION = 64;
@@ -25,6 +26,8 @@ const HEAD = [32.4, 33.0] as const;       // column head and trace fade in
 const Q1_META = 33.0;
 const Q1_TYPE = 33.3, Q1_PER_CHAR = 0.085, Q1_SEED = 150;   // seed 150 ends the typing at 35.90
 const Q1_ASK = '第一级涡轮叶片的冷却孔缩小 0.1 毫米，会影响到哪些东西？';
+// How the question breaks at 22 px in the 464 px dialog column (measured), for the fold.
+const Q1_ASK_LINES = ['第一级涡轮叶片的冷却孔缩小 0.1 毫米，会影响', '到哪些东西？'];
 const Q1_QUERY = 36.2;                    // typing end + 0.3
 const GHOST_IN = [36.2, 37.2] as const;
 const DIM_IN = [36.2, 37.0] as const;
@@ -83,11 +86,14 @@ const hops = [
 const probes: [string, number][] = [['insp', 40.85], ['spray', 40.98], ['stock', 41.1], ['e7', 43.3], ['e3', 43.5]];
 const litAt: [string, number][] = [['design', 36.8], ['blade', 36.8], ['drill', 40.6], ['std', 40.7], ['mwo', 43.3], ['po', 43.6]];
 const pulses: [string, number, number][] = [['blade', 36.8, 37.5], ['mwo', 43.3, 44.0], ['po', 43.6, 44.3]];
-const chips: [string, number, string][] = [
-  ['design', 36.8, 'v3.2'], ['drill', 40.6, 'LD-17 · LD-18'], ['std', 40.7, 'QS-T1-07'],
+// [node, at, text, optional move]: v3.2 sits 8 px right of its default spot, clear of the drilling link.
+type ChipMove = { dx?: number; dy?: number; anchor?: 'start' | 'middle' | 'end' };
+const chips: [string, number, string, ChipMove?][] = [
+  ['design', 36.8, 'v3.2', { dx: 8, dy: 2 }], ['drill', 40.6, 'LD-17 · LD-18'], ['std', 40.7, 'QS-T1-07', { dx: -4, anchor: 'end' }],
   ['mwo', 43.3, 'JG-2608…2610 · 8–10 号'], ['po', 43.6, 'PO-26-1163 · 11、12 号'],
 ];
-const timings: [number, string, number, number][] = [[36.8, '12 ms', 96, 540], [43.3, '0.21 s', 470, 560]];
+// '0.21 s' sits beside its own link (blade -> work orders), below the line, clear of it.
+const timings: [number, string, number, number][] = [[36.8, '12 ms', 96, 540], [43.3, '0.21 s', 462, 590]];
 const CORE_COMPS = ['core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles'];
 const COMB_COMPS = ['combustor.cans', 'combustor.casing', 'combustor.injectors', 'combustor.inner-shell'];
 const GLASS_TINT = new THREE.Color('#e2a23a');
@@ -102,7 +108,8 @@ const hops2 = [
 ];
 const litAt2: [string, number][] = [['e7', Q2_QUERY], ...hops2.map((h): [string, number] => [h.to, h.b])];
 const pulses2: [string, number, number][] = [['e7', 51.3, 52.0], ['m-comb', 52.35, 53.05], ['po', 55.1, 55.8], ['e7', 57.7, 58.4]];
-const chips2: [string, number, string][] = [['po', 55.1, 'PO-26-1187 · 在途'], ['supplier', 55.6, '启衡航空'], ['awo', 57.5, 'ZP-0707 · 09:00 前完成']];
+// ZP-0707 is centred under its node, clear of the combustor -> purchase order link.
+const chips2: [string, number, string, ChipMove?][] = [['po', 55.1, 'PO-26-1187 · 在途'], ['supplier', 55.6, '启衡航空'], ['awo', 57.5, 'ZP-0707 · 09:00 前完成', { dx: -22, dy: 4, anchor: 'middle' }]];
 const timings2: [number, string, number, number][] = [[53.35, '9 ms', 575, 300], [55.6, '0.12 s', 452, 878]];
 const NQ1: [number, number, number][] = [[9, 53.8, 0.3], [8, 53.9, 0.3], [1, 54.0, 0.3]];
 const NQ2: [number, number, number][] = [[1, 55.8, 0.3], [160, 55.9, 0.4]];   // 160 min = 02:40
@@ -231,10 +238,11 @@ function dialogHTML(t: number) {
     const cursor = !askDone || t < STEP_AT[0] ? (askDone && blinkOff ? ' typing blink-off' : ' typing') : '';
     const active = `<div class="turn" style="${appear(t, Q1_META, 0.2)}"><div class="meta"><b>研发</b><span>02:07</span></div>
         <p class="ask${cursor}">${askText}</p>${steps.length ? `<div class="steps">${stepsHTML}</div>` : ''}</div>`;
-    const fold = ease(seg(t, FOLD[0], FOLD[1]));
-    turns = fold <= 0 ? active : fold >= 1 ? PAST_Q1 : `<div class="swap">
-      <div class="layer" style="opacity:${(1 - fold).toFixed(3)}">${active}</div>
-      <div class="layer" style="opacity:${fold.toFixed(3)}">${PAST_Q1}</div></div>`;
+    const fold = seg(t, FOLD[0], FOLD[1]);
+    turns = fold <= 0 ? active : fold >= 1 ? PAST_Q1 : foldHTML(fold, {
+      meta: '<b>研发</b><span>02:07</span>', askLines: Q1_ASK_LINES, steps: `<div class="steps">${stepsHTML}</div>`,
+      answer: '<p class="answer">在制叶片 300 枚 · 在途铸件 200 件 · 涉及发动机 5 台</p>',
+    });
   }
   if (t >= Q2_META) {
     const askText = typed(Q2_ASK, t, Q2_TYPE, Q1_PER_CHAR, Q2_SEED);
@@ -245,10 +253,11 @@ function dialogHTML(t: number) {
     const cursor = !askDone || t < STEP2_AT[0] ? (askDone && blinkOff ? ' typing blink-off' : ' typing') : '';
     const active = `<div class="turn" style="${appear(t, Q2_META, 0.2)}"><div class="meta"><b>总装</b><span>02:11</span></div>
         <p class="ask${cursor}">${askText}</p>${steps.length ? `<div class="steps">${stepsHTML}</div>` : ''}</div>`;
-    const fold = ease(seg(t, FOLD2[0], FOLD2[1]));
-    turns += fold <= 0 ? active : fold >= 1 ? PAST_Q2 : `<div class="swap">
-      <div class="layer" style="opacity:${(1 - fold).toFixed(3)}">${active}</div>
-      <div class="layer" style="opacity:${fold.toFixed(3)}">${PAST_Q2}</div></div>`;
+    const fold = seg(t, FOLD2[0], FOLD2[1]);
+    turns += fold <= 0 ? active : fold >= 1 ? PAST_Q2 : foldHTML(fold, {
+      meta: '<b>总装</b><span>02:11</span>', askLines: [Q2_ASK], steps: `<div class="steps">${stepsHTML}</div>`,
+      answer: '<p class="answer green"><span>可以按时上试车台</span><span class="state">09:00</span></p>',
+    });
   }
   const [left, right] = t < HEAD[0] ? ['', ''] : traceAt(t);
   return `<div class="dialog"><header class="col-head"${alpha(head)}><span>提问</span><span>4 个部门 · 同一套对象</span></header>
@@ -256,6 +265,12 @@ function dialogHTML(t: number) {
     <div class="trace"${alpha(head)}><span>${left}</span><span class="spin">${right}</span></div></div>`;
 }
 // ------------------------------------------------------------------ graph
+/** Chips fade out early in a release, before the resting links under them brighten past 0.3. */
+function chipFade(chip: GraphState['chip'], release: number) {
+  if (release <= 0) return undefined;
+  const k = 1 - ease(seg(release, 0, 0.09));
+  return Object.fromEntries(Object.keys(chip).map(id => [id, k]));
+}
 function graph2At(t: number): GraphState {
   const base: GraphState = { ...NET_GRAPH, relStyle: undefined, focus: true, dimLevel: 1 };
   if (t < Q2_QUERY) return base;
@@ -269,12 +284,12 @@ function graph2At(t: number): GraphState {
   const pulse: Record<string, number> = {};
   for (const [id, a, b] of pulses2) if (t > a && t < b) pulse[id] = seg(t, a, b);
   const chip: GraphState['chip'] = {};
-  for (const [id, at, text] of chips2) if (t >= at) chip[id] = { text };
+  for (const [id, at, text, move] of chips2) if (t >= at) chip[id] = { text, ...move };
   const timing = timings2.filter(([at]) => t >= at).map(([, text, x, y]) => ({ text, x, y }));
   const dimLevel = 1 - 0.78 * ease(seg(t, DIM2_IN[0], DIM2_IN[1])) * (1 - release);
   return {
     focus: true, dimLevel, lit, litEdges, drawing, nodeAlpha: {}, pulse, status, chip, timing,
-    counter: NET_GRAPH.counter, release: release > 0 ? release : undefined,
+    counter: NET_GRAPH.counter, release: release > 0 ? release : undefined, chipAmount: chipFade(chip, release),
   };
 }
 function graphAt(t: number): GraphState {
@@ -295,12 +310,12 @@ function graphAt(t: number): GraphState {
   const pulse: Record<string, number> = {};
   for (const [id, a, b] of pulses) if (t > a && t < b) pulse[id] = seg(t, a, b);
   const chip: GraphState['chip'] = {};
-  for (const [id, at, text] of chips) if (t >= at) chip[id] = { text };
+  for (const [id, at, text, move] of chips) if (t >= at) chip[id] = { text, ...move };
   const timing = timings.filter(([at]) => t >= at).map(([, text, x, y]) => ({ text, x, y }));
   const dimLevel = 1 - 0.78 * ease(seg(t, DIM_IN[0], DIM_IN[1])) * (1 - release);
   return {
     focus: true, dimLevel, lit, litEdges, drawing, nodeAlpha, pulse, status: {}, chip, timing,
-    counter: NET_GRAPH.counter, release: release > 0 ? release : undefined,
+    counter: NET_GRAPH.counter, release: release > 0 ? release : undefined, chipAmount: chipFade(chip, release),
   };
 }
 

@@ -227,14 +227,14 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';
       let text: SVGTextElement;
       if (n.kind === 'engine') {
-        text = el('text', { x: n.x, y: n.y + r + 20, 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': 'middle', fill }, g);
+        text = el('text', { x: n.x + (chip.dx ?? 0), y: n.y + r + 20 + (chip.dy ?? 0), 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': chip.anchor ?? 'middle', fill }, g);
         text.textContent = chip.text;
       } else {
         const toLeft = n.anchor === 'left';
         const below = n.anchor === 'below';
         text = el('text', {
-          x: below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10, y: below ? n.y + r + 34 : n.y + 22,
-          'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': below ? 'middle' : toLeft ? 'end' : 'start', fill,
+          x: (below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10) + (chip.dx ?? 0), y: (below ? n.y + r + 34 : n.y + 22) + (chip.dy ?? 0),
+          'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': chip.anchor ?? (below ? 'middle' : toLeft ? 'end' : 'start'), fill,
         }, g);
         text.textContent = chip.text;
       }

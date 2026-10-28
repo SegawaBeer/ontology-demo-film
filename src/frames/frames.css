@@ -221,6 +221,12 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .step .line.ok { color: var(--green); display: flex; gap: 10px; align-items: baseline; }
 .step .line .state { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border: 1px solid currentColor; border-radius: 3px; }
 .model-caption .xf { display: grid; justify-items: end; }
+/* A question folding into its answered form (fold.ts): the open steps and the folded
+   answer share one slot; the steps' row closes up while nothing in it is visible. */
+.fold-slot { display: grid; }
+.fold-slot > * { grid-area: 1 / 1; align-self: start; }
+.fold-steps { display: grid; }
+.fold-clip { overflow: hidden; min-height: 0; }
 .model-caption .xf > span { grid-area: 1 / 1; letter-spacing: inherit; }
 
 /* Browser preview: scale the 1920×1080 frame down to fit the window. */

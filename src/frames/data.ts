@@ -86,7 +86,8 @@ export type GraphState = {
   focus: boolean;
   lit: string[];
   litEdges: [string, string][];
-  chip: Record<string, { text: string; tone?: Tone }>;
+  /** `dx`, `dy`, `anchor`: optional move of the chip off its default spot (to keep it clear of lines). */
+  chip: Record<string, { text: string; tone?: Tone; dx?: number; dy?: number; anchor?: 'start' | 'middle' | 'end' }>;
   status: Record<string, Tone>;
   timing: { text: string; x: number; y: number }[];
   counter?: string;
