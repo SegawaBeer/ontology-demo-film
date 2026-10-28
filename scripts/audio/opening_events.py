@@ -1,14 +1,15 @@
-"""Hand-written event table for the opening, 0-30 s (声音任务说明.md, 三).
+"""Hand-written event table for the opening, 0-30 s (声音任务说明.md 三 and 7.2).
 
     opening_events.py [OUT.json]      # default 音频/events-opening.json
 
-Times come from the picture code, style-frames/src/frames/clip-open.ts
-(milestones one to three A), and from 开头三B任务说明.md for 23.0-30.0 s,
-which has no picture code yet.  verify() re-reads clip-open.ts and stops if
-any constant copied below has changed there.
+Times are copied from the opening picture code in the style-frames worktree
+(read only): clip-open.ts for milestones one to three A, opening-net.ts and
+data.ts for three B (23.0-30.0, accepted at 89aca04).  verify() re-reads
+those files and stops if any constant copied below has changed there.
 
-rotor_rps(t) is the rotor speed for the spin voice, 开头组装动画任务说明.md
-21.6; make_audio.py uses it as --spin opening_events:rotor_rps.
+The rotor speed for the spin voice lives in rotor.py (whole film);
+rotor_rps / FULL_RPS are re-exported here so --spin opening_events:rotor_rps
+from the first round still works.
 """
 import json
 import os
@@ -17,8 +18,15 @@ import sys
 
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rotor  # noqa: E402
+from rotor import FULL_RPS, OMEGA, rotor_rps  # noqa: E402,F401
+
 ROOT = '<项目目录>'
-CLIP_OPEN = f'{ROOT}/.claude/worktrees/style-frames/src/frames/clip-open.ts'
+FRAMES = f'{ROOT}/.claude/worktrees/style-frames/src/frames'
+CLIP_OPEN = f'{FRAMES}/clip-open.ts'
+OPENING_NET = f'{FRAMES}/opening-net.ts'
+DATA_TS = f'{FRAMES}/data.ts'
 OUT = f'{ROOT}/音频/events-opening.json'
 
 # ---- times copied from clip-open.ts -----------------------------------------
@@ -53,58 +61,47 @@ def fan_start(k):
 
 THUD = 21.90                                    # every part in place
 
-# ---- 23.0-30.0 s, from 开头三B任务说明.md (三B picture not built yet) --------------
+# ---- 23.0-30.0 s, copied from opening-net.ts and data.ts ----------------------
 
-E3_NODE = 23.0
-BIZ_GROUPS = [                                  # group start, members in data.ts order
-    (23.4, ['design', 'drill', 'std']),
-    (23.8, ['mwo', 'spray', 'awo']),
-    (24.2, ['insp', 'coat']),
-    (24.6, ['po', 'powder', 'supplier', 'stock']),
+E3_START = 23.0                                 # engine three fades in
+GROUP_START = {'rd': 23.4, 'mfg': 23.8, 'qa': 24.2, 'scm': 24.6}
+NODE_GAP = 0.08
+# BIZ_PLAN: groups in data.ts order, nodes in data.ts order inside a group.
+BIZ_ORDER = [
+    ('rd', ['design', 'drill', 'std']),
+    ('mfg', ['mwo', 'spray', 'awo']),
+    ('qa', ['insp', 'coat']),
+    ('scm', ['po', 'powder', 'supplier', 'stock']),
 ]
-BIZ_STEP = 0.08
-# 15 relations.  Fixed by 三B: po->m-comb 27.3, stock->blade 27.6,
-# po->supplier 28.0.  The other twelve are not fixed there; until the 三B page
-# exports its own times they are spread evenly over 25.0-27.2 in data.ts order.
-FREE_RELATIONS = ['design-blade', 'drill-blade', 'std-blade', 'mwo-blade', 'spray-blade',
-                  'awo-e7', 'insp-blade', 'coat-powder', 'powder-spray', 'powder-supplier',
-                  'po-blade', 'blade-e3']
-FIXED_RELATIONS = [('po-m-comb', 27.3), ('stock-blade', 27.6), ('po-supplier', 28.0)]
-SLIDE = (30.3, 2.1)                             # dialog panel slides in 30.3-32.4
+REL_DUR = 0.35
+# REL_PLAN: (from, to, start, end); end None is start + REL_DUR.
+REL_PLAN = [
+    ('design', 'blade', 25.0, None), ('coat', 'powder', 25.2, None),
+    ('drill', 'blade', 25.4, None), ('powder', 'spray', 25.6, None),
+    ('std', 'blade', 25.8, None), ('awo', 'e7', 26.0, None),
+    ('mwo', 'blade', 26.2, None), ('powder', 'supplier', 26.4, None),
+    ('spray', 'blade', 26.6, None), ('insp', 'blade', 26.8, None),
+    ('blade', 'e3', 27.0, None), ('po', 'blade', 27.2, None),
+    ('po', 'm-comb', 27.3, 27.65), ('stock', 'blade', 27.6, 28.6),
+    ('po', 'supplier', 28.0, 28.6),
+]
+ALL_DRAWN = 28.6            # last relation lands (库存 -> 叶片); the counter is final
+ROTOR_LINES = [             # rotorSpeed(): the opening part of rotor.speed_factor
+    'if (t <= 22.0 || t >= 28.0) return 0;',
+    'if (t < 23.2) return smoother((t - 22.0) / 1.2);',
+    'if (t <= 26.0) return 1;',
+    'return 1 - smoother((t - 26.0) / 2);',
+]
+# The table covers 0-30 s only.  The dialog slide at 30.3 (声音任务说明 7: heard
+# in the full mix) is in the film page's own event table from 30 s on.
+END = 30.0
 
 LINE_GAIN = 10 ** ((-32 - -24) / 20)            # line at -32 dBFS instead of -24
-
-# ---- rotor -------------------------------------------------------------------
-
-OMEGA = 360 / 4.4                               # deg/s
-FULL_RPS = OMEGA / 360                          # spin voice is at full level here
+TICK_NUM_GAIN = 0.5
 
 
-def smootherstep(u):
-    u = np.clip(u, 0.0, 1.0)
-    return u ** 3 * (u * (6 * u - 15) + 10)
-
-
-def rotor_rps(t):
-    """dθ/dt / 360 for θ(t) of 21.6: smootherstep up over 22.0-23.2, constant
-    to 26.0, times 1 - smootherstep((t - 26) / 2) to 28.0, zero after."""
-    t = np.asarray(t, dtype=np.float64)
-    up = smootherstep((t - 22.0) / 1.2)
-    down = 1.0 - smootherstep((t - 26.0) / 2.0)
-    return np.where((t > 22.0) & (t < 28.0), FULL_RPS * up * down, 0.0)
-
-
-def rotor_degrees(t):
-    """θ(t) of 21.6, for checking rotor_rps against the picture's formula."""
-    I = lambda u: u ** 6 - 3 * u ** 5 + 2.5 * u ** 4
-    if t <= 22.0:
-        return 0.0
-    if t >= 28.0:
-        return 360.0
-    ramp = min(1.0, (t - 22.0) / 1.2)
-    cruise = max(0.0, min(t, 26.0) - 23.2)
-    ease = (t - 26.0) - 2 * I((t - 26.0) / 2) if t > 26.0 else 0.0
-    return OMEGA * (1.2 * I(ramp) + cruise + ease)
+def rel_end(start, end):
+    return round(start + REL_DUR, 6) if end is None else end
 
 
 # ---- the table -----------------------------------------------------------------
@@ -129,22 +126,29 @@ def events():
     for k in range(1, 17):
         add(fan_start(k), 'tick', f'fan blade {k}')
     add(THUD, 'thud', 'engine complete')
-    add(22.0, 'spin', 'rotor', dur=6.0)
-    add(E3_NODE, 'line', 'node e3', LINE_GAIN, 'graph')
-    for start, ids in BIZ_GROUPS:
+    for t0, dur in rotor.SPIN_EVENTS:
+        if t0 < END:
+            add(t0, 'spin', 'rotor', dur=dur)
+    add(E3_START, 'line', 'node e3', LINE_GAIN, 'graph')
+    for group, ids in BIZ_ORDER:
         for j, node in enumerate(ids):
-            add(start + j * BIZ_STEP, 'line', f'node {node}', LINE_GAIN, 'graph')
-    step = (27.2 - 25.0) / (len(FREE_RELATIONS) - 1)
-    rel = [(name, 25.0 + j * step) for j, name in enumerate(FREE_RELATIONS)] + FIXED_RELATIONS
-    for name, t in rel:
-        add(t, 'path', f'relation {name}', src='graph')
-    add(SLIDE[0], 'slide', 'dialog panel in', src='dialog', dur=SLIDE[1])
+            add(GROUP_START[group] + j * NODE_GAP, 'line', f'node {node}', LINE_GAIN, 'graph')
+    for a, b, start, _ in REL_PLAN:
+        add(start, 'path', f'relation {a} -> {b}', src='graph')
+    add(ALL_DRAWN, 'tick-num', 'relation counter final', TICK_NUM_GAIN, 'graph')
     ev.sort(key=lambda e: e['t'])
+    assert all(e['t'] < END for e in ev)
     return ev
 
 
-def verify():
-    """Stop if clip-open.ts no longer has the constants copied above."""
+# ---- check against the picture code -------------------------------------------
+
+def _block(src, head, tail):
+    i = src.index(head)
+    return src[i:src.index(tail, i)]
+
+
+def _check_clip_open(bad):
     src = open(CLIP_OPEN, encoding='utf-8').read()
     need = [
         'const bladeStart = (k: number) => 7.65 + 0.95 * Math.sqrt((k - 2) / 98);',
@@ -155,36 +159,73 @@ def verify():
         "const COMP_ORDER = ['compressor.stage-4', 'compressor.stators', 'compressor.stage-3', "
         "'compressor.struts', 'compressor.stage-2', 'compressor.stage-1', 'compressor.drum', 'compressor.inlet-bell'];",
     ]
-    missing = [s for s in need if s not in src]
+    bad += [f'clip-open.ts: {s}' for s in need if s not in src]
     stages = [float(x) for x in re.findall(r"start: (\d+\.\d+), node: 'c-t\d'", src)]
-    block = src[src.index('const M3_PIECES'):src.index('const m3Pieces')]
-    m3 = [float(x) for x in re.findall(r'start: (\d+\.\d+), axis', block)]
+    m3 = [float(x) for x in re.findall(r'start: (\d+\.\d+), axis', _block(src, 'const M3_PIECES', 'const m3Pieces'))]
     if stages != STAGE_STARTS:
-        missing.append(f'STAGE_GROUPS starts {stages}')
+        bad.append(f'clip-open.ts: STAGE_GROUPS starts {stages}')
     if m3 != [t for _, t in M3_STARTS]:
-        missing.append(f'M3_PIECES starts {m3}')
-    if missing:
-        raise SystemExit('clip-open.ts changed, update opening_events.py:\n  ' + '\n  '.join(missing))
-    # rotor_rps must integrate to the picture's rotor angle.
-    t = np.arange(21.0, 29.0, 1e-5)
-    deg = np.concatenate([[0.0], np.cumsum(360 * (rotor_rps(t[1:]) + rotor_rps(t[:-1])) / 2 * 1e-5)])
-    err = max(abs(np.interp(s, t, deg) - rotor_degrees(s)) for s in np.arange(21.5, 28.6, 0.1))
-    if err > 0.01:
-        raise SystemExit(f'rotor_rps does not integrate to rotor_degrees (max error {err:.4f} deg)')
-    return err
+        bad.append(f'clip-open.ts: M3_PIECES starts {m3}')
 
 
-def main():
-    out = sys.argv[1] if len(sys.argv) > 1 else OUT
-    err = verify()
+def _check_opening_net(bad):
+    src = open(OPENING_NET, encoding='utf-8').read()
+    data = open(DATA_TS, encoding='utf-8').read()
+    need = [
+        f'export const E3_START = {E3_START};',
+        f'const NODE_GAP = {NODE_GAP};',
+        f'const REL_DUR = {REL_DUR};',
+        'export const BIZ_PLAN = groups.flatMap(g => nodes.filter(n => n.group === g.id)',
+        'start: GROUP_START[g.id] + NODE_GAP * i',
+        'end = start + REL_DUR',
+        *ROTOR_LINES,
+    ]
+    bad += [f'opening-net.ts: {s}' for s in need if s not in src]
+    m = re.search(r'export const GROUP_START: Record<string, number> = \{([^}]*)\}', src)
+    groups = {k: float(v) for k, v in re.findall(r'(\w+): ([\d.]+)', m.group(1))} if m else None
+    if groups != GROUP_START:
+        bad.append(f'opening-net.ts: GROUP_START {groups}')
+    plan = [(a, b, float(s), float(e) if e else None) for a, b, s, e in re.findall(
+        r"rel\('([\w-]+)', '([\w-]+)', ([\d.]+)(?:, ([\d.]+))?", _block(src, 'export const REL_PLAN', '];'))]
+    if plan != REL_PLAN:
+        bad.append(f'opening-net.ts: REL_PLAN {plan}')
+    if max(rel_end(s, e) for _, _, s, e in REL_PLAN) != ALL_DRAWN:
+        bad.append('opening-net.ts: last relation no longer lands at 28.6')
+    order = re.findall(r"id: '(\w+)'", _block(data, 'export const groups', '] as const;'))
+    biz = re.findall(r"\{ id: '([\w-]+)'[^}]*kind: 'biz', group: '(\w+)'", data)
+    plan_biz = [(g, [n for n, ng in biz if ng == g]) for g in order]
+    if plan_biz != BIZ_ORDER:
+        bad.append(f'data.ts: business nodes by group {plan_biz}')
+
+
+def verify():
+    """Stop if the picture code no longer has the constants copied above."""
+    bad = []
+    _check_clip_open(bad)
+    _check_opening_net(bad)
+    if bad:
+        raise SystemExit('opening picture changed, update opening_events.py:\n  ' + '\n  '.join(bad))
+    return {'clip_open': CLIP_OPEN, 'opening_net': OPENING_NET, 'data': DATA_TS}
+
+
+def write(out=OUT):
+    """verify(), then write the table; returns the events."""
+    verify()
     ev = events()
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, 'w', encoding='utf-8') as f:
         f.write('[\n' + ',\n'.join(json.dumps(e, ensure_ascii=False) for e in ev) + '\n]\n')
+    return ev
+
+
+def main():
+    out = sys.argv[1] if len(sys.argv) > 1 else OUT
+    r = rotor.verify()
+    ev = write(out)
     kinds = {}
     for e in ev:
         kinds[e['kind']] = kinds.get(e['kind'], 0) + 1
-    print(f'{len(ev)} events -> {out}  {kinds}  rotor check {err:.5f} deg')
+    print(f'{len(ev)} events -> {out}  {kinds}  rotor {r}')
 
 
 if __name__ == '__main__':
