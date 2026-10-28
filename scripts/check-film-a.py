@@ -425,10 +425,10 @@ def f7(browser, step=0.006):
     img = Image.new('RGB', (1800, 1000), 'white'); d = ImageDraw.Draw(img)
     for row, (title, sec) in enumerate((('assembled (49.0 s)', H), ('fully exploded (53.4 s)', F))):
         oy = 40 + row * 490
-        d.text((40, oy - 30), title + '   x -3.2 .. 2.6 (engine axis, front to the right), radius 0 .. 0.85; per module: min and max radius in 0.02 bins', fill='black')
-        X = lambda x: 40 + (x + 3.2) / 5.8 * 1720
+        d.text((40, oy - 30), title + '   x -3.1 .. 3.1 (engine axis, front to the right), radius 0 .. 0.85; per module: min and max radius in 0.02 bins', fill='black')
+        X = lambda x: 40 + (x + 3.1) / 6.2 * 1720
         Y = lambda r: oy + 430 - r / 0.85 * 420
-        d.rectangle([X(-3.2), Y(0.85), X(2.6), Y(0)], outline='#cccccc')
+        d.rectangle([X(-3.1), Y(0.85), X(3.1), Y(0)], outline='#cccccc')
         for name in mods:
             m, col = sec[name], colours.get(name, '#333333')
             for i in range(NB):
