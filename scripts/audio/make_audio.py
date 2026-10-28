@@ -241,6 +241,30 @@ def normalise(x, target=TARGET_LUFS):
 
 # ---- main ----------------------------------------------------------------------
 
+def mix(event_paths, out, spin_spec=None, start=0.0, end=None, seed=0):
+    """Render, reverb, normalise and write `out` (48 kHz 24-bit stereo) plus
+    OUT.mix.json, the record check_audio.py reads.  Returns that record."""
+    events = load_events(event_paths)
+    spin = load_spin(spin_spec)
+    end = end if end is not None else max(e['t'] for e in events) + 2.0
+    dry, info = render(events, start, end, spin, seed)
+    y, norm = normalise(reverb(dry))
+    write_wav(out, y)
+    lufs, peak = ebur128(out)
+    report = {
+        'events': [os.path.abspath(p) for p in event_paths], 'spin': spin_spec, 'seed': seed,
+        'start': start, 'end': end, 'samples': len(y), 'count': len(events),
+        'by_kind': {k: sum(e['kind'] == k for e in events) for k in synth.VOICES if any(e['kind'] == k for e in events)},
+        'thinned': info['thinned'],
+        'skipped': [(e['t'], e['kind']) for e in info['skipped']],
+        'cut': [(e['t'], e['kind']) for e in info['cut']],
+        **norm, 'lufs': lufs, 'dbtp': peak,
+    }
+    with open(os.path.splitext(out)[0] + '.mix.json', 'w', encoding='utf-8') as f:
+        json.dump(report, f, ensure_ascii=False, indent=1)
+    return report
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('out')
@@ -251,25 +275,8 @@ def main(argv=None):
     ap.add_argument('--seed', type=int, default=0)
     a = ap.parse_args(argv)
 
-    events = load_events(a.events)
-    spin = load_spin(a.spin)
-    end = a.end if a.end is not None else max(e['t'] for e in events) + 2.0
-    dry, info = render(events, a.start, end, spin, a.seed)
-    y, norm = normalise(reverb(dry))
-    write_wav(a.out, y)
-    lufs, peak = ebur128(a.out)
-
-    report = {
-        'events': [os.path.abspath(p) for p in a.events], 'spin': a.spin, 'seed': a.seed,
-        'start': a.start, 'end': end, 'count': len(events),
-        'by_kind': {k: sum(e['kind'] == k for e in events) for k in synth.VOICES if any(e['kind'] == k for e in events)},
-        'thinned': info['thinned'],
-        'skipped': [(e['t'], e['kind']) for e in info['skipped']],
-        'cut': [(e['t'], e['kind']) for e in info['cut']],
-        **norm, 'lufs': lufs, 'dbtp': peak,
-    }
-    with open(os.path.splitext(a.out)[0] + '.mix.json', 'w', encoding='utf-8') as f:
-        json.dump(report, f, ensure_ascii=False, indent=1)
+    report = mix(a.events, a.out, a.spin, a.start, a.end, a.seed)
+    lufs, peak = report['lufs'], report['dbtp']
     print(json.dumps({k: v for k, v in report.items() if k != 'events'}, ensure_ascii=False))
     if peak > MAX_DBTP or abs(lufs - TARGET_LUFS) > 0.5:
         raise SystemExit(f'loudness off target: {lufs} LUFS, {peak} dBTP')
