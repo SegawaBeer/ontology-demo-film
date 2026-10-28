@@ -102,21 +102,24 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
       if (!state) continue;
       engine.setColor(id, color.copy(state.baseColor).lerp(ghostColor, amount));
     }
+    for (const material of entry.materials) ghostMaterial(material, amount);
+    for (const mesh of entry.meshes) { mesh.castShadow = amount < 0.5; mesh.receiveShadow = amount < 0.5; }
+  }
+
+  /** setGhost's material side, for one material whose `userData.base` is set. */
+  function ghostMaterial(material: THREE.MeshStandardMaterial, amount: number) {
     const transparent = amount > 0.001;
     const depthWrite = amount < 0.6;
-    for (const material of entry.materials) {
-      const base = material.userData.base;
-      material.metalness = lerp(base.metalness, 0.15, amount);
-      material.roughness = lerp(base.roughness, 0.75, amount);
-      material.envMapIntensity = lerp(base.env, 0.4, amount);
-      material.opacity = lerp(1, look.ghostOpacity, 1 - (1 - amount) ** 2);
-      if (material.transparent !== transparent || material.depthWrite !== depthWrite) {
-        material.transparent = transparent;
-        material.depthWrite = depthWrite;
-        material.needsUpdate = true;
-      }
+    const base = material.userData.base;
+    material.metalness = lerp(base.metalness, 0.15, amount);
+    material.roughness = lerp(base.roughness, 0.75, amount);
+    material.envMapIntensity = lerp(base.env, 0.4, amount);
+    material.opacity = lerp(1, look.ghostOpacity, 1 - (1 - amount) ** 2);
+    if (material.transparent !== transparent || material.depthWrite !== depthWrite) {
+      material.transparent = transparent;
+      material.depthWrite = depthWrite;
+      material.needsUpdate = true;
     }
-    for (const mesh of entry.meshes) { mesh.castShadow = amount < 0.5; mesh.receiveShadow = amount < 0.5; }
   }
 
   // Ghost materials take the half-section plane; every material takes the
@@ -214,6 +217,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
   return {
     scene, camera, renderer, width, height,
     addEngine, setGhost, cutaway, setSweep, worldOf, project, fit, applyPose, frame,
+    ghostMaterial, ghostColor: ghostColor.clone(),
     render: () => renderer.render(scene, camera),
     // Second pass onto the picture already on screen: depth starts over, colour
     // stays. Lets depth-only shells be drawn first without losing the metal a
