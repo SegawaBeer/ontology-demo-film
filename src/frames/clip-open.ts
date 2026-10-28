@@ -9,8 +9,13 @@ import { bladePoint } from '../hero-blade';
 import { renderGraph } from './graph';
 import type { GraphState } from './data';
 import type { Theme } from './scene';
+import {
+  netGraph, highlightAt, flashAt as flashTrain, rotorSpeed, RING_FLASHES, ENGINE_FLASHES, RING_FLASH, ENGINE_FLASH,
+  CAPTION_FADE, REL_PLAN, BIZ_PLAN, GROUP_START, E3_START, relProgress, HIGHLIGHT_IN,
+} from './opening-net';
+import { createFlow } from './opening-flow';
 
-export const DURATION = 23.0;
+export const DURATION = 30.0;
 
 const RING = 'turbine.stage-1-blades';
 const DISC = 'turbine.stage-1-disk';
@@ -20,6 +25,15 @@ const VIEW_DIR = new THREE.Vector3(0.836, 0.271, 0.477).normalize();
 const LIT = new THREE.Color('#1c5fb8');
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+// Opening 3B: 23.0-30.0.
+const M3B = 23.0;
+const GHOST_END = 24.6;
+const GHOST: [number, number] = [23.0, 24.6];
+const CUT: [number, number] = [24.0, 25.6];
+const GHOST_COMPONENTS = new Set(['nacelle.duct', 'fan-cowl.aft', 'fan-cowl.lip', 'fan-cowl.shell', 'core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles']);
+const TAG_HTML = '<small>燃烧室 · 外购</small><span class="tag-count"><b class="mono-sm">PO-26-1187</b></span><small>刚连上：采购订单 → 燃烧室</small>';
+const CAPTION_OLD = '第一级涡轮叶片';
+const CAPTION_NEW = '7 号发动机 · 总装中';
 const seg = (t: number, a: number, b: number) => clamp01((t - a) / (b - a));
 const smoother = (p: number) => p * p * p * (p * (p * 6 - 15) + 10);
 const smootherAt = (t: number, a: number, b: number) => smoother(seg(t, a, b));
@@ -270,6 +284,12 @@ export async function mountOpening(theme: Theme) {
     );
     camera.near = Math.max(0.001, dist * nearFarRatio.near);
     camera.far = dist * nearFarRatio.far;
+    if (t > M3B) {
+      // frame=net renders with the view's own clip range; reach it by 24.6.
+      const u = smootherAt(t, M3B, GHOST_END);
+      camera.near = lerp(camera.near, 0.05, u);
+      camera.far = lerp(camera.far, 80, u);
+    }
     camera.updateProjectionMatrix();
   }
 
@@ -318,6 +338,13 @@ export async function mountOpening(theme: Theme) {
       cam.bottom = bt * lerp(s, ext, u);
       cam.near = Math.max(0.01, nr * lerp(s, 1, u));
       cam.far = fr * lerp(s, 8, u);
+      if (t > M3B) {
+        // Back to the view's own shadow frustum, which frame=net renders with.
+        const w = smootherAt(t, M3B, GHOST_END);
+        cam.left = lerp(cam.left, l, w); cam.right = lerp(cam.right, r, w);
+        cam.top = lerp(cam.top, tp, w); cam.bottom = lerp(cam.bottom, bt, w);
+        cam.near = lerp(cam.near, nr, w); cam.far = lerp(cam.far, fr, w);
+      }
       cam.updateProjectionMatrix();
       void k;
     }
@@ -480,7 +507,7 @@ export async function mountOpening(theme: Theme) {
   }
   let solidNow = -1;
   function ringAt(t: number) {
-    if (solo) { engine.setVisible(RING, false); if (ringShell) ringShell.visible = false; return; }
+    if (solo && !solo.includes(RING)) { engine.setVisible(RING, false); if (ringShell) ringShell.visible = false; return; }
     const shown = bladesShown(t);
     const solid = solidBlades(t);
     if (shown !== shownNow || solid !== solidNow) {
@@ -561,6 +588,15 @@ export async function mountOpening(theme: Theme) {
     const two = t >= 8.8;
     const appear = smootherAt(t, 1.0, 1.4);
     if (mask) return;
+    if (t >= M3B) {
+      const net = netGraph(t);
+      renderGraph(graphEl, net.state);
+      lastGraphNodes = net.nodes;
+      lastPulse = Object.keys(net.state.pulses ?? {});
+      lastEdges = net.progress;
+      return;
+    }
+    lastEdges = {};
     if (appear <= 0) {
       renderGraph(graphEl, { focus: false, lit: [], litEdges: [], chip: {}, status: {}, timing: [], only: [], counter: '0 个节点 · 0 条关系' });
       return;
@@ -973,6 +1009,8 @@ export async function mountOpening(theme: Theme) {
     for (let pi = 0; pi < pieces.length; pi++) {
       const a = amounts.get(pieces[pi]) ?? 0;
       const piece = pieces[pi];
+      // From 3B on, m3bAt() writes every piece colour itself.
+      if (t >= M3B) continue;
       if (a <= 0.0005) {
         if (piece.idle !== 1) {
           for (const tint of pieceTints[pi]) writeTint(tint, tint.base);
@@ -995,7 +1033,7 @@ export async function mountOpening(theme: Theme) {
   function drawFrame() {
     // Before milestone two the picture has to stay exactly what frame=open
     // draws, so the first 9.6 seconds keep the single pass.
-    if (mask || appliedT < 9.6) { view.render(); return; }
+    if (mask || appliedT < 9.6) { view.render(); passesNow = 1; return; }
     const hidden: THREE.Object3D[] = [];
     const hide = (o: THREE.Object3D | null) => { if (o && o.visible) { hidden.push(o); o.visible = false; } };
     for (const p of pieces) { for (const l of p.lines) hide(l); for (const sh of p.shells) hide(sh); }
@@ -1005,15 +1043,21 @@ export async function mountOpening(theme: Theme) {
     hide(ringShell);
     hide(fanShell);
     view.render();
+    // With no outline or depth shell on screen the second pass would only draw
+    // every translucent surface a second time.
+    if (!hidden.length) { passesNow = 1; return; }
     for (const o of hidden) o.visible = true;
     view.renderSecond();
+    passesNow = 2;
   }
+  let passesNow = 1;
 
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
   let appliedT = 0;
   let lastGraphNodes: string[] = [];
   let lastPulse: string[] = [];
+  let lastEdges: Record<string, number> = {};
   function attached(t: number) {
     appliedT = t;
     discAt(t);
@@ -1036,8 +1080,125 @@ export async function mountOpening(theme: Theme) {
   function rotorAt(t: number) {
     const deg = params.get('norotor') === '1' ? 0 : rotorDegrees(t);
     rotorNow = deg;
-    for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg);
+    for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg % 360);
   }
+
+  // ---- opening 3B: shells to ghosts, cutaway, airflow, highlight, flashes ----
+  const flowMask = maskMode === 'flow';
+  const noFlow = params.get('noflow') === '1';
+  const flow = createFlow(engineGroup);
+  if (flowMask) {
+    // Where flow lines can show at all: the full paths, solid black, on top.
+    const fm = flow.material;
+    fm.color.set(0x000000); fm.linewidth = 7; fm.depthTest = false; fm.transparent = false; fm.dashed = false;
+    fm.needsUpdate = true;
+  }
+  const ghostColor = view.ghostColor;
+  const ghostMats: THREE.MeshStandardMaterial[] = [];
+  const ghostMeshes: THREE.Mesh[] = [];
+  const ghostTints = new Set<Tint>();
+  for (let pi = 0; pi < pieces.length; pi++) {
+    const p = pieces[pi];
+    for (const mesh of p.meshes) {
+      if (!GHOST_COMPONENTS.has(mesh.parent?.name ?? '')) continue;
+      ghostMeshes.push(mesh);
+      ghostMats.push(mesh.material as THREE.MeshStandardMaterial);
+    }
+    for (const tint of pieceTints[pi]) {
+      const owner = tint.mesh ?? p.meshes.find(m => m.material === tint.mat);
+      if (owner && GHOST_COMPONENTS.has(owner.parent?.name ?? '')) ghostTints.add(tint);
+    }
+  }
+  const combIndex = pieces.indexOf(m3Pieces[0].piece);
+  const e7Set = new Set<Piece>([...stagePieces, ...compPieces, ...m3Pieces.map(m => m.piece)]);
+  const cutPlane = new THREE.Plane();
+  const tint3 = new THREE.Color();
+  let ghostNow = 0, cutNow = 0, highlightNow = 0;
+  const calloutSvg = document.querySelector<SVGSVGElement>('#callouts')!;
+  const calloutLabels = document.querySelector<HTMLElement>('#callout-labels')!;
+  const captionRight = document.querySelector<HTMLElement>('.col-model .model-caption span + span');
+  let captionKey = '';
+  let tagKey = '';
+  function captionAt(t: number) {
+    if (!captionRight) return;
+    const k = smootherAt(t, CAPTION_FADE[0], CAPTION_FADE[1]);
+    const key = k <= 0 ? 'old' : k >= 1 ? 'new' : k.toFixed(5);
+    if (key === captionKey) return;
+    captionKey = key;
+    if (k <= 0) captionRight.textContent = CAPTION_OLD;
+    else if (k >= 1) captionRight.textContent = CAPTION_NEW;
+    else captionRight.innerHTML = '<span style="display:inline-grid;justify-items:end">'
+      + `<span style="grid-area:1/1;opacity:${1 - k}">${CAPTION_OLD}</span>`
+      + `<span style="grid-area:1/1;opacity:${k}">${CAPTION_NEW}</span></span>`;
+  }
+  // The PO-26-1187 tag, written exactly as treeToNet() writes it once it is full.
+  function tagAt(t: number) {
+    const h = highlightAt(t);
+    const key = h <= 0 ? 'off' : h.toFixed(5);
+    if (key === tagKey) return;
+    tagKey = key;
+    calloutSvg.innerHTML = '';
+    calloutLabels.innerHTML = '';
+    if (h <= 0) return;
+    const p = view.project(view.worldOf(engine, 'combustor.inner-shell.001')!);
+    const lx = 780, ly = 250, colour = 'var(--lit)';
+    const marks = `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${colour}"/>`
+      + `<path d="M${p.x} ${p.y} L${lx - 30} ${ly} H${lx - 10}" fill="none" stroke="${colour}" stroke-width="1" opacity="0.8"/>`;
+    calloutSvg.insertAdjacentHTML('beforeend', h >= 1 ? marks : `<g style="opacity:${h}">${marks}</g>`);
+    calloutLabels.insertAdjacentHTML('beforeend',
+      `<div class="tag tone-lit" style="left:${lx}px;top:${ly}px${h >= 1 ? '' : `;opacity:${h}`}">${TAG_HTML}</div>`);
+  }
+  function m3bAt(t: number) {
+    const g = smootherAt(t, GHOST[0], GHOST[1]);
+    const c = smootherAt(t, CUT[0], CUT[1]);
+    const h = highlightAt(t);
+    ghostNow = g; cutNow = c; highlightNow = h;
+    flow.set(rotorSpeed(t), rotorDegrees(t), noFlow || mask);
+    if (mask) return;
+    for (const m of ghostMats) view.ghostMaterial(m, g);
+    for (const mesh of ghostMeshes) { mesh.castShadow = g < 0.5; mesh.receiveShadow = g < 0.5; }
+    if (c > 0) {
+      // view.cutaway()'s plane, from the camera that stands still after 21.9 s.
+      engine.root.updateMatrixWorld(true);
+      const axis = new THREE.Vector3(1, 0, 0).transformDirection(engine.root.matrixWorld);
+      const origin = new THREE.Vector3().setFromMatrixPosition(engine.root.matrixWorld);
+      const toCamera = camera.position.clone().sub(origin);
+      const normal = toCamera.sub(axis.clone().multiplyScalar(toCamera.dot(axis))).normalize().negate();
+      cutPlane.setFromNormalAndCoplanarPoint(normal, origin);
+      cutPlane.constant += (1 - c) * 1.4 * engine.root.scale.x;
+      for (const m of ghostMats) m.clippingPlanes = [cutPlane];
+    }
+    captionAt(t);
+    tagAt(t);
+    if (t < M3B) return;
+    const e7a = noFlash ? 0 : flashTrain(ENGINE_FLASHES, ENGINE_FLASH, t);
+    const ringA = noFlash ? 0 : flashTrain(RING_FLASHES, RING_FLASH, t);
+    for (let pi = 0; pi < pieces.length; pi++) {
+      const piece = pieces[pi];
+      // So m2At writes the base colours again if the playhead goes back.
+      piece.idle = 0;
+      const a = e7Set.has(piece) ? e7a : 0;
+      const comb = pi === combIndex && h > 0;
+      for (const tint of pieceTints[pi]) {
+        tint3.copy(tint.base);
+        if (ghostTints.has(tint)) tint3.lerp(ghostColor, g);
+        if (comb) {
+          if (h >= 1) tint3.copy(LIT);
+          else tint3.convertLinearToSRGB().lerp(LIT_SRGB, h).convertSRGBToLinear();
+        }
+        if (a > 0.0005) tint3.convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear();
+        writeTint(tint, tint3);
+      }
+    }
+    if (ringA > 0.0005) {
+      for (let n = 1; n <= 100; n++) {
+        const state = engine.parts.get(bladeId(n));
+        if (!state) continue;
+        engine.setColor(bladeId(n), tint3.copy(state.baseColor).convertLinearToSRGB().lerp(LIT_SRGB, ringA).convertSRGBToLinear());
+      }
+    }
+  }
+  if (!mask) calloutSvg.setAttribute('viewBox', '0 0 1280 1080');
 
   function apply(t: number, render = true) {
     appliedT = t;
@@ -1080,13 +1241,25 @@ export async function mountOpening(theme: Theme) {
       : smootherAt(t, 7.30, 7.60);
     hero.root.updateMatrixWorld(true);
     open.hero.root.visible = fade < 0.999;
+    if (flowMask) {
+      hero.root.visible = false;
+      open.hero.root.visible = false;
+      engine.setVisible(allComponentIds, false);
+      cameraAt(t);
+      lightsAt(t);
+      flow.set(rotorSpeed(t), rotorDegrees(t), false);
+      if (render) drawFrame();
+      return;
+    }
     if (partMask) {
       hero.root.visible = false;
       open.hero.root.visible = false;
-      engine.setVisible(RING, false);
+      engine.setVisible(RING, partMask.includes(RING));
       engine.setVisible(DISC, false);
       cameraAt(t);
       lightsAt(t);
+      // From 3B on the masks follow the turning rotor.
+      if (t >= M3B) rotorAt(t);
       appliedT = t;
       if (render) drawFrame();
       return;
@@ -1137,6 +1310,7 @@ export async function mountOpening(theme: Theme) {
     lastBladeState = bladeState;
     if (t >= 9.6) m2At(t);
     rotorAt(t);
+    m3bAt(t);
     graphAt(t);
     if (!mask) {
       const first = firstBladeTip();
@@ -1220,6 +1394,15 @@ export async function mountOpening(theme: Theme) {
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       rotor: rotorNow,
+      passes: passesNow,
+      m3b: {
+        ghost: ghostNow, cut: cutNow, highlight: highlightNow, flow: flow.opacity(),
+        edges: lastEdges,
+        caption: captionRight ? captionRight.textContent : null,
+        tag: calloutLabels.querySelector('.tag') ? (calloutLabels.querySelector<HTMLElement>('.tag')!.style.opacity || '1') : '0',
+        plane: cutPlane.normal.toArray().concat([cutPlane.constant]),
+        near: camera.near, far: camera.far,
+      },
       shellsOn: [...pieces.filter(p => p.shells.some(sh => sh.visible)).map(p => p.ids[0]),
         ...(ringShell && ringShell.visible ? ['ring'] : []),
         ...(fanShell && fanShell.visible ? ['fan'] : [])],
