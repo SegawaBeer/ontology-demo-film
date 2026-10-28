@@ -104,10 +104,13 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   el('line', { x1: 32, x2: 608, y1: 84, y2: 84, stroke: 'var(--rule)' }, svg);
 
   for (const g of only ? [] : groups) {
+    const shown = state.groupAppear?.[g.id];
+    if (shown !== undefined && shown <= 0) continue;
     const gLit = all.some(n => n.group === g.id && lit.has(n.id));
     const t = el('text', { x: g.x, y: g.y, 'font-size': 12, 'letter-spacing': '0.12em', 'text-anchor': g.align, fill: gLit || strong ? 'var(--ink-2)' : 'var(--ink-3)' }, svg);
     t.textContent = g.label;
     if (!gLit && dimming) t.style.opacity = String(0.5 + 0.5 * Math.max(0, (dimValue - 0.22) / 0.78));
+    if (shown !== undefined && shown < 1) t.style.opacity = String(shown);
   }
   for (const c of only ? captions.filter(x => (state.captions ?? []).includes(x.text)) : captions) {
     const t = el('text', { x: c.x, y: c.y + 12, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--ink-3)' }, svg);
@@ -152,27 +155,35 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     }
   }
 
+  // Finished edges whose lit stroke is fading back to the resting look.
+  for (const f of state.fading ?? []) {
+    if (f.amount <= 0) continue;
+    const e = allEdges.find(x => same(x.from, x.to, [[f.from, f.to]]));
+    if (!e) continue;
+    const a = byId.get(f.from)!, b = byId.get(f.to)!;
+    const forward = e.from === f.from;
+    const d = e.kind === 'tree'
+      ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
+      : linkPath(e, a, b, forward);
+    const path = el('path', { d, fill: 'none', stroke: 'var(--lit)', 'stroke-width': f.width ?? litWidth }, litLayer);
+    path.style.opacity = String(Math.min(1, f.amount));
+  }
+
   for (const t of state.timing) {
     el('text', { x: t.x, y: t.y, 'font-size': 10.5, class: 'mono', fill: 'var(--lit)', opacity: 0.85 }, litLayer).textContent = t.text;
   }
 
   const fresh = new Set(state.fresh ?? []);
-  for (const n of visible) {
-    const on = lit.has(n.id);
-    const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
-    if (appear !== undefined && appear <= 0) continue;
-    const g = el('g', {}, svg);
-    const floor = state.nodeAlpha?.[n.id];
-    if (dimming && !on) g.style.opacity = floor !== undefined ? String(Math.max(dimValue, floor)) : dim;
-    if (appear !== undefined) {
-      g.style.opacity = String(appear);
-      g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
-    }
+  const drawNode = (n: GraphNode, on: boolean, g: SVGGElement) => {
     const r = radius[n.kind];
     const tone = state.status[n.id];
     const ring = tone ? toneVar[tone] : on ? 'var(--lit)' : 'var(--node-ring)';
     if (on && n.kind !== 'component') el('circle', { cx: n.x, cy: n.y, r: r + 6, fill: tone ? toneVar[tone] : 'var(--lit)', opacity: 0.12 }, g);
-    if (fresh.has(n.id)) el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
+    if (fresh.has(n.id)) {
+      const ringEl = el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
+      const k = state.freshAmount?.[n.id];
+      if (k !== undefined && k < 1) ringEl.setAttribute('opacity', String(0.45 * Math.max(0, k)));
+    }
     const pulse = state.pulse?.[n.id];
     if (pulse !== undefined && pulse > 0 && pulse < 1) {
       el('circle', { cx: n.x, cy: n.y, r: r + 4 + 18 * pulse, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1.4, opacity: 0.7 * (1 - pulse) }, g);
@@ -189,16 +200,42 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const chip = state.chip[n.id];
     if (chip) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';
+      let text: SVGTextElement;
       if (n.kind === 'engine') {
-        el('text', { x: n.x, y: n.y + r + 20, 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': 'middle', fill }, g).textContent = chip.text;
+        text = el('text', { x: n.x, y: n.y + r + 20, 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': 'middle', fill }, g);
+        text.textContent = chip.text;
       } else {
         const toLeft = n.anchor === 'left';
         const below = n.anchor === 'below';
-        el('text', {
+        text = el('text', {
           x: below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10, y: below ? n.y + r + 34 : n.y + 22,
           'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': below ? 'middle' : toLeft ? 'end' : 'start', fill,
-        }, g).textContent = chip.text;
+        }, g);
+        text.textContent = chip.text;
       }
+      const k = state.chipAmount?.[n.id];
+      if (k !== undefined && k < 1) text.style.opacity = String(Math.max(0, k));
+    }
+  };
+  for (const n of visible) {
+    const on = lit.has(n.id);
+    const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
+    if (appear !== undefined && appear <= 0) continue;
+    const g = el('g', {}, svg);
+    const floor = state.nodeAlpha?.[n.id];
+    if (dimming && !on) g.style.opacity = floor !== undefined ? String(Math.max(dimValue, floor)) : dim;
+    if (appear !== undefined) {
+      g.style.opacity = String(appear);
+      g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
+    }
+    drawNode(n, on, g);
+    // A lit copy on top, for a node crossing between lit and resting.
+    const k = state.litAmount?.[n.id];
+    if (!on && k !== undefined && k > 0) {
+      const top = el('g', {}, svg);
+      top.style.opacity = String(Math.min(1, k) * (appear ?? 1));
+      if (appear !== undefined) top.setAttribute('transform', g.getAttribute('transform')!);
+      drawNode(n, true, top);
     }
   }
 

@@ -114,6 +114,16 @@ export type GraphState = {
   onlyEdges?: [string, string][];
   /** Match the drawing head's thickness so completion does not pop. */
   edgeWidth?: number;
+  /** Per-group label fade-in, 0..1 (absent = shown). */
+  groupAppear?: Record<string, number>;
+  /** For unlit nodes: a lit copy drawn on top at this opacity, 0..1. */
+  litAmount?: Record<string, number>;
+  /** Finished edges with a lit stroke fading over their normal look. */
+  fading?: { from: string; to: string; amount: number; width?: number }[];
+  /** Per-node chip opacity, 0..1 (absent = 1). */
+  chipAmount?: Record<string, number>;
+  /** Per-node opacity of the `fresh` ring, 0..1 (absent = 1). */
+  freshAmount?: Record<string, number>;
 };
 
 // First-stage blades in fleet order: engines 1–7, stock, engines 8–10.
