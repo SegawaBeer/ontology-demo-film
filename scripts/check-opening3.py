@@ -812,11 +812,17 @@ with sync_playwright() as pw:
     n28 = over(on28, off28, LEFT, tol=0)
     go('frame=opening&theme=light&t=25.0', which=page)
     direct = snap(page, 'p47a')
+    state_a = page.evaluate(STATE_JS)
     page.evaluate('window.__seek(27.9)'); page.evaluate('window.__seek(25.0)'); time.sleep(0.2)
     back = snap(page, 'p47b')
+    state_b = page.evaluate(STATE_JS)
+    # Same judgement as item 42: exact canvas and markup, screenshot within one level.
     nback = over(direct, back, FULL, tol=0)
-    check('47 airflow', n25 >= 3000 and n28 == 0 and nback == 0,
-          f'25.0 {n25}px over 15 in the flow region, 28.0 {n28}px, 27.9->25.0 {nback}px',
+    nback1 = over(direct, back, FULL, tol=1)
+    same = state_a == state_b and nback1 == 0
+    check('47 airflow', n25 >= 3000 and n28 == 0 and same,
+          f'25.0 {n25}px over 15 in the flow region, 28.0 {n28}px, 27.9->25.0 state {state_a == state_b}, '
+          f'{nback}px at 1 level, {nback1}px over 1',
           '>= 3,000 at 25.0, 0 at 28.0, seek back identical')
 
     # ---- 8 one pass from 23.0 on, and 22.0-23.0 as before ----
