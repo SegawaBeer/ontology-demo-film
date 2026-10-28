@@ -825,6 +825,66 @@ with sync_playwright() as pw:
           f'{nback}px at 1 level, {nback1}px over 1',
           '>= 3,000 at 25.0, 0 at 28.0, seek back identical')
 
+    # ---- 49 flow lines never cross a solid part (cross-section test) ----
+    # Every drawn segment is cut into 0.02-wide axial slices; the radii it covers
+    # in a slice may not fall inside the radius range of any visible part that
+    # is solid and overlaps that slice (tolerance 0.005). Shell parts count as
+    # solid until they are fully ghosted.
+    PARTS49 = json.load(open(f'{ROOT}/.claude/worktrees/style-frames/public/models/turbofan-parts.json'))['parts']
+    GHOST_MODULES = ('nacelle', 'fan-cowl', 'core-casing')
+    W49, TOL49 = 0.02, 0.005
+
+    def slices(seg):
+        x0, r0, x1, r1 = seg
+        if x0 > x1: x0, r0, x1, r1 = x1, r1, x0, r0
+        cuts = [x0] + [k * W49 for k in range(math.floor(x0 / W49) + 1, math.ceil(x1 / W49))] + [x1]
+        for a, b in zip(cuts, cuts[1:]):
+            if b - a < 1e-9: continue
+            ra = r0 + (r1 - r0) * (a - x0) / (x1 - x0); rb = r0 + (r1 - r0) * (b - x0) / (x1 - x0)
+            yield math.floor((a + b) / 2 / W49), min(ra, rb), max(ra, rb)
+
+    go('frame=opening&theme=light&t=22.0')
+    hits49, tested49, empty49 = [], 0, []
+    for i in range(1, 60):
+        tt = round(22.0 + 0.1 * i, 2)
+        page.evaluate(f'window.__seek({tt})')
+        g = page.evaluate('window.__flowGeometry()')
+        vis = set(g['visible'])
+        solid = [p for p in PARTS49 if p['id'] in vis and not (p['module'] in GHOST_MODULES and g['ghost'] >= 0.999)]
+        if not g['segments']: empty49.append(tt)
+        for fam, segs in g['segments'].items():
+            for seg in segs:
+                for k, lo, hi in slices(seg):
+                    tested49 += 1
+                    sx0, sx1 = k * W49, (k + 1) * W49
+                    for p in solid:
+                        if (p['axial'][1] >= sx0 and p['axial'][0] <= sx1
+                                and lo <= p['radius'][1] + TOL49 and hi >= p['radius'][0] - TOL49):
+                            hits49.append(f'{tt}s {fam} x {sx0:.2f} r {lo:.3f} {p["id"]}'); break
+    # Inside the bypass duct (0.2 < x < 1.3): free radii below the duct and cowl
+    # walls that no solid part covers, slice by slice. A line can only run there
+    # if one radius stays free in every slice.
+    duct = []
+    for k in range(10, 65):
+        sx0, sx1 = k * W49, (k + 1) * W49
+        here = [p for p in PARTS49 if p['axial'][0] <= sx1 and p['axial'][1] >= sx0]
+        wall = min((p['radius'][0] for p in here if p['module'] in ('nacelle', 'fan-cowl')), default=None)
+        if wall is None: continue
+        blocks = sorted((p['radius'][0] - TOL49, p['radius'][1] + TOL49) for p in here if p['module'] not in GHOST_MODULES)
+        free, cur = [], 0.0
+        for a, b in blocks:
+            if a > cur: free.append((cur, min(a, wall)))
+            cur = max(cur, b)
+        if cur < wall: free.append((cur, wall))
+        duct.append((round(sx0, 2), [(round(a, 3), round(b, 3)) for a, b in free if b > a and a > 0.1]))
+    closed = [x for x, f in duct if not f]
+    with open(f'{OUT3B}/m3b-flow-section.json', 'w') as f:
+        json.dump({'hits': hits49, 'tested': tested49, 'duct_free': duct}, f, ensure_ascii=False, indent=1)
+    check('49 flow cross-section', not hits49 and not empty49 and tested49 > 0,
+          f'{tested49} slice pieces at 59 times, {len(hits49)} inside a solid part {hits49[:2]}; '
+          f'duct 0.2-1.3: {len(closed)} of {len(duct)} slices have no free radius (from {closed[0] if closed else None}), so no line inside',
+          'no flow piece within 0.005 of a visible solid part in its 0.02 slice')
+
     # ---- 8 one pass from 23.0 on, and 22.0-23.0 as before ----
     go('frame=opening&theme=light&t=23.0')
     twos = []
