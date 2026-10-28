@@ -33,6 +33,8 @@ LEVELS = {
 # nobody can hear; 15.125 puts full speed on 55 Hz, the pitch of the thud.
 SPIN_BLADES = 16
 SPIN_PITCH = 15.125
+SPIN_NOISE_CUT_HZ = 150.0
+SPIN_NOISE_CUT_DB = 6.0
 
 LN1000 = np.log(1000.0)          # exp(-LN1000 * t / t60) is -60 dB at t60
 
@@ -85,6 +87,17 @@ def _pink(n, rng):
     spec[0] = 0.0
     x = np.fft.irfft(spec, n)
     return x / (np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+
+def _cut_below(x, f0, cut_db, width_oct=0.5):
+    """x with everything below f0 turned down by cut_db (linear-phase, in the
+    frequency domain), rising back to 0 dB over width_oct octaves above f0.
+    Meant for stationary noise, where wrapping round the ends does not show."""
+    n = len(x)
+    f = np.fft.rfftfreq(n, 1.0 / SR)
+    u = np.clip(np.log2(np.maximum(f, 1e-9) / f0) / width_oct, 0.0, 1.0)
+    g = db(-cut_db * (0.5 + 0.5 * np.cos(np.pi * u)))
+    return np.fft.irfft(np.fft.rfft(x) * g, n)
 
 
 def _rng(rng):
@@ -171,6 +184,10 @@ def spin(speed, t0, dur, gain=1.0, pan=0.0, rng=None, full=None):
     tonal = np.sin(ph) + 0.5 * np.sin(2 * ph) + 0.33 * np.sin(3 * ph)
     noise = signal.sosfilt(_sos('lowpass', 400.0, 4), _pink(n, rng))
     noise /= np.sqrt(np.mean(noise ** 2)) + 1e-12
+    # 声音任务说明 8.1: the noise layer a further 6 dB down below 150 Hz, so the
+    # rotor sounds like turning rather than rumbling.  Done after the level is
+    # set, so the 150-400 Hz part keeps its level.
+    noise = _cut_below(noise, SPIN_NOISE_CUT_HZ, SPIN_NOISE_CUT_DB)
     x = amp * (tonal + db(-12.0) * noise)
     return _out(x, 'spin', gain, pan, scale=_spin_scale())
 

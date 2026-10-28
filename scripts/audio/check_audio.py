@@ -21,6 +21,9 @@
   with the motion; for them only the locate position is checked.
 - Loudness -16 +- 0.5 LUFS and true peak <= -1 dBTP (ffmpeg ebur128; loudnorm
   as a second reading).
+- Balance (8.2): each category's momentary maximum from its solo stem, against
+  the thud's (T) and the 8.1 ranges; and the mix's own momentary maximum away
+  from the thud must not be above T (balance.py).
 - 48 kHz / 24-bit / stereo, no clipped samples, |mean| < 0.001 per channel.
 - Head: 0-0.3 s below -60 dBFS.  Tail: last 0.5 s below -60 dBFS or falling,
   and no voice cut off by the end of the file.
@@ -38,6 +41,7 @@ from scipy import signal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import synth  # noqa: E402
+import balance  # noqa: E402
 import make_audio as mx  # noqa: E402
 
 SR = synth.SR
@@ -67,7 +71,7 @@ def loudnorm_reading(path):
     return float(j['input_i']), float(j['input_tp'])
 
 
-def locate(mono, mono_hp, events, group, cfg, gains, spin, close):
+def locate(mono, mono_hp, events, group, cfg, gains, spin, close, env):
     """Film-time error (ms) of the event's onset, by cross-correlation, and
     how well the voice is found there.
     When another voice starts within CLOSE_MS of this one ("close"), only
@@ -80,10 +84,10 @@ def locate(mono, mono_hp, events, group, cfg, gains, spin, close):
 
     Returns (onset_ms, lag_ms, level, corr): level is the voice's amplitude
     fitted at the found position over the amplitude it was mixed at (the
-    normalisation gain), about 1 where the voice is on the waveform and about
+    output gain there, normalisation x limiter), about 1 where the voice is on the waveform and about
     0 where it is not; corr is the correlation coefficient there."""
     e = events[group[0]]
-    vs = [mx.voice_of(events[i], i, cfg['seed'], gains[i], spin).sum(axis=1) for i in group]
+    vs = [mx.voice_of(events[i], i, cfg['seed'], gains[i], spin, cfg.get('category_db')).sum(axis=1) for i in group]
     v = np.zeros(max(len(u) for u in vs))
     for u in vs:
         v[:len(u)] += u
@@ -103,7 +107,10 @@ def locate(mono, mono_hp, events, group, cfg, gains, spin, close):
     lag = k + a - i0
     win = seg[k:k + len(v)]
     vv = float(v @ v)
-    level = float(c[k]) / vv / synth.db(cfg['gain_db'])
+    # Output gain the voice got where it was found: normalisation x limiter.
+    g = env[k + a:k + a + len(v)]
+    expected = float(np.average(g, weights=v[:len(g)] ** 2 + 1e-30)) if len(g) else synth.db(cfg['gain_db'])
+    level = float(c[k]) / vv / expected
     corr = float(c[k]) / np.sqrt(vv * float(win @ win) + 1e-30)
     return 1000.0 * lag / SR + rise, 1000.0 * lag / SR, level, corr
 
@@ -138,12 +145,12 @@ def voice_lengths(events, cfg, gains, spin):
         if e['kind'] in synth.MOTION_VOICES:
             out.append(float(e.get('dur', 0.0)))
             continue
-        m = np.abs(mx.voice_of(e, idx, cfg['seed'], gains[idx], spin)).max(axis=1)
+        m = np.abs(mx.voice_of(e, idx, cfg['seed'], gains[idx], spin, cfg.get('category_db'))).max(axis=1)
         out.append(float(np.nonzero(m >= synth.db(-40.0) * m.max())[0][-1]) / SR)
     return np.array(out)
 
 
-def onsets(x, cfg):
+def onsets(x, cfg, env):
     """One row per event inside the file.  "dense": another hit voice is
     sounding from 25 ms before the event to 40 ms after it."""
     events = mx.load_events(cfg['events'])
@@ -164,7 +171,7 @@ def onsets(x, cfg):
         others = hits & ~same & (times < e['t'] + 0.040) & (ends > e['t'] - 0.025)
         dense = bool(others.any())
         close = bool((hits & ~same & (np.abs(times - e['t']) * 1000 < CLOSE_MS)).any())
-        loc, lag, level, corr = locate(mono, mono_hp, events, group, cfg, gains, spin, close)
+        loc, lag, level, corr = locate(mono, mono_hp, events, group, cfg, gains, spin, close, env)
         det = None
         if e['kind'] not in synth.MOTION_VOICES and not dense:
             det = detect(env_full if e['kind'] in LOW_VOICES else env_hp, e, cfg['start'])
@@ -191,7 +198,8 @@ def run(path, expect_samples=None):
         ok['samples'] = len(x) == expect_samples
         res['samples'] = {'samples': len(x), 'expected': expect_samples}
 
-    rows = onsets(x, cfg)
+    built = balance.rebuild(mx, cfg, x)       # stems, output gain, rebuild error
+    rows = onsets(x, cfg, built[1])
     worst = lambda key, rs: max((abs(r[key]) for r in rs if r[key] is not None), default=0.0)
     missing = [r for r in rows if r['locate_ms'] is None]
     hit_rows = [r for r in rows if r['kind'] not in synth.MOTION_VOICES]
@@ -224,10 +232,22 @@ def run(path, expect_samples=None):
 
     lufs, tp = mx.ebur128(path)
     ln_i, ln_tp = loudnorm_reading(path)
+    target = cfg.get('target_lufs', mx.TARGET_LUFS)
+    # Always judged against the spec's -16 LUFS, whatever the mix aimed at.
     ok['loudness'] = abs(lufs - mx.TARGET_LUFS) <= 0.5
     ok['true_peak'] = tp <= mx.MAX_DBTP
-    res['loudness'] = {'ebur128_lufs': lufs, 'loudnorm_lufs': ln_i}
+    res['loudness'] = {'ebur128_lufs': lufs, 'loudnorm_lufs': ln_i, 'target_lufs': target,
+                       'gain_capped': cfg.get('capped', False)}
     res['true_peak'] = {'ebur128_dbtp': tp, 'loudnorm_dbtp': ln_tp}
+
+    # 声音任务说明 8.2: each category's momentary maximum against T, and the
+    # mix's own momentary maximum away from the thud.
+    rows_b, T, peak, rebuilt = balance.report(mx, cfg, x, built)
+    ok['balance'] = bool(rows_b) and all(r['ok'] for r in rows_b) and rebuilt < 1e-4
+    res['balance'] = {'T': None if T is None else round(T, 1), 'stems_rebuild_error': float(f'{rebuilt:.1e}'),
+                      'rows': rows_b}
+    ok['mix_peak'] = peak['ok']
+    res['mix_peak'] = peak
 
     full = 1.0 - 1.5 / (1 << 23)
     clipped = int((np.abs(x) >= full).sum())
