@@ -536,39 +536,67 @@ def f8(browser):
 COL = (561, 0, 1281, 1080)
 
 
+COMB_BOX_JS = r"""() => { const { e7, colCam, THREE } = window.__filmDebug; const v = new THREE.Vector3(); let b = [1e9, 1e9, -1e9, -1e9];
+  for (const id of e7.resolve('combustor')) { const P = e7.partWorldPoints(id); for (let i = 0; i < P.length; i += 3) { v.set(P[i], P[i+1], P[i+2]).project(colCam);
+    const x = (v.x * 0.5 + 0.5) * 720, y = (-v.y * 0.5 + 0.5) * 1080; b = [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)]; } }
+  return b; }"""
+
+
+def why9(t):
+    # Question one
+    if 38.0 <= t <= 38.6: return 'close-up window opens (wipe)'
+    if 46.6 <= t <= 47.1: return 'close-up window closes'
+    if 38.4 <= t <= 40.0: return 'window blade turns and opens its cutaway'
+    if 40.8 <= t <= 41.6: return 'film-hole rows light up'
+    if 44.0 <= t <= 44.8: return 'number tags appear'
+    if 36.2 <= t <= 37.2: return 'engine turns to ghost'
+    if 37.0 <= t <= 38.2 or 46.6 <= t <= 48.6: return 'camera move'
+    if 47.4 <= t <= 48.4: return 'ghost goes away'
+    # Question two
+    if 51.6 <= t <= 53.4: return 'engine opens along its axis, camera backs out'
+    if 56.0 <= t <= 56.3: return 'combustor tag appears'
+    if 60.0 <= t <= 60.3: return 'combustor tag fades'
+    if 60.0 <= t <= 62.6: return 'engine closes, camera returns'
+    return 'unplanned'
+
+
 def f9(browser):
+    from PIL import ImageDraw
     page = new_page(browser, 'f9')
     load(page, FILM + '&play=0')
-    frames, f0, f1 = [], int(34 * FPS), int(48 * FPS)
-    jumps, means = [], []
-    prev = None
-    for f in range(f0, f1 + 1):
-        seek(page, f / FPS)
-        img = shot(page, COL)
-        if prev is not None:
-            m = diffmax(prev, img)
-            big = sum(m.histogram()[61:])
-            if big >= 2000: jumps.append([round(f / FPS, 3), big])
-        if (f - f0) % 3 == 0:
-            frames.append((f, img))
-        prev = img
-    for (fa, a), (fb, b) in zip(frames, frames[1:]):
-        md = mean_diff(a, b)
-        if md > 3: means.append([round(fa / FPS, 3), round(fb / FPS, 3), round(md, 2)])
+    jumps, means, windows = [], [], []
+    def blank(a, b, boxes):
+        # Both frames of a pair lose the union of their combustor boxes, so the comparison is like for like.
+        a, b = a.copy(), b.copy()
+        for bx in boxes:
+            if bx is None: continue
+            for im in (a, b): ImageDraw.Draw(im).rectangle([bx[0] - 6, bx[1] - 6, bx[2] + 6, bx[3] + 6], fill=(0, 0, 0))
+        return a, b
+    for a0, a1 in ((34.0, 48.0), (52.0, 61.0)):
+        frames, prev = [], None
+        f0, f1 = int(round(a0 * FPS)), int(round(a1 * FPS))
+        for f in range(f0, f1 + 1):
+            t = f / FPS
+            seek(page, t)
+            img = shot(page, COL)
+            # The flickering see-through combustor (52.6-61.0 s) does not count.
+            box = page.evaluate(COMB_BOX_JS) if 52.6 <= t <= 61.0 + 1e-9 else None
+            if prev is not None:
+                pa, pb = blank(prev[0], img, [prev[1], box])
+                big = sum(diffmax(pa, pb).histogram()[61:])
+                if big >= 2000: jumps.append([round(t, 3), big])
+            if (f - f0) % 3 == 0: frames.append((f, img, box))
+            prev = (img, box)
+        for (fa, ia, ba), (fb, ib, bb) in zip(frames, frames[1:]):
+            pa, pb = blank(ia, ib, [ba, bb])
+            md = mean_diff(pa, pb)
+            if md > 3: means.append([round(fa / FPS, 3), round(fb / FPS, 3), round(md, 2)])
+        windows.append([a0, a1])
     page.close()
-    def why(t):
-        if 38.0 <= t <= 38.6: return 'close-up window opens (wipe)'
-        if 46.6 <= t <= 47.1: return 'close-up window closes'
-        if 38.4 <= t <= 40.0: return 'window blade turns and opens its cutaway'
-        if 40.8 <= t <= 41.6: return 'film-hole rows light up'
-        if 44.0 <= t <= 44.8: return 'number tags appear'
-        if 36.2 <= t <= 37.2: return 'engine turns to ghost'
-        if 37.0 <= t <= 38.2 or 46.6 <= t <= 48.6: return 'camera move'
-        if 47.4 <= t <= 48.4: return 'ghost goes away'
-        return 'unplanned'
-    unplanned = [j for j in jumps if why(j[0]) == 'unplanned'] + [m for m in means if why(m[0]) == 'unplanned']
-    record('F9', not unplanned, window='34.0-48.0 s (52-61 s belongs to question two)',
-           single_frame_jumps=[j + [why(j[0])] for j in jumps], mean_over_3=[m + [why(m[0])] for m in means], unplanned=unplanned)
+    unplanned = [j for j in jumps if why9(j[0]) == 'unplanned'] + [m for m in means if why9(m[0]) == 'unplanned']
+    record('F9', not unplanned, windows=windows,
+           single_frame_jumps=[j + [why9(j[0])] for j in jumps], mean_over_3=[m + [why9(m[0])] for m in means], unplanned=unplanned,
+           note='model column, every frame for jumps and every 0.05 s for means; 52.6-61.0 s the combustor screen box (+6 px) is blanked in both frames of a pair')
 
 
 # ---------------------------------------------------------------- F10
@@ -635,7 +663,7 @@ def f11(browser):
     page = new_page(browser, 'f11')
     load(page, FILM + '&play=0')
     rows, ok = [], True
-    for a, b in ((30.3, 32.4), (37.0, 38.2), (46.6, 48.6)):
+    for a, b in ((30.3, 32.4), (37.0, 38.2), (46.6, 48.6), (51.6, 53.4), (60.0, 62.6)):
         pos = []
         for f in range(int(round(a * FPS)), int(round(b * FPS)) + 1):
             seek(page, f / FPS); pos.append(probe(page)['camera']['position'])
@@ -653,16 +681,26 @@ def f11(browser):
     vb = [math.dist(p, q) for p, q in zip(blade, blade[1:])]
     jump = max(abs(y - x) for x, y in zip(vb, vb[1:])) / (sorted(vb)[len(vb) // 2] or 1)
     page.close()
-    record('F11', ok, moves=rows, blade_speed_change_max_over_median=round(jump, 3), note='51.6-53.4 and 60.0-62.6 belong to question two')
+    record('F11', ok, moves=rows, blade_speed_change_max_over_median=round(jump, 3))
 # ---------------------------------------------------------------- F12, F13
 HOPS = [('design', 'blade', 36.2, 36.8), ('blade', 'drill', 40.2, 40.6), ('blade', 'std', 40.3, 40.7),
         ('blade', 'mwo', 42.8, 43.3), ('blade', 'po', 43.0, 43.6)]
+MODULES = ['m-fan', 'm-cowl', 'm-comp', 'm-comb', 'm-turb', 'm-exh', 'm-core', 'm-nac', 'm-shaft']
+HOPS2 = [('e7', m, round(51.6 + 0.2 * i, 3), round(51.75 + 0.2 * i, 3)) for i, m in enumerate(MODULES)] + [
+    ('m-comb', 'po', 54.6, 55.1), ('po', 'supplier', 55.1, 55.6), ('e7', 'awo', 57.0, 57.5)]
 FRAME_JS = r"""() => { const p = window.__filmProbe();
   const ask = document.querySelector('#dialog .turn:not(.past) .ask');
   return { drawing: p.graph.drawing.map(d => d[0] + '>' + d[1]), lit: p.graph.litEdges.map(e => e[0] + '>' + e[1]),
-    ask: ask ? [...ask.textContent].length : 0, steps: document.querySelectorAll('#dialog .step').length,
-    ems: [...document.querySelectorAll('#dialog .step em')].map(e => e.textContent).join('|'),
-    ax: p.pulled.axial, rad: p.pulled.radial, _t: p.t }; }"""
+    ask: ask ? [...ask.textContent].length : 0, steps: document.querySelectorAll('#dialog .turn:not(.past) .step').length,
+    ems: [...document.querySelectorAll('#dialog .turn:not(.past) .step em')].map(e => e.textContent).join('|'),
+    tags: document.querySelectorAll('#callout-labels .tag').length,
+    ax: p.pulled.axial, rad: p.pulled.radial, ex: p.explode.turbine, glass: p.combustorOpacity, _t: p.t }; }"""
+GRAPH_DOM_JS = r"""() => { const svg = document.querySelector('#graph');
+  const nodes = [...svg.querySelectorAll(':scope > g')].filter(g => g.querySelector('text') && g.querySelector('circle')).map(g => {
+    const t = g.querySelector('text'), c = [...g.querySelectorAll('circle')].pop();
+    return { label: t.textContent, opacity: getComputedStyle(g).opacity, stroke: c.getAttribute('stroke'), fill: c.getAttribute('fill'), text: t.getAttribute('fill') }; });
+  const counter = [...svg.querySelectorAll('text')].find(t => t.textContent.includes('个节点'))?.textContent;
+  return { nodes, links: svg.querySelectorAll('path').length, counter, html: svg.innerHTML }; }"""
 
 
 def f12_f13(browser):
@@ -670,13 +708,15 @@ def f12_f13(browser):
     load(page, FILM + '&play=0')
     events = page.evaluate('window.__events')
     timeline = []
-    for f in range(int(32.9 * FPS), int(49.0 * FPS) + 1):
+    for f in range(int(32.9 * FPS), int(64.0 * FPS) + 1):
         seek(page, f / FPS); timeline.append((f, page.evaluate(FRAME_JS)))
+    film64 = (load(page, f'{FILM}&t=64'), page.evaluate(GRAPH_DOM_JS))[1]
+    load(page, f'{NEW}?frame=clip&theme=light&t=0'); clip0 = page.evaluate(GRAPH_DOM_JS)
     page.close()
-    first = lambda pred: next((f for f, s in timeline if pred(s)), None)
+    first = lambda pred, after=0: next((f for f, s in timeline if f >= after and pred(s)), None)
     # F12: each query link starts drawing / is finished within one frame of the table.
     rows, ok = [], True
-    for a, b, ta, tb in HOPS:
+    for a, b, ta, tb in HOPS + HOPS2:
         key = f'{a}>{b}'
         s = first(lambda s: key in s['drawing'] or key in s['lit'])
         e = first(lambda s: key in s['lit'])
@@ -684,38 +724,59 @@ def f12_f13(browser):
         good = abs(ds) <= 1 and abs(de) <= 1
         ok &= good
         rows.append({'link': key, 'start_frame_err': round(ds, 2), 'end_frame_err': round(de, 2), 'pass': good})
-    record('F12', ok, links=rows, note='timing half only; the 64 s DOM comparison belongs to question two')
+    # 64 s graph DOM against clip t=0.
+    node_diff = [[x, y] for x, y in zip(film64['nodes'], clip0['nodes']) if x != y]
+    dom = {'nodes': [len(film64['nodes']), len(clip0['nodes'])], 'links': [film64['links'], clip0['links']],
+           'counter': [film64['counter'], clip0['counter']], 'node_differences': node_diff[:5], 'svg_identical': film64['html'] == clip0['html']}
+    dom_ok = dom['nodes'][0] == dom['nodes'][1] and dom['links'][0] == dom['links'][1] and dom['counter'][0] == dom['counter'][1] and not node_diff
+    record('F12', ok and dom_ok, links=rows, dom_64s=dom)
     # F13: sound events against what the picture does.
     bad, n = [], {}
+    near = lambda et, f, tol=1: f is not None and abs(f - et * FPS) <= tol
     type_frames = [f for (f, s), (_, p) in zip(timeline[1:], timeline) if s['ask'] > p['ask']]
     types = [e['t'] for e in events if e['kind'] == 'type']
     if len(types) != len(type_frames): bad.append(['type count', len(types), len(type_frames)])
     for et, f in zip(types, type_frames):
-        if abs(f - et * FPS) > 1: bad.append(['type', et, f / FPS])
+        if not near(et, f): bad.append(['type', et, f / FPS])
     step_frames = [f for (f, s), (_, p) in zip(timeline[1:], timeline) if s['steps'] > p['steps']]
-    lines = [e['t'] for e in events if e['kind'] == 'line' and 36.0 < e['t'] < 44.0]
+    lines = [e['t'] for e in events if e['kind'] == 'line' and (36.0 < e['t'] < 44.0 or 53.0 < e['t'] < 58.0) and abs(e['t'] - 56.0) > 1e-6]
+    if len(lines) != len(step_frames): bad.append(['line count', len(lines), len(step_frames)])
     for et, f in zip(lines, step_frames):
-        if abs(f - et * FPS) > 1: bad.append(['line', et, f / FPS])
-    paths = [e['t'] for e in events if e['kind'] == 'path']
-    for (a, b, ta, tb), et in zip(HOPS, paths):
-        if abs(et - ta) * FPS > 1: bad.append(['path', et, ta])
-    finals = [('2', 40.8, 0.3, 0), ('1', 40.9, 0.3, 1), ('300', 43.9, 0.35, 2), ('200', 44.05, 0.35, 3), ('5', 44.2, 0.3, 4)]
-    ticks = sorted(e['t'] for e in events if e['kind'] == 'tick')
-    for (val, at, dur, i), et in zip(finals, ticks):
-        # The frame from which the number stays on its final value (flicker may touch it earlier).
+        if not near(et, f): bad.append(['line', et, f / FPS])
+    tag2 = first(lambda s: s['tags'] > 0, int(55 * FPS))
+    if not near(56.0, tag2): bad.append(['line (tag 02:40)', 56.0, tag2 and tag2 / FPS])
+    paths = sorted(e['t'] for e in events if e['kind'] == 'path')
+    hops = sorted(HOPS + HOPS2, key=lambda h: h[2])
+    if len(paths) != len(hops): bad.append(['path count', len(paths), len(hops)])
+    for (a, b, ta, tb), et in zip(hops, paths):
+        f = first(lambda s: f'{a}>{b}' in s['drawing'] or f'{a}>{b}' in s['lit'])
+        if not near(et, f, 1.5): bad.append(['path', et, f and f / FPS])
+    # Numbers: the frame from which each one stays on its final value (flicker may touch it earlier).
+    finals = [('2', 40.8, 0), ('1', 40.9, 1), ('300', 43.9, 2), ('200', 44.05, 3), ('5', 44.2, 4),
+              ('9', 53.8, 0), ('8', 53.9, 1), ('1', 54.0, 2), ('1', 55.8, 3), ('02:40', 55.9, 4)]
+    ticks = [e['t'] for e in events if e['kind'] == 'tick']
+    if len(ticks) != len(finals): bad.append(['tick count', len(ticks), len(finals)])
+    settle = []
+    for val, at, i in finals:
         win = [(f, s) for f, s in timeline if at <= s['_t'] <= at + 1.5]
         off = [f for f, s in win if not (len(s['ems'].split('|')) > i and s['ems'].split('|')[i] == val)]
         f = (off[-1] + 1) if off else (win[0][0] if win else None)
-        if f is None or abs(f - et * FPS) > 1: bad.append(['tick', val, et, f and f / FPS])
-    parts = [e['t'] for e in events if e['kind'] == 'part']
-    moved = first(lambda s: s['ax'] > 0)
-    radial = first(lambda s: s['rad'] > 0)
-    back = next((f for f, s in timeline if f > 46 * FPS and s['rad'] < 0.063), None)
-    home = next((f for f, s in timeline if f > 46 * FPS and s['ax'] == 0 and s['rad'] == 0), None)
-    for et, f in zip(parts, [moved, radial, back, home]):
-        if f is None or abs(f - et * FPS) > 1.5: bad.append(['part', et, f and f / FPS])
+        settle.append(f)
+        if not any(near(et, f) for et in ticks): bad.append(['tick', val, at, f and f / FPS])
+    parts = sorted(e['t'] for e in events if e['kind'] == 'part')
+    q1 = [first(lambda s: s['ax'] > 0), first(lambda s: s['rad'] > 0),
+          first(lambda s: s['rad'] < 0.063, int(46 * FPS)), first(lambda s: s['ax'] == 0 and s['rad'] == 0, int(46 * FPS))]
+    q2 = [first(lambda s: s['ex'] < 0, int(50 * FPS)), first(lambda s: s['ex'] <= -1, int(50 * FPS)),
+          first(lambda s: s['ex'] > -1, int(60 * FPS)), first(lambda s: s['ex'] == 0, int(60 * FPS))]
+    for et, f in zip(parts, q1 + q2):
+        if not near(et, f, 1.5): bad.append(['part', et, f and f / FPS])
+    alerts = [e['t'] for e in events if e['kind'] == 'alert']
+    glass = first(lambda s: s['glass'] < 1, int(52 * FPS))
+    for et in alerts:
+        if not near(et, glass, 1.5): bad.append(['alert', et, glass and glass / FPS])
     for e in events: n[e['kind']] = n.get(e['kind'], 0) + 1
-    record('F13', not bad, counts=n, problems=bad[:20], note='a value or motion that starts at an event time shows up on the first frame at or after it')
+    record('F13', not bad, counts=n, problems=bad[:20], number_settle_s=[f and round(f / FPS, 3) for f in settle],
+           note='a value or motion that starts at an event time shows up on the first frame at or after it')
 
 
 # ---------------------------------------------------------------- F14
