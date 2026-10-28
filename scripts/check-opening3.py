@@ -595,18 +595,40 @@ with sync_playwright() as pw:
           'each < 0.01% over 8, camera within 0.002 and 0.01deg')
 
     # ---- 42 every frame depends on t only ----
-    bad42 = []
+    # Besides the screenshot, the exact state: the 3D canvas's own pixels and the
+    # markup of every overlay. Chrome rasterises the SVG column with a +-1 jitter
+    # now and then even when nothing changed, so a screenshot alone can differ
+    # without the frame depending on where the playhead came from.
+    STATE_JS = """async () => {
+      const parts = [document.querySelector('#model').toDataURL()];
+      for (const sel of ['#graph', '#callouts', '#callout-labels', '.col-model .model-caption']) {
+        const el = document.querySelector(sel); parts.push(el ? el.outerHTML : '');
+      }
+      const out = [];
+      for (const p of parts) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
+        out.push([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16));
+      }
+      return out;
+    }"""
+    bad42, notes42 = [], []
     for tt in (24.0, 25.0, 26.5, 27.7, 28.3, 29.0):
         go(f'frame=opening&theme=light&t={tt}')
         direct = snap(page, 'p42a')
+        state_a = page.evaluate(STATE_JS)
         page.evaluate('window.__seek(29.9)')
         page.evaluate(f'window.__seek({tt})')
         time.sleep(0.2)
         back = snap(page, 'p42b')
+        state_b = page.evaluate(STATE_JS)
         n = over(direct, back, FULL, tol=0)
-        if n:
-            bad42.append(f'{tt}s {n}px')
-    check('42 pure of t', not bad42, '; '.join(bad42) or 'all six identical', 'seek 29.9 and back = direct open, 0 px')
+        n1 = over(direct, back, FULL, tol=1)
+        if state_a != state_b or n1:
+            bad42.append(f'{tt}s state {state_a == state_b}, {n}px')
+        elif n:
+            notes42.append(f'{tt}s {n}px at 1 level, same state')
+    check('42 pure of t', not bad42, '; '.join(bad42 + notes42) or 'all six identical',
+          'seek 29.9 and back = direct open: same canvas pixels and markup, screenshot 0 px over 1 level')
 
     # ---- 43 graph timetable, read from the drawn page ----
     NODE_PLAN = {'e3': 23.0, 'design': 23.4, 'drill': 23.48, 'std': 23.56, 'mwo': 23.8, 'spray': 23.88, 'awo': 23.96,
