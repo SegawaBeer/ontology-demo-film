@@ -253,3 +253,5 @@ html.fit .frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .answer.reanswer .old-rows { display: grid; }
 .answer.reanswer .old-clip { overflow: hidden; min-height: 0; }
 .answer.reanswer .old { display: flex; flex-wrap: wrap; gap: 10px; row-gap: 6px; align-items: baseline; }
+.gap-tag { position: absolute; transform: translate(-100%, -50%); white-space: nowrap; font-size: 13px; color: var(--ink-2); }
+.gap-tag b { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--green); }

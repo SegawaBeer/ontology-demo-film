@@ -8,7 +8,9 @@
 import * as THREE from 'three';
 import { mountFilmA, type FilmEvent } from './clip-q12';
 import { mountClip, dialogHTML, graphAt as clipGraphAt } from './clip-q3';
-import { q4DialogHTML, q4GraphAt } from './q4';
+import { q4DialogHTML, q4GraphAt, GAP_TAGS_OUT } from './q4';
+import { createQ4Model, TAGS_OUT, GAP_TAGS } from './q4-model';
+import { seg, ease } from './timing';
 import { renderGraph } from './graph';
 import type { Theme, Pose } from './scene';
 import { clamp } from './timing';
@@ -44,6 +46,16 @@ export async function mountFilm(theme: Theme) {
   const E3_SCALE = clip.e3.root.scale.x;
   const clipEnd = dialogHTML(22);
   const graphEnd = clipGraphAt(22);
+  // Question four: 3 号 fades, the camera pushes in to 7 号's first-stage ring.
+  e7.root.updateMatrixWorld(true);
+  const from = clip.cameraAt(22);
+  const ringCentre = new THREE.Vector3(-1.355, 0, 0).applyMatrix4(e7.root.matrixWorld);
+  const RING_POSE: Pose = { target: ringCentre.clone().add(new THREE.Vector3(0, 0.05, 0)), position: new THREE.Vector3() };
+  RING_POSE.position.copy(RING_POSE.target).addScaledVector(from.position.clone().sub(from.target).normalize(), 0.5 * from.position.distanceTo(from.target));
+  const q4 = createQ4Model({
+    view, e7, e3: clip.e3, hit7: clip.hit7, ring: f.ringGrey, red: clip.ink.red, green: theme === 'dark' ? '#4cc48f' : '#3fb27f',
+    from, to: RING_POSE, project,
+  });
 
   let lastT = START;
   let lastPose: Pose = f.lastPose();
@@ -55,6 +67,7 @@ export async function mountFilm(theme: Theme) {
     if (e7.parts.get(clip.hit7[0])!.promoted) e7.setOpacity(ringParts, 1);
     e7.setVisible(clip.hit7, true);
     view.cutLayers(e7, 0);
+    q4.apply(CLIP_AT);
     a.seek(t);
     lastPose = f.lastPose();
   }
@@ -65,14 +78,48 @@ export async function mountFilm(theme: Theme) {
     if (t < CLIP_AT) { partOne(t); return; }
     // Part one's last state (columns settled, P0, solid engine), then the clip on top.
     a.seek(CLIP_AT, false);
-    const local = Math.min(t, Q4_AT) - CLIP_AT;
+    if (t > Q4_AT) { questionFour(t); return; }
+    q4.apply(CLIP_AT);
+    const local = t - CLIP_AT;
     clip.seek(local, 2);
     lastPose = clip.cameraAt(local);
     colCam.position.copy(view.camera.position);
     colCam.quaternion.copy(view.camera.quaternion);
     colCam.updateMatrixWorld();
-    if (t <= Q4_AT) return;
-    // Question four builds on the clip's 22.0 state.
+  }
+
+  /** Question four on top of the clip's 22.0 state (clip.seek(22) has set every engine state). */
+  function questionFour(t: number) {
+    clip.seek(22, false);
+    const oldSvg = f.overlay.innerHTML, oldHtml = f.labels.innerHTML;
+    q4.apply(t);
+    lastPose = q4.cameraAt(t);
+    view.applyPose(lastPose);
+    view.cutaway(e7, 1);
+    view.cutLayers(e7, 1, f.netShell);
+    view.cutaway(clip.e3, 1);
+    view.render(); view.render();
+    colCam.position.copy(view.camera.position);
+    colCam.quaternion.copy(view.camera.quaternion);
+    colCam.updateMatrixWorld();
+    // clip-q3's two engine tags fade out; the gap tags come in above the empty slots.
+    const k = 1 - ease(seg(t, TAGS_OUT[0], TAGS_OUT[1]));
+    let svg = k > 0 ? `<g opacity="${k.toFixed(3)}">${oldSvg}</g>` : '';
+    let html = k > 0 ? `<div style="opacity:${k.toFixed(3)}">${oldHtml}</div>` : '';
+    const g = ease(seg(t, GAP_TAGS, GAP_TAGS + 0.3)) * (1 - ease(seg(t, GAP_TAGS_OUT[0], GAP_TAGS_OUT[1])));
+    if (g > 0) {
+      // Stacked above the right end of the empty slots, each with a leader to its own group.
+      // Right-aligned in the clear space above-left of the ring, leaders down to the gaps.
+      const all = q4.groupScreen([...q4.home, ...q4.plant]);
+      const x0 = all.x - 40, y0 = all.y0 - 210;
+      ([[q4.home, '6', '本厂 · 20 分钟'], [q4.plant, '10', '二号厂区 · 2.5 小时']] as const).forEach(([ids, big, rest], i) => {
+        const p = q4.groupScreen([...ids]), y = y0 + 34 * i;
+        svg += `<g opacity="${g.toFixed(3)}"><circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.5" fill="var(--green)"/><path d="M${p.x.toFixed(2)} ${p.y.toFixed(2)} L${(x0 + 8).toFixed(2)} ${y.toFixed(2)}" stroke="var(--green)" stroke-width="1" fill="none" opacity="0.8"/></g>`;
+        html += `<div class="gap-tag" style="left:${x0.toFixed(2)}px;top:${y.toFixed(2)}px;opacity:${g.toFixed(3)}"><b>${big}</b> · ${rest}</div>`;
+      });
+    }
+    f.overlay.innerHTML = svg;
+    f.labels.innerHTML = html;
     f.dialogRoot.innerHTML = q4DialogHTML(t, clipEnd);
     renderGraph(f.graphRoot, q4GraphAt(t, graphEnd));
   }

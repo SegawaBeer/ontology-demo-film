@@ -19,6 +19,10 @@ export const N_STOCK: [number, number, number][] = [[6, 91.4, 0.3], [10, 91.55, 
 export const PLANS = [93.8, 94.2] as const;            // the two plan cards, 0.32 s each
 export const POINTER_IN = [95.1, 95.4] as const, POINTER_MOVE = [95.4, 95.8] as const, POINTER_OUT = [96.6, 96.9] as const;
 export const EXEC = 95.8;                              // 执行中 · 调拨库存
+export const FLY_AT = 96.0, FLY_GAP = 0.12, FLY_DUR = 0.5;   // 16 blades into the ring
+/** Time blade k (0..15, in arrival order) is seated. */
+export const landAt = (k: number) => FLY_AT + FLY_GAP * k + FLY_DUR;
+export const GAP_TAGS_OUT = [98.4, 98.7] as const;
 export const GREEN = 98.6;                             // question two's answer turns green again
 export const DONE = 99.0;
 const traceKeys: [number, number][] = [[90.0, 0], [90.6, 0.12], [91.2, 0.3], [91.4, 0.4], [92.7, 0.62], [93.4, 0.86], [95.8, 1]];
@@ -178,7 +182,10 @@ export function q4GraphAt(t: number, at22: GraphState): GraphState {
   }
   if (t >= E7_GREEN[1]) { chip.e7 = { ...at22.chip.e7, text: '可以按时上试车台', tone: 'green' }; if (greenIn < 1) chipAmount.e7 = greenIn; }
   else if (redOut < 1) chipAmount.e7 = redOut;
-  if (t >= 90.9) chip.blade = { text: '缺 16 枚', tone: 'red' };
+  // From the first arrival the blade chip counts the seated blades up.
+  const seated = Array.from({ length: 16 }, (_, k) => landAt(k)).filter(at => t >= at).length;
+  if (t >= FLY_AT) chip.blade = { text: `到位 ${seated} / 16`, tone: seated < 16 ? 'red' : 'green' };
+  else if (t >= 90.9) chip.blade = { text: '缺 16 枚', tone: 'red' };
   if (t >= STEP1) chip.stock = { text: '本厂成品库 · 6 枚\n二号厂区 · 10 枚' };
   // Left of its node: on the right the stock and disposal links run past.
   if (t >= 92.35) chip.insp = { text: '16 枚 · 全部合格', tone: 'green', dx: -32, anchor: 'end' };
