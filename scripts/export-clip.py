@@ -2,7 +2,8 @@
 
 Each frame is produced by seeking the page to an exact time, so the result
 does not depend on how fast the machine renders.
-Usage: export-clip.py URL OUT.mp4 [fps] [scale] [limit_frames] [start_seconds]
+Usage: export-clip.py URL OUT.mp4 [fps] [scale] [limit_frames] [start_seconds] [crf]
+(limit_frames 0 = no limit; crf defaults to 14)
 """
 import sys, time, subprocess
 from playwright.sync_api import sync_playwright
@@ -12,6 +13,7 @@ fps = int(sys.argv[3]) if len(sys.argv) > 3 else 60
 scale = int(sys.argv[4]) if len(sys.argv) > 4 else 2
 limit = int(sys.argv[5]) if len(sys.argv) > 5 else None
 start_at = float(sys.argv[6]) if len(sys.argv) > 6 else 0.0
+crf = sys.argv[7] if len(sys.argv) > 7 else '14'
 
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
@@ -25,7 +27,7 @@ with sync_playwright() as p:
     ffmpeg = subprocess.Popen([
         'ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
         '-f', 'image2pipe', '-framerate', str(fps), '-i', '-',
-        '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p',
+        '-c:v', 'libx264', '-preset', 'slow', '-crf', crf, '-pix_fmt', 'yuv420p',
         '-movflags', '+faststart', out,
     ], stdin=subprocess.PIPE)
     started = time.time()
