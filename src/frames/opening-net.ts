@@ -63,11 +63,7 @@ function stockProgress(tau: number) {
 }
 
 export function relProgress(r: RelPlan, t: number) {
-  if (r.from === 'stock' && r.to === 'blade') {
-    // Exactly the frame=net value on the frame it has to match.
-    if (Math.abs(t - 28.0) < 1e-9) return 0.42;
-    return stockProgress((t - r.start) / (r.end - r.start));
-  }
+  if (r.from === 'stock' && r.to === 'blade') return stockProgress((t - r.start) / (r.end - r.start));
   return smootherAt(t, r.start, r.end);
 }
 

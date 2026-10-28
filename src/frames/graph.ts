@@ -153,7 +153,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     if (p < 1) {
       const head = path.getPointAtLength(length * p);
       el('circle', { cx: head.x, cy: head.y, r: 6, fill: 'var(--lit)', opacity: 0.16 }, litLayer);
-      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: 'var(--lit)' }, litLayer);
+      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: 'var(--lit)' }, litLayer).setAttribute('data-head', `${d.from}>${d.to}`);
     }
   }
 

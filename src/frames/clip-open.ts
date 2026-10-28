@@ -1289,6 +1289,9 @@ export async function mountOpening(theme: Theme) {
       cameraAt(t);
       lightsAt(t);
       flow.set(rotorSpeed(t), rotorDegrees(t), false);
+      // Opaque in the mask, or the canvas alpha lets the page show through.
+      flow.group.visible = true;
+      flow.material.opacity = 1;
       if (render) drawFrame();
       return;
     }
@@ -1437,6 +1440,7 @@ export async function mountOpening(theme: Theme) {
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       rotor: rotorNow,
       passes: passesNow,
+      partsVisible: [...engine.parts.values()].filter(st => st.visible).length,
       m3b: {
         ghost: ghostNow, cut: cutNow, highlight: highlightNow, flow: flow.opacity(), crossfade: blendNow,
         edges: lastEdges,

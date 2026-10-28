@@ -1,6 +1,6 @@
-"""Checks 29-38 for opening milestone three A."""
+"""Checks 29-39 for opening milestone three A, 40-48 and section 8 for three B."""
 import json, math, os, sys, time
-from PIL import Image, ImageFilter, ImageChops
+from PIL import Image, ImageFilter, ImageChops, ImageStat
 from playwright.sync_api import sync_playwright
 
 ROOT = '<项目目录>'
@@ -527,10 +527,301 @@ with sync_playwright() as pw:
           f'worst {worst5}; shells only {literal}', 'every frame <= 150 pixels of metal turned into background')
 
     check('14c console during milestone three', not console, console[:2] or 'none', 'no error / pageerror')
+    # ======================= opening 3B: 40-48 and section 8 =======================
+    OUT3B = f'{ROOT}/review/opening/m3b'
+    os.makedirs(OUT3B, exist_ok=True)
+    first3b = len(results)
+    console3b = []
+    for pg_ in [page, *extra]:
+        pg_.on('console', lambda m: console3b.append(m.text) if m.type == 'error' else None)
+        pg_.on('pageerror', lambda e: console3b.append(f'pageerror: {e}'))
+    LEFT, RIGHT, FULL = (0, 0, 1280, 1080), (1280, 0, 1920, 1080), (0, 0, 1920, 1080)
+
+    def snap(pg, name):
+        pg.screenshot(path=f'{TMP}/{name}.png')
+        return Image.open(f'{TMP}/{name}.png').convert('RGB')
+
+    def over(a, b, box, tol=8, keep=None):
+        """Pixels in box where any channel differs by more than tol."""
+        d = ImageChops.difference(a.crop(box), b.crop(box))
+        m = Image.merge('RGB', [c.point(lambda v, tol=tol: 255 if v > tol else 0) for c in d.split()]).convert('L')
+        m = m.point(lambda v: 255 if v else 0)
+        if keep is not None:
+            m = ImageChops.multiply(m, keep)
+        return m.histogram()[255]
+
+    CAM_JS = """async () => {
+      const url = performance.getEntriesByType('resource').map(r => r.name).find(n => n.includes('deps/three'));
+      const THREE = await import(url);
+      const c = window.__lastCam;
+      if (!c) return null;
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(c.quaternion);
+      return { position: c.position.toArray(), dir: dir.toArray() };
+    }"""
+    refpg = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=1)
+    refpg.add_init_script(THREE_PROBE)
+    refpg.on('console', lambda m: console3b.append(m.text) if m.type == 'error' else None)
+    refpg.on('pageerror', lambda e: console3b.append(f'pageerror: {e}'))
+
+    def reference(frame):
+        refpg.goto(f'{URL}?frame={frame}&theme=light')
+        refpg.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
+        time.sleep(0.5)
+        return snap(refpg, f'ref-{frame}'), refpg.evaluate(CAM_JS)
+
+    def against(tt, im_ref, cam_ref):
+        go(f'frame=opening&theme=light&t={tt}')
+        im = snap(page, f'vs-{tt}')
+        pr = probe()
+        left = over(im, im_ref, LEFT) / (1280 * 1080)
+        right = over(im, im_ref, RIGHT) / (640 * 1080)
+        dist = math.dist(pr['camera']['position'], cam_ref['position'])
+        d = [pr['camera']['target'][i] - pr['camera']['position'][i] for i in range(3)]
+        n = math.sqrt(sum(x * x for x in d)) or 1
+        dot = sum((d[i] / n) * cam_ref['dir'][i] for i in range(3))
+        angle = math.degrees(math.acos(max(-1.0, min(1.0, dot))))
+        ok = left < 0.0001 and right < 0.0001 and dist <= 0.002 and angle <= 0.01
+        return ok, f'{tt}s left {left*100:.4f}% right {right*100:.4f}% cam {dist:.5f} {angle:.5f}deg'
+
+    # ---- 40 at 28.0 the picture is frame=net ----
+    net_im, net_cam = reference('net')
+    ok40, v40 = against(28.0, net_im, net_cam)
+    check('40 28.0 = frame=net', ok40, v40, 'left and right < 0.01% over 8, camera within 0.002 and 0.01deg')
+
+    # ---- 41 from 29.5 the picture is frame=net-end ----
+    end_im, end_cam = reference('net-end')
+    rows41 = [against(tt, end_im, end_cam) for tt in (29.5, 29.75, 30.0)]
+    check('41 29.5-30.0 = frame=net-end', all(r[0] for r in rows41), '; '.join(r[1] for r in rows41),
+          'each < 0.01% over 8, camera within 0.002 and 0.01deg')
+
+    # ---- 42 every frame depends on t only ----
+    bad42 = []
+    for tt in (24.0, 25.0, 26.5, 27.7, 28.3, 29.0):
+        go(f'frame=opening&theme=light&t={tt}')
+        direct = snap(page, 'p42a')
+        page.evaluate('window.__seek(29.9)')
+        page.evaluate(f'window.__seek({tt})')
+        time.sleep(0.2)
+        back = snap(page, 'p42b')
+        n = over(direct, back, FULL, tol=0)
+        if n:
+            bad42.append(f'{tt}s {n}px')
+    check('42 pure of t', not bad42, '; '.join(bad42) or 'all six identical', 'seek 29.9 and back = direct open, 0 px')
+
+    # ---- 43 graph timetable, read from the drawn page ----
+    NODE_PLAN = {'e3': 23.0, 'design': 23.4, 'drill': 23.48, 'std': 23.56, 'mwo': 23.8, 'spray': 23.88, 'awo': 23.96,
+                 'insp': 24.2, 'coat': 24.28, 'po': 24.6, 'powder': 24.68, 'supplier': 24.76, 'stock': 24.84}
+    NODE_FADE = {k: (0.4 if k == 'e3' else 0.3) for k in NODE_PLAN}
+    EDGE_PLAN = [('design', 'blade', 25.0, 25.35), ('coat', 'powder', 25.2, 25.55), ('drill', 'blade', 25.4, 25.75),
+                 ('powder', 'spray', 25.6, 25.95), ('std', 'blade', 25.8, 26.15), ('awo', 'e7', 26.0, 26.35),
+                 ('mwo', 'blade', 26.2, 26.55), ('powder', 'supplier', 26.4, 26.75), ('spray', 'blade', 26.6, 26.95),
+                 ('insp', 'blade', 26.8, 27.15), ('blade', 'e3', 27.0, 27.35), ('po', 'blade', 27.2, 27.55),
+                 ('po', 'm-comb', 27.3, 27.65), ('stock', 'blade', 27.6, 28.6), ('po', 'supplier', 28.0, 28.6)]
+    GRAPH_JS = """() => {
+      const g = document.querySelector('#graph');
+      const nodes = {}, at = {};
+      g.querySelectorAll('[data-node]').forEach(n => {
+        nodes[n.dataset.node] = parseFloat(n.style.opacity || '1');
+        const c = n.querySelector('circle'); at[n.dataset.node] = [+c.getAttribute('cx'), +c.getAttribute('cy')];
+      });
+      const draws = {}, starts = {};
+      g.querySelectorAll('[data-draw]').forEach(p => {
+        const [a, b] = p.getAttribute('stroke-dasharray').split(' ').map(Number);
+        draws[p.dataset.draw] = a / b;
+        const s = p.getPointAtLength(0); starts[p.dataset.draw] = [s.x, s.y];
+      });
+      const heads = [...g.querySelectorAll('[data-head]')].map(c => c.dataset.head);
+      const rest = [...g.querySelectorAll('[data-edge]')].map(p => p.dataset.edge);
+      const counter = [...g.querySelectorAll('text')].map(t => t.textContent).find(x => x.includes('个节点'));
+      return { nodes, at, draws, starts, heads, rest, counter };
+    }"""
+    FPS = 60
+    go('frame=opening&theme=light&t=22.9')
+    seen_node, full_node, seen_edge, done_edge, wrong_dir = {}, {}, {}, {}, set()
+    for i in range(int(round(22.9 * FPS)), int(round(29.0 * FPS)) + 1):
+        tt = i / FPS
+        page.evaluate(f'window.__seek({tt})')
+        s = page.evaluate(GRAPH_JS)
+        for node in NODE_PLAN:
+            o = s['nodes'].get(node)
+            if o is not None and o > 0 and node not in seen_node: seen_node[node] = tt
+            if o is not None and o >= 1 and node not in full_node: full_node[node] = tt
+        for a, b, _, _ in EDGE_PLAN:
+            key = f'{a}>{b}'
+            drawn = key in s['draws'] or key in s['rest']
+            if drawn and key not in seen_edge:
+                seen_edge[key] = tt
+                st = s['starts'].get(key); src = s['at'].get(a)
+                if st and src and math.dist(st, src) > 1.0: wrong_dir.add(key)
+            whole = (key in s['rest'] or s['draws'].get(key, 0) >= 0.9999) and key not in s['heads']
+            if whole and key not in done_edge: done_edge[key] = tt
+    frame = 1 / FPS + 1e-6
+    late = []
+    for node, start in NODE_PLAN.items():
+        if abs(seen_node.get(node, 99) - start) > frame: late.append(f'{node} in {seen_node.get(node)}')
+        if abs(full_node.get(node, 99) - (start + NODE_FADE[node])) > frame: late.append(f'{node} full {full_node.get(node)}')
+    for a, b, start, end in EDGE_PLAN:
+        key = f'{a}>{b}'
+        if abs(seen_edge.get(key, 99) - start) > frame: late.append(f'{key} start {seen_edge.get(key)}')
+        if abs(done_edge.get(key, 99) - end) > frame: late.append(f'{key} end {done_edge.get(key)}')
+    page.evaluate('window.__seek(28.0)')
+    s28 = page.evaluate(GRAPH_JS)
+    done28 = len(s28['rest']) + sum(1 for k, v in s28['draws'].items() if v >= 0.9999 and k not in s28['heads'])
+    stock28 = s28['draws'].get('stock>blade', -1)
+    page.evaluate('window.__seek(30.0)')
+    s30 = page.evaluate(GRAPH_JS)
+    done30 = len(s30['rest']) + sum(1 for k, v in s30['draws'].items() if v >= 0.9999 and k not in s30['heads'])
+    ok43 = (not late and not wrong_dir and done28 == 33 and abs(stock28 - 0.42) <= 0.005 and done30 == 35
+            and s28['counter'] == '34 个节点 · 33 / 35 条关系' and s30['counter'] == '34 个节点 · 35 条关系')
+    check('43 graph timetable', ok43,
+          f"{len(late)} off the table {late[:3]}, wrong direction {sorted(wrong_dir)}, 28.0: {done28} done, "
+          f"stock {stock28:.4f}, '{s28['counter']}'; 30.0: {done30} done, '{s30['counter']}'",
+          'every fade-in, start and end within a frame; 33 done and stock 0.42 at 28.0; 35 at 30.0')
+
+    # ---- 44 flashes where a line lands on a product node ----
+    def blue_red(im, pts):
+        px = im.load()
+        return sum(px[x, y][2] - px[x, y][0] for x, y in pts) / max(1, len(pts))
+
+    def region(mask_im, off_im, box=LEFT):
+        pm, po = mask_im.load(), off_im.load()
+        return [(x, y) for y in range(box[1], box[3], 2) for x in range(box[0], box[2], 2)
+                if (pm is None or max(pm[x, y]) < 245) and max(abs(po[x, y][i] - BG[i]) for i in range(3)) > 12]
+
+    RING_ID = 'turbine.stage-1-blades'
+    rows44, bad44 = [], []
+    for a, b, start, end in EDGE_PLAN:
+        if b != 'blade':
+            continue
+        tt = end + 0.2
+        mk = snap(go(f'frame=opening&theme=light&mask=part:{RING_ID}&t={tt:.3f}', which=extra[0]), 'm44')
+        on = snap(go(f'frame=opening&theme=light&solo={RING_ID}&t={tt:.3f}', which=page), 'o44')
+        off = snap(go(f'frame=opening&theme=light&solo={RING_ID}&noflash=1&t={tt:.3f}', which=extra[1]), 'f44')
+        pts = region(mk, off)
+        d = blue_red(on, pts) - blue_red(off, pts) if pts else 0
+        rows44.append(f'{a}>{b} ring {d:+.0f}')
+        if d < 10: bad44.append(rows44[-1])
+    # Engine seven: the whole engine at 15 %, at the peak of its half second.
+    for a, b, start, end in EDGE_PLAN:
+        if b != 'e7':
+            continue
+        tt = end + 0.25
+        on = snap(go(f'frame=opening&theme=light&t={tt:.3f}', which=page), 'o44')
+        off = snap(go(f'frame=opening&theme=light&noflash=1&t={tt:.3f}', which=extra[1]), 'f44')
+        pts = [(x, y) for y in range(100, 1080, 2) for x in range(0, 1280, 2)
+               if max(abs(off.load()[x, y][i] - BG[i]) for i in range(3)) > 12]
+        d = blue_red(on, pts) - blue_red(off, pts)
+        rows44.append(f'{a}>{b} engine {d:+.0f}')
+        if d < 10: bad44.append(rows44[-1])
+    # The combustor takes the highlight instead: before 27.3 against 28.0.
+    COMB = 'combustor.cans,combustor.casing,combustor.injectors,combustor.inner-shell'
+    mk = snap(go(f'frame=opening&theme=light&mask=part:{COMB}&t=28.0', which=extra[0]), 'm44')
+    before = snap(go(f'frame=opening&theme=light&solo={COMB}&noflow=1&t=27.3', which=page), 'o44')
+    after = snap(go(f'frame=opening&theme=light&solo={COMB}&noflow=1&t=28.0', which=extra[1]), 'f44')
+    pts = region(mk, after)
+    d = blue_red(after, pts) - blue_red(before, pts)
+    rows44.append(f'po>m-comb highlight {d:+.0f}')
+    if d < 10: bad44.append(rows44[-1])
+    check('44 flashes', not bad44, '; '.join(rows44), 'each landing >= +10 blue-red (ring 25 %, engine 15 %, combustor highlight)')
+
+    # ---- 45 steady while the shells fade and open ----
+    rotor_ids = probe()['rotorIds']
+    fm = snap(go('frame=opening&theme=light&mask=flow&t=25.0', which=extra[1]), 'flowmask')
+    flow_mask = fm.crop(LEFT).convert('L').point(lambda v: 255 if v < 128 else 0)
+    main = go('frame=opening&theme=light&t=23.0', which=page)
+    rmask = go(f'frame=opening&theme=light&mask=part:{",".join(rotor_ids)}&t=23.0', which=extra[0])
+
+    def at(pg, tt, name):
+        pg.evaluate(f'window.__seek({tt})')
+        return snap(pg, name).crop(LEFT)
+    prev = at(main, 23.0, 's45'); prot = at(rmask, 23.0, 'r45').convert('L').point(lambda v: 255 if v < 128 else 0)
+    rows45 = []
+    for i in range(1, 61):
+        tt = round(23.0 + 0.05 * i, 3)
+        cur = at(main, tt, 's45'); crot = at(rmask, tt, 'r45').convert('L').point(lambda v: 255 if v < 128 else 0)
+        keep = ImageChops.lighter(ImageChops.lighter(prot, crot), flow_mask).filter(ImageFilter.MaxFilter(9)).point(lambda v: 0 if v else 255)
+        d = ImageChops.difference(prev, cur)
+        kept = keep.histogram()[255]
+        mean = sum(ImageStat.Stat(ImageChops.multiply(d, Image.merge('RGB', [keep] * 3))).sum) / 3 / max(1, kept)
+        big = over(prev, cur, (0, 0, 1280, 1080), tol=60, keep=keep)
+        rows45.append((tt, round(mean, 3), big))
+        prev, prot = cur, crot
+    worst_mean = max(rows45, key=lambda r: r[1]); worst_big = max(rows45, key=lambda r: r[2])
+    # The depth-write (0.6) and shadow (0.5) switches, frame by frame, rotor and flow off.
+    sw = go('frame=opening&theme=light&norotor=1&noflow=1&t=23.70', which=extra[1])
+    seq = []
+    prevs = None
+    for i in range(0, 19):
+        tt = round(23.70 + i / 60, 4)
+        sw.evaluate(f'window.__seek({tt})')
+        g = sw.evaluate('window.__openingProbe().m3b.ghost')
+        cur = snap(sw, 'w45').crop(LEFT)
+        if prevs is not None:
+            seq.append((tt, g, over(prevs[1], cur, (0, 0, 1280, 1080), tol=30), prevs[0]))
+        prevs = (g, cur)
+    straddle = [r for r in seq if (r[3] < 0.5 <= r[1]) or (r[3] < 0.6 <= r[1])]
+    others = sorted(r[2] for r in seq if r not in straddle)
+    med = others[len(others) // 2] if others else 0
+    jump = max((r[2] for r in straddle), default=0)
+    ok45 = worst_mean[1] <= 4 and worst_big[2] < 3000 and straddle and jump <= max(3 * med, 200)
+    with open(f'{OUT3B}/m3b-steady.json', 'w') as f:
+        json.dump({'frames': rows45, 'switch': seq}, f)
+    check('45 steady', ok45,
+          f'worst mean {worst_mean[1]} at {worst_mean[0]}s, worst >60 {worst_big[2]}px at {worst_big[0]}s; '
+          f'switch frames {[(r[0], r[2]) for r in straddle]} vs median {med}px over 30',
+          'mean <= 4, < 3,000 px over 60 per 0.05 s; no jump at the 0.5 and 0.6 switches')
+
+    # ---- 46 every part on screen ----
+    parts46 = []
+    for tt in range(23, 31):
+        page.evaluate(f'window.__seek({tt})')
+        pr = probe()
+        parts46.append((tt, pr['partsVisible'], pr['visibleParts']))
+    check('46 parts', all(a == 2027 and b == 2027 for _, a, b in parts46),
+          ', '.join(f'{t}s {a}' for t, a, _ in parts46), '2,027 visible parts every second 23-30')
+
+    # ---- 47 airflow ----
+    fm_keep = flow_mask
+    on = snap(go('frame=opening&theme=light&t=25.0', which=page), 'o47')
+    off = snap(go('frame=opening&theme=light&noflow=1&t=25.0', which=extra[0]), 'f47')
+    n25 = over(on, off, LEFT, tol=15, keep=fm_keep)
+    on28 = snap(go('frame=opening&theme=light&t=28.0', which=page), 'o47')
+    off28 = snap(go('frame=opening&theme=light&noflow=1&t=28.0', which=extra[0]), 'f47')
+    n28 = over(on28, off28, LEFT, tol=0)
+    go('frame=opening&theme=light&t=25.0', which=page)
+    direct = snap(page, 'p47a')
+    page.evaluate('window.__seek(27.9)'); page.evaluate('window.__seek(25.0)'); time.sleep(0.2)
+    back = snap(page, 'p47b')
+    nback = over(direct, back, FULL, tol=0)
+    check('47 airflow', n25 >= 3000 and n28 == 0 and nback == 0,
+          f'25.0 {n25}px over 15 in the flow region, 28.0 {n28}px, 27.9->25.0 {nback}px',
+          '>= 3,000 at 25.0, 0 at 28.0, seek back identical')
+
+    # ---- 8 one pass from 23.0 on, and 22.0-23.0 as before ----
+    go('frame=opening&theme=light&t=23.0')
+    twos = []
+    for i in range(int(round(23.0 * 60)), int(round(30.0 * 60)) + 1):
+        page.evaluate(f'window.__seek({i / 60})')
+        if page.evaluate('window.__openingProbe().passes') != 1: twos.append(round(i / 60, 3))
+    check('8a one pass 23-30', not twos, f'{len(twos)} frames with two passes {twos[:3]}', 'passes = 1 on every frame')
+    worst8 = (0, 0.0)
+    for i in range(11):
+        tt = round(22.0 + 0.1 * i, 2)
+        a = snap(go(f'frame=opening&theme=light&noflow=1&t={tt}', which=page), 'n8')
+        b = snap(go(f'frame=opening&theme=light&t={tt}', base=True, which=extra[0]), 'b8')
+        s = over(a, b, FULL) / (1920 * 1080)
+        if s >= worst8[1]: worst8 = (tt, s)
+    check('8b 22-23 vs two passes', worst8[1] < 0.0001, f'worst {worst8[1]*100:.4f}% at {worst8[0]}s', '< 0.01% over 8 against af3ce3e')
+
+    check('48 console', not console3b and not console, (console3b + console)[:2] or 'none', 'no error / pageerror')
+    refpg.close()
+    with open(f'{OUT3B}/results.json', 'w') as f:
+        json.dump(results[first3b:], f, ensure_ascii=False, indent=2)
     browser.close()
 
+# Three A keeps its own file; three B's items are in m3b/results.json.
 with open(f'{OUT}/results.json', 'w') as f:
-    json.dump(results, f, ensure_ascii=False, indent=2)
+    json.dump([r for r in results if r['check'].split(' ')[0] < '40' or r['check'].startswith(('14c', '35b'))], f, ensure_ascii=False, indent=2)
 passed = sum(1 for r in results if r['ok'])
 print(f'\n{passed}/{len(results)} milestone-three checks passed')
 sys.exit(0 if passed == len(results) else 1)
