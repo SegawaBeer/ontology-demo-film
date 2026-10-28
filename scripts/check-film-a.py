@@ -1,16 +1,21 @@
 """Checks for frame=film-a, main timeline part one (任务说明/主时间轴一任务说明.md, section 九).
 
-Covers 30–64 s: F1–F14 (question one 33–49 s, question two 49–64 s).
+Covers 30–64 s: F1–F15 (question one 33–49 s, question two 49–64 s); F15 also on opening 23–30 s and clip 0–22 s.
 
 Usage: check-film-a.py [--only F1,F3] [--out review/film-a]
-Needs the dev server on 5194 (this branch) and the 802c77f baseline on 5195.
+Needs the dev server on 5194 (this branch), 1dc6a6c on 5195 and 89aca04 on 5193.
 Results merge into <out>/results.json, so single checks can be re-run.
 """
 import io, json, math, os, sys, time
 from PIL import Image, ImageChops
 from playwright.sync_api import sync_playwright
 
-NEW, BASE = 'http://127.0.0.1:5194/frames.html', 'http://127.0.0.1:5195/frames.html'
+NEW = 'http://127.0.0.1:5194/frames.html'
+BASE = 'http://127.0.0.1:5195/frames.html'       # 1dc6a6c: question two accepted (主时间轴一 第十二节)
+OPEN_BASE = 'http://127.0.0.1:5193/frames.html'  # 89aca04: opening 3B accepted (style-frames, merged)
+HERE = os.path.dirname(os.path.abspath(__file__))
+F15_JS = open(os.path.join(HERE, 'f15-lines.js')).read()
+FOLD_JS = open(os.path.join(HERE, 'fold-check.js')).read()
 FILM = f'{NEW}?frame=film-a&theme=light'
 FPS = 60
 args = sys.argv[1:]
@@ -113,31 +118,41 @@ def edge_mask(page):
     return mask, len(info['pts'])
 
 
+# film-a frames allowed to differ from 1dc6a6c (主时间轴一 12.1, 12.2): moved chips and timing
+# labels from 36.8 s, the question-one fold; the moved ZP-0707 chip and the question-two fold.
+FILM_A_EXCEPTIONS = [(36.8, 48.4), (57.5, 61.8)]
+
+
 def f1(browser):
-    cases = [('open', ''), ('q3', ''), ('stale', ''), ('net', '')]
+    cases = [('open', ''), ('q3', ''), ('stale', ''), ('net', ''), ('net-end', '')]
     cases += [('clip', f'&t={t}') for t in (0, 6, 12, 18, 21.9)]
-    cases += [('opening', f'&t={t}') for t in (3, 8, 12, 15, 17)]
+    cases += [('opening', f'&t={t}') for t in (3, 8, 12, 15, 17, 23, 28, 29.5)]
     pa, pb = new_page(browser, 'f1-new'), new_page(browser, 'f1-base')
     rows, ok = [], True
     for frame, extra in cases:
         q = f'?frame={frame}&theme=light{extra}'
-        load(pa, NEW + q); load(pb, BASE + q)
-        a, b = shot(pa), shot(pb)
-        m = diffmax(a, b)
-        masked = frame in ('q3', 'stale', 'net', 'clip')
-        allowed = 0
-        if masked:
-            mask, n = edge_mask(pa)
-            inside = ImageChops.multiply(m.point(lambda v: 255 if v > 8 else 0), mask)
-            allowed = over(inside, 0)
-        total = over(m)
-        outside = total - allowed
-        share = 100 * outside / (1920 * 1080)
-        good = share < 0.01
+        base = OPEN_BASE if frame == 'opening' else BASE
+        load(pa, NEW + q); load(pb, base + q)
+        m = diffmax(shot(pa), shot(pb))
+        n = over(m, 1)
+        good = n == 0
         ok &= good
-        rows.append({'frame': frame + extra, 'diff>8': total, 'inside_link_mask': allowed, 'outside_pct': round(share, 5), 'bbox': m.point(lambda v: 255 if v > 8 else 0).getbbox(), 'pass': good})
+        rows.append({'frame': frame + extra, 'against': '89aca04' if frame == 'opening' else '1dc6a6c', 'diff>1': n, 'bbox': m.point(lambda v: 255 if v > 1 else 0).getbbox(), 'pass': good})
+    # film-a itself against 1dc6a6c every 0.5 s: zero outside the listed exception spans.
+    load(pa, FILM + '&play=0'); load(pb, f'{BASE}?frame=film-a&theme=light&play=0')
+    film = []
+    for i in range(0, 69):
+        t = 30 + i * 0.5
+        seek(pa, t); seek(pb, t)
+        m = diffmax(shot(pa), shot(pb)); n = over(m, 1)
+        inside = any(a <= t < b for a, b in FILM_A_EXCEPTIONS)
+        if n: film.append({'t': t, 'diff>1': n, 'bbox': m.point(lambda v: 255 if v > 1 else 0).getbbox(), 'exception': inside})
+        if n and not inside: ok = False
     pa.close(); pb.close()
-    record('F1', ok, rows=rows)
+    record('F1', ok, rows=rows, film_a_vs_1dc6a6c=film, exceptions=FILM_A_EXCEPTIONS,
+           note='criterion: 0 pixels differing by more than 1 level (主时间轴二 第八节); opening against 89aca04, the rest against 1dc6a6c')
+
+
 # ---------------------------------------------------------------- F2
 def f2(browser):
     pa, pb = new_page(browser, 'f2-seek'), new_page(browser, 'f2-direct')
@@ -205,7 +220,8 @@ EXPECT_Q1 = {
 }
 LAYOUT_JS = r"""() => {
   const out = { bad: [], lines: [] };
-  const vis = el => { let e = el; while (e && e.nodeType === 1) { const s = getComputedStyle(e); if (s.display === 'none' || +s.opacity === 0) return false; e = e.parentElement; } return true; };
+  // Visible: not hidden, and the opacity product over its ancestors above 0.05 (主时间轴一 12.1).
+  const vis = el => { let e = el, o = 1; while (e && e.nodeType === 1) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden') return false; o *= +s.opacity; e = e.parentElement; } return o > 0.05; };
   const R = el => el.getBoundingClientRect();
   const col = { dialog: [0, 560], model: [560, 1280], graph: [1280, 1920] };
   const panel = document.querySelector('#dialog').getBoundingClientRect();
@@ -224,8 +240,8 @@ LAYOUT_JS = r"""() => {
   // Answer lines: at most 15 characters per visual line, digits and punctuation not counted.
   // The folded answer of a past turn is clip-q3's text verbatim (section 四 asks for
   // identical text at 64 s), so it is reported, not failed.
-  for (const el of [...document.querySelectorAll('#dialog .past .answer')].filter(vis)) out.lines.push(['past: ' + el.innerText, [...el.innerText.replace(/[\d\s.,·，。？、→…–\-()（）:：a-zA-Z]/g, '')].length]);
-  for (const el of [...document.querySelectorAll('#dialog .step .line, #dialog .turn:not(.past) .answer')].filter(vis)) {
+  for (const el of [...document.querySelectorAll('#dialog .past .answer, #dialog .folding .answer')].filter(vis)) out.lines.push(['past: ' + el.innerText, [...el.innerText.replace(/[\d\s.,·，。？、→…–\-()（）:：a-zA-Z]/g, '')].length]);
+  for (const el of [...document.querySelectorAll('#dialog .step .line, #dialog .turn:not(.past):not(.folding) .answer')].filter(vis)) {
     for (const line of el.innerText.split('\n')) { const n = [...line.replace(/[\d\s.,·，。？、→…–\-()（）:：a-zA-Z]/g, '')].length; out.lines.push([line, n]); if (n > 15) out.bad.push(['line too long', line, n]); } }
   // Model column overlays: inside the column, labels not overlapping.
   const ov = [...document.querySelectorAll('#callout-labels > div, .model-caption')].filter(vis);
@@ -306,12 +322,19 @@ def f4_f5(browser):
         if tt >= 62.6: need(trace == ['就绪', ''], 'ready', trace)
         samples += 1
         t += 0.1
+    # 主时间轴一 12.1: during the folds, every frame: no sentence twice, no overlapping text.
+    fold_bad, fold_frames = [], 0
+    for a, b in ((47.6, 48.4), (61.0, 61.8)):
+        for f in range(int(round(a * FPS)), int(round(b * FPS)) + 1):
+            seek(page, f / FPS); fold_frames += 1
+            r = page.evaluate(FOLD_JS)
+            if r and len(fold_bad) < 20: fold_bad.append([round(f / FPS, 3), r[:3]])
     lines = []
     for at in (46.0, 49.0, 58.0, 64.0):
         seek(page, at); lines += page.evaluate(LAYOUT_JS)['lines']
     seek(page, 58.0); tones = page.evaluate(MODULE_TONES_JS)
     page.close()
-    record('F4', not bad and not text_bad, samples=samples, layout_problems=bad[:20], text_problems=text_bad[:20],
+    record('F4', not bad and not text_bad and not fold_bad, samples=samples, fold_frames=fold_frames, fold_problems=fold_bad, layout_problems=bad[:20], text_problems=text_bad[:20],
            line_lengths=lines, final_q1=finals.get('q1'), final_q2=finals.get('q2'))
     # F5: numbers read back from the final DOM of each question.
     e1 = [int(x.replace(',', '')) for x in (finals.get('q1') or {}).get('ems', [])]
@@ -779,6 +802,38 @@ def f12_f13(browser):
            note='a value or motion that starts at an event time shows up on the first frame at or after it')
 
 
+# ---------------------------------------------------------------- F15
+def f15_scan(page, times):
+    hits = {}
+    for t in times:
+        seek(page, t)
+        for h in page.evaluate(F15_JS):
+            key = (h['kind'], h['lit'], h['line'], h['text'])
+            r = hits.setdefault(key, [t, t, 0]); r[1] = t; r[2] += 1
+    rows = [{'kind': k[0], 'lit_line': k[1], 'line': k[2], 'text': k[3], 'from': v[0], 'to': v[1], 'samples': v[2]} for k, v in sorted(hits.items(), key=lambda kv: kv[1][0])]
+    return [r for r in rows if r['kind'] in ('chip', 'timing')], [r for r in rows if r['kind'] == 'name']
+
+
+def f15(browser):
+    page = new_page(browser, 'f15')
+    out, ok = {}, True
+    fine = lambda a, b: [f / FPS for f in range(int(round(a * FPS)), int(round(b * FPS)) + 1)]
+    plans = {
+        'film-a': (FILM + '&play=0', sorted({round(30 + i / 10, 4) for i in range(341)} | {round(t, 4) for a, b in ((47.6, 48.4), (57.0, 58.0), (60.0, 61.8)) for t in fine(a, b)})),
+        'opening': (f'{NEW}?frame=opening&theme=light&play=0', [round(23 + i / 10, 2) for i in range(71)]),
+        'clip': (f'{NEW}?frame=clip&theme=light&play=0', [round(i / 10, 2) for i in range(221)]),
+    }
+    for name, (url, times) in plans.items():
+        load(page, url)
+        fails, names = f15_scan(page, times)
+        out[name] = {'samples': len(times), 'labels_crossed': fails, 'node_names_under_lit_lines': names}
+        # clip-q3's crossings are left for the main timeline part two (主时间轴一 12.3).
+        if name != 'clip' and fails: ok = False
+    page.close()
+    record('F15', ok, **out, note='chips and timing labels: no line with opacity > 0.3 through their box (+3 px); node names: only lit lines listed, '
+                                    'not failed (主时间轴一 12.2). clip 0-22 s is listed, not failed (left for 主时间轴二)')
+
+
 # ---------------------------------------------------------------- F14
 def f14():
     real = [c for c in console if not c['text'].startswith('[vite]')]
@@ -786,7 +841,7 @@ def f14():
 
 
 # ---------------------------------------------------------------- run
-CHECKS = [('F1', f1), ('F2', f2), ('F3', f3), ('F4', f4_f5), ('F6', f6), ('F7', f7), ('F8', f8), ('F9', f9), ('F10', f10), ('F11', f11), ('F12', f12_f13)]
+CHECKS = [('F1', f1), ('F2', f2), ('F3', f3), ('F4', f4_f5), ('F6', f6), ('F7', f7), ('F8', f8), ('F9', f9), ('F10', f10), ('F11', f11), ('F12', f12_f13), ('F15', f15)]
 with sync_playwright() as pw:
     browser = pw.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
     for key, fn in CHECKS:
