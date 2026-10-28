@@ -218,6 +218,8 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .layout-film .callouts { left: 561px; width: 720px; }
 .layout-film .callout-labels { left: 561px; }
 .step .line .green { color: var(--green); }
+.step .line.ok { color: var(--green); display: flex; gap: 10px; align-items: baseline; }
+.step .line .state { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border: 1px solid currentColor; border-radius: 3px; }
 .model-caption .xf { display: grid; justify-items: end; }
 .model-caption .xf > span { grid-area: 1 / 1; letter-spacing: inherit; }
 

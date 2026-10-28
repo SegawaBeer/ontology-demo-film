@@ -1,13 +1,12 @@
 // Main timeline part one, global t 30–64 (script v1.3): the split view turns
 // into three columns (30–33), then question one, 研发 · 02:07 (33–49).
-// Question two (49–64, task section 5.3) is not built yet: every t past
-// Q2_START holds the Q2_START frame.
+// then question two, 总装 · 02:11 (49–64): the engine opens along its axis.
 // Every frame is a pure function of t. The few cached flags below only mirror
 // what the engine already shows, so seeking anywhere and back gives the same picture.
 import * as THREE from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { renderGraph } from './graph';
-import type { GraphState } from './data';
+import { nodes as graphNodes, type GraphState } from './data';
 import { createModelView, type Theme, type Pose } from './scene';
 import { createHeroBlade, HERO_COMPONENT } from '../hero-blade';
 import { NET_GRAPH, NET_VIEW } from './net';
@@ -46,6 +45,32 @@ const GHOST_OUT = [47.4, 48.4] as const;
 const GRAPH_REST = [47.0, 48.0] as const;
 const FOLD = [47.6, 48.4] as const;
 const UNCLEAR = [48.0, 48.4] as const;
+// 5.3 question two
+const Q2_META = 49.0;
+const Q2_TYPE = 49.3, Q2_SEED = 135;     // seed 135 ends the typing at 51.00
+const Q2_ASK = '7 号发动机明早 9 点能按时上试车台吗？';
+const Q2_QUERY = 51.3;                    // typing end + 0.3
+const DIM2_IN = [51.3, 52.1] as const;
+const EXPLODE_OPEN = [51.6, 53.4] as const, EXPLODE_CLOSE = [60.6, 62.4] as const;
+const CAM2_OUT = [51.6, 53.4] as const, CAM2_BACK = [60.0, 62.6] as const;
+// The core casing interlocks with the combustor (its transition drum runs through the
+// cans), so it cannot slide away; it turns to ghost while the engine is apart.
+const CORE_GHOST_IN = [51.6, 52.6] as const, CORE_GHOST_OUT = [61.4, 62.4] as const;
+const GLASS_AT = 52.6, GLASS_RAMP = 0.3, GLASS_HZ = 1.4, GLASS_OUT = [60.3, 61.0] as const;
+const STEP2_AT = [53.8, 55.8, 57.7] as const;
+const TAG2_AT = 56.0, TAG2_OUT = [60.0, 60.3] as const;
+const TRACE2_DONE = 58.0, READY_AT = 62.6;
+const GRAPH2_REST = [60.6, 61.8] as const;
+const FOLD2 = [61.0, 61.8] as const;
+const CAPTION2_AT = [51.6, 62.4] as const;
+// Exploded view, engine-local x offsets (axis is x, + is forward). Compressor, nacelle,
+// combustor, core casing and shaft interlock and stay; turbine and exhaust move as one
+// rigid group (the tail cone wraps the rear turbine stages).
+const EXPLODE: Record<string, number> = { fan: 0.7, 'fan-cowl': 0.7, turbine: -1.0, exhaust: -1.0 };
+// Where the opened engine sits in the column (NDC centre and half extents of its parts).
+const EXP_FRAME = { cx: 0, cy: -0.04, lx: 0.8, ly: 0.6 };
+const COMB_ANCHOR: [number, number, number] = [0.05, 0.62, 0.12];   // engine-local, on the casing top
+const TAG2_DX = 60, TAG2_DY = -120;                                    // tag offset from the anchor, px
 
 // Graph query path, same structure as clip-q3.
 const hops = [
@@ -63,6 +88,27 @@ const chips: [string, number, string][] = [
   ['mwo', 43.3, 'JG-2608…2610 · 8–10 号'], ['po', 43.6, 'PO-26-1163 · 11、12 号'],
 ];
 const timings: [number, string, number, number][] = [[36.8, '12 ms', 96, 540], [43.3, '0.21 s', 470, 560]];
+const CORE_COMPS = ['core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles'];
+const COMB_COMPS = ['combustor.cans', 'combustor.casing', 'combustor.injectors', 'combustor.inner-shell'];
+const GLASS_TINT = new THREE.Color('#e2a23a');
+// Question two: 7 号发动机 -> its 9 modules (data.ts order, 0.2 s apart, 0.15 s each), then the
+// combustor's purchase order and supplier, then the assembly work order.
+const MODULE_NODES = graphNodes.filter(n => n.kind === 'module').map(n => n.id);
+const hops2 = [
+  ...MODULE_NODES.map((id, i) => ({ from: 'e7', to: id, a: 51.6 + 0.2 * i, b: 51.75 + 0.2 * i })),
+  { from: 'm-comb', to: 'po', a: 54.6, b: 55.1 },
+  { from: 'po', to: 'supplier', a: 55.1, b: 55.6 },
+  { from: 'e7', to: 'awo', a: 57.0, b: 57.5 },
+];
+const litAt2: [string, number][] = [['e7', Q2_QUERY], ...hops2.map((h): [string, number] => [h.to, h.b])];
+const pulses2: [string, number, number][] = [['e7', 51.3, 52.0], ['m-comb', 52.35, 53.05], ['po', 55.1, 55.8], ['e7', 57.7, 58.4]];
+const chips2: [string, number, string][] = [['po', 55.1, 'PO-26-1187 · 在途'], ['supplier', 55.6, '启衡航空'], ['awo', 57.5, 'ZP-0707 · 09:00 前完成']];
+const timings2: [number, string, number, number][] = [[53.35, '9 ms', 575, 300], [55.6, '0.12 s', 452, 878]];
+const NQ1: [number, number, number][] = [[9, 53.8, 0.3], [8, 53.9, 0.3], [1, 54.0, 0.3]];
+const NQ2: [number, number, number][] = [[1, 55.8, 0.3], [160, 55.9, 0.4]];   // 160 min = 02:40
+const trace2Keys: [number, number][] = [
+  [51.3, 0], [51.75, 0.1], [52.2, 0.17], [53.35, 0.41], [54.6, 0.5], [55.6, 0.74], [57.0, 0.79], [57.5, 0.95], [58.0, 1],
+];
 // Answer numbers: [final, tick start, tick duration].
 const N2: [number, number, number][] = [[2, 40.8, 0.3], [1, 40.9, 0.3]];
 const N3: [number, number, number][] = [[300, 43.9, 0.35], [200, 44.05, 0.35], [5, 44.2, 0.3]];
@@ -101,6 +147,17 @@ function pullAt(t: number): [number, number] {
 const INSET = { x: 380, y: 138, w: 280, h: 400 };
 const TAG_X = 380, TAG_Y = [744, 824, 904];
 
+/** 0 = assembled, 1 = fully exploded. */
+function explodeAt(t: number) {
+  return ease(seg(t, EXPLODE_OPEN[0], EXPLODE_OPEN[1])) * (1 - ease(seg(t, EXPLODE_CLOSE[0], EXPLODE_CLOSE[1])));
+}
+/** The flickering see-through combustor, eased in over GLASS_RAMP so it does not jump on one frame. */
+function glassAt(t: number) {
+  if (t < GLASS_AT || t >= GLASS_OUT[1]) return null;
+  const flick = 0.35 + 0.15 * Math.sin(2 * Math.PI * GLASS_HZ * (t - GLASS_AT));
+  const on = ease(seg(t, GLASS_AT, GLASS_AT + GLASS_RAMP)) * (1 - ease(seg(t, GLASS_OUT[0], GLASS_OUT[1])));
+  return { opacity: 1 + (flick - 1) * on, mix: 0.35 * on };
+}
 // ------------------------------------------------------------------ dialog
 const PAST_Q1 = `<div class="turn past"><div class="meta"><b>研发</b><span>02:07</span></div>
     <p class="ask">第一级涡轮叶片的冷却孔缩小 0.1 毫米，会影响到哪些东西？</p>
@@ -122,7 +179,32 @@ function q1Steps(t: number) {
   return steps;
 }
 
+const PAST_Q2 = `<div class="turn past"><div class="meta"><b>总装</b><span>02:11</span></div>
+      <p class="ask">7 号发动机明早 9 点能按时上试车台吗？</p>
+      <p class="answer green"><span>可以按时上试车台</span><span class="state">09:00</span></p></div>`;
+const Q2_TYPE_END = typingEnd(Q2_ASK, Q2_TYPE, Q1_PER_CHAR, Q2_SEED);
+const clock = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+function q2Steps(t: number) {
+  const steps: string[] = [];
+  if (t >= STEP2_AT[0]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[0])}"><span class="n">01</span><span class="line">核对 <em>${num(t, NQ1[0])}</em> 个模块：<em class="green">${num(t, NQ1[1])}</em> 个到位，<em class="amber">${num(t, NQ1[2])}</em> 个缺件</span></div>`);
+  // Folded after the first clause so the big 02:40 keeps its size inside the column.
+  if (t >= STEP2_AT[1]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[1])}"><span class="n">02</span><span class="line">缺燃烧室组件 <em>${num(t, NQ2[0])}</em> 套，<br>采购单在途，<em>${clock(t < NQ2[1][1] ? 0 : num(t, NQ2[1]))}</em> 到厂</span></div>`);
+  if (t >= STEP2_AT[2]) steps.push(`<div class="step" style="${appear(t, STEP2_AT[2])}"><span class="n">03</span><span class="line ok">可以按时上试车台<span class="state">09:00</span></span></div>`);
+  return steps;
+}
+
 function traceAt(t: number): [string, string] {
+  if (t >= READY_AT) return ['就绪', ''];
+  if (t >= TRACE2_DONE) return ['已检索 5 类对象 · 27 条关系', '0.3 秒'];
+  if (t >= Q2_QUERY) {
+    let share = 1;
+    for (let i = 1; i < trace2Keys.length; i++) {
+      const [t1, v1] = trace2Keys[i], [t0, v0] = trace2Keys[i - 1];
+      if (t <= t1) { share = v0 + (v1 - v0) * (t - t0) / (t1 - t0); break; }
+    }
+    const objects = 1 + Number(t >= 53.35) + Number(t >= 55.1) + Number(t >= 55.6) + Number(t >= 57.5);
+    return [`检索中 · ${objects} 类对象 · ${Math.round(27 * share)} 条关系`, `${(0.3 * share).toFixed(2)} 秒`];
+  }
   if (t < Q1_QUERY) return ['就绪', ''];
   if (t < TRACE_DONE) {
     let share = 1;
@@ -155,13 +237,49 @@ function dialogHTML(t: number) {
       <div class="layer" style="opacity:${(1 - fold).toFixed(3)}">${active}</div>
       <div class="layer" style="opacity:${fold.toFixed(3)}">${PAST_Q1}</div></div>`;
   }
+  if (t >= Q2_META) {
+    const askText = typed(Q2_ASK, t, Q2_TYPE, Q1_PER_CHAR, Q2_SEED);
+    const askDone = t >= Q2_TYPE_END;
+    const steps = q2Steps(t);
+    const live = steps.length - 1;
+    const stepsHTML = steps.map((s, i) => i === live ? s.replace('class="step"', `class="step live${blinkOff ? ' blink-off' : ''}"`) : s).join('');
+    const cursor = !askDone || t < STEP2_AT[0] ? (askDone && blinkOff ? ' typing blink-off' : ' typing') : '';
+    const active = `<div class="turn" style="${appear(t, Q2_META, 0.2)}"><div class="meta"><b>总装</b><span>02:11</span></div>
+        <p class="ask${cursor}">${askText}</p>${steps.length ? `<div class="steps">${stepsHTML}</div>` : ''}</div>`;
+    const fold = ease(seg(t, FOLD2[0], FOLD2[1]));
+    turns += fold <= 0 ? active : fold >= 1 ? PAST_Q2 : `<div class="swap">
+      <div class="layer" style="opacity:${(1 - fold).toFixed(3)}">${active}</div>
+      <div class="layer" style="opacity:${fold.toFixed(3)}">${PAST_Q2}</div></div>`;
+  }
   const [left, right] = t < HEAD[0] ? ['', ''] : traceAt(t);
   return `<div class="dialog"><header class="col-head"${alpha(head)}><span>提问</span><span>4 个部门 · 同一套对象</span></header>
     <div class="turns">${turns}</div>
     <div class="trace"${alpha(head)}><span>${left}</span><span class="spin">${right}</span></div></div>`;
 }
 // ------------------------------------------------------------------ graph
+function graph2At(t: number): GraphState {
+  const base: GraphState = { ...NET_GRAPH, relStyle: undefined, focus: true, dimLevel: 1 };
+  if (t < Q2_QUERY) return base;
+  const release = ease(seg(t, GRAPH2_REST[0], GRAPH2_REST[1]));
+  if (release >= 1) return base;
+  const lit = litAt2.filter(([, at]) => t >= at).map(([id]) => id);
+  const litEdges = hops2.filter(h => t >= h.b).map(h => [h.from, h.to] as [string, string]);
+  const drawing = hops2.filter(h => t > h.a && t < h.b).map(h => ({ from: h.from, to: h.to, progress: ease(seg(t, h.a, h.b)) }));
+  const status: GraphState['status'] = {};
+  for (const h of hops2.slice(0, MODULE_NODES.length)) if (t >= h.b) status[h.to] = h.to === 'm-comb' ? 'amber' : 'green';
+  const pulse: Record<string, number> = {};
+  for (const [id, a, b] of pulses2) if (t > a && t < b) pulse[id] = seg(t, a, b);
+  const chip: GraphState['chip'] = {};
+  for (const [id, at, text] of chips2) if (t >= at) chip[id] = { text };
+  const timing = timings2.filter(([at]) => t >= at).map(([, text, x, y]) => ({ text, x, y }));
+  const dimLevel = 1 - 0.78 * ease(seg(t, DIM2_IN[0], DIM2_IN[1])) * (1 - release);
+  return {
+    focus: true, dimLevel, lit, litEdges, drawing, nodeAlpha: {}, pulse, status, chip, timing,
+    counter: NET_GRAPH.counter, release: release > 0 ? release : undefined,
+  };
+}
 function graphAt(t: number): GraphState {
+  if (t >= Q2_START) return graph2At(t);
   if (t < Q1_QUERY) {
     // 30.3–32.4: the net's strong link style eases into the three-column style.
     const mix = ease(seg(t, SLIDE[0], SLIDE[1]));
@@ -208,6 +326,16 @@ function buildEvents(): FilmEvent[] {
   out.push({ t: RETURN[0], kind: 'part', gain: 0.4 }, { t: RETURN[1], kind: 'part', gain: 0.6 });
   for (const at of TAGS_AT) out.push({ t: at, kind: 'line', gain: 0.35 });
   out.push({ t: FOLD[0], kind: 'line', gain: 0.3 });
+  // Question two
+  out.push({ t: Q2_META, kind: 'line', gain: 0.4 });
+  for (const at of typedTimes(Q2_ASK, Q2_TYPE, Q1_PER_CHAR, Q2_SEED)) out.push({ t: at, kind: 'type', gain: 0.32 });
+  hops2.forEach((h, i) => out.push({ t: h.a, kind: 'path', gain: i < MODULE_NODES.length ? 0.3 : 0.5 }));
+  for (const at of STEP2_AT) out.push({ t: at, kind: 'line', gain: 0.7 });
+  for (const n of [...NQ1, ...NQ2]) out.push({ t: settleAt(n), kind: 'tick', gain: 0.5 });
+  out.push({ t: CAM2_OUT[0], kind: 'slide', gain: 0.45 }, { t: CAM2_BACK[0], kind: 'slide', gain: 0.45 });
+  for (const at of [EXPLODE_OPEN[0], EXPLODE_OPEN[1], EXPLODE_CLOSE[0], EXPLODE_CLOSE[1]]) out.push({ t: at, kind: 'part', gain: 0.55 });
+  out.push({ t: GLASS_AT, kind: 'alert', gain: 0.35 });
+  out.push({ t: TAG2_AT, kind: 'line', gain: 0.35 }, { t: FOLD2[0], kind: 'line', gain: 0.3 });
   return out.sort((a, b) => a.t - b.t);
 }
 // ------------------------------------------------------------------ close-up window
@@ -326,6 +454,7 @@ export async function mountFilmA(theme: Theme) {
   const netShell = new Set(e7.modules.filter(m => NET_VIEW.ghost.includes(m.meta.id)).flatMap(m => m.components.map(c => c.meta.id)));
   // Ghost amount each component was last given, for the checks (solid = 0).
   const ghostNow = new Map<string, number>();
+  const coreSet = new Set(CORE_COMPS), combSet = new Set(COMB_COMPS);
 
   // Poses. The net pose is net-end's own fit (1280-wide camera, engine at the origin).
   // P0 is clip-q3's fit (720-wide camera, engine at y 1.05); the canvas then shows
@@ -342,6 +471,30 @@ export async function mountFilmA(theme: Theme) {
   const P1: Pose = { target: P0.target.clone().lerp(ringCenter, 0.82), position: new THREE.Vector3() };
   P1.position.copy(P1.target).add(P0.position.clone().sub(P0.target).multiplyScalar(0.5));
   const lift = new THREE.Vector3(0, LIFT, 0);
+  const setExplode = (p: number) => { for (const m of e7.modules) m.group.position.x = (EXPLODE[m.meta.id] ?? 0) * p; };
+  // Exploded framing: P0's viewing direction, distance and target fitted to the opened engine.
+  const EXP: Pose = (() => {
+    setExplode(1);
+    e7.root.updateMatrixWorld(true);
+    const pts: THREE.Vector3[] = [];
+    for (const [id] of e7.parts) { const P = e7.partWorldPoints(id)!; for (let i = 0; i < P.length; i += 24) pts.push(new THREE.Vector3(P[i], P[i + 1], P[i + 2])); }
+    setExplode(0);
+    e7.root.updateMatrixWorld(true);
+    const cam = new THREE.PerspectiveCamera(camera.fov, COL_W / 1080, camera.near, camera.far);
+    const dir = REST.position.clone().sub(REST.target).normalize();
+    const target = new THREE.Box3().setFromPoints(pts).getCenter(new THREE.Vector3());
+    let dist = REST.position.distanceTo(REST.target) * 1.3;
+    const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), q = new THREE.Vector3();
+    for (let i = 0; i < 40; i++) {
+      cam.position.copy(target).addScaledVector(dir, dist); cam.lookAt(target); cam.updateMatrixWorld();
+      let x0 = 9, x1 = -9, y0 = 9, y1 = -9;
+      for (const p of pts) { q.copy(p).project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+      const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+      target.addScaledVector(right, ((x0 + x1) / 2 - EXP_FRAME.cx) * halfH * dist * COL_W / 1080).addScaledVector(up, ((y0 + y1) / 2 - EXP_FRAME.cy) * halfH * dist);
+      dist *= Math.pow(Math.max((x1 - x0) / 2 / EXP_FRAME.lx, (y1 - y0) / 2 / EXP_FRAME.ly), 0.7);
+    }
+    return { target, position: target.clone().addScaledVector(dir, dist) };
+  })();
 
   // Column camera: the 720-wide camera every overlay position is measured with.
   const colCam = new THREE.PerspectiveCamera(camera.fov, COL_W / 1080, camera.near, camera.far);
@@ -389,6 +542,12 @@ export async function mountFilmA(theme: Theme) {
       const rel = blendPose(NET, shiftPose(P0, lift.clone().negate()), p);
       return shiftPose(rel, lift.clone().multiplyScalar(p));
     }
+    if (t >= Q2_START) {
+      // Back out along P0's own direction while the engine opens, and in again as it closes.
+      const a2 = ease(seg(t, CAM2_OUT[0], CAM2_OUT[1])), b2 = ease(seg(t, CAM2_BACK[0], CAM2_BACK[1]));
+      if (a2 <= 0 || b2 >= 1) return { position: REST.position.clone(), target: REST.target.clone() };
+      return b2 > 0 ? blendPose(EXP, REST, b2) : blendPose(REST, EXP, a2);
+    }
     const a = ease(seg(t, CAM_IN[0], CAM_IN[1])), b = ease(seg(t, CAM_OUT[0], CAM_OUT[1]));
     if (a <= 0 || b >= 1) return { position: REST.position.clone(), target: REST.target.clone() };
     const turn = DRIFT_ANGLE * ease(seg(t, DRIFT[0], DRIFT[1]));
@@ -425,11 +584,17 @@ export async function mountFilmA(theme: Theme) {
     const unshell = ease(seg(t, UNSHELL[0], UNSHELL[1]));
     const ghostIn = smooth(seg(t, GHOST_IN[0], GHOST_IN[1])) * (1 - smooth(seg(t, GHOST_OUT[0], GHOST_OUT[1])));
     const clear = ease(seg(t, CLEAR_PATH[0], CLEAR_PATH[1])) * (1 - ease(seg(t, UNCLEAR[0], UNCLEAR[1])));
+    const coreGhost = smooth(seg(t, CORE_GHOST_IN[0], CORE_GHOST_IN[1])) * (1 - smooth(seg(t, CORE_GHOST_OUT[0], CORE_GHOST_OUT[1])));
+    const glass = glassAt(t);
     for (const id of layerIds) {
-      const amount = netShell.has(id) ? Math.max(1 - unshell, ghostIn) : ghostIn;
+      if (glass && combSet.has(id)) { view.setGlassOf(e7, [id], glass.opacity, GLASS_TINT, glass.mix); ghostNow.set(id, 0); continue; }
+      let amount = netShell.has(id) ? Math.max(1 - unshell, ghostIn) : ghostIn;
+      if (coreSet.has(id)) amount = Math.max(amount, coreGhost);
       view.setGhostOf(e7, [id], amount);
       ghostNow.set(id, amount);
     }
+    const ex = explodeAt(t);
+    setExplode(ex);
     setNeighbours(1 - clear);
     // Ring colour: its own metal in the net picture, clip-q3's grey in the three columns.
     const grey = ease(seg(t, UNSHELL[0], UNSHELL[1]));
@@ -441,18 +606,23 @@ export async function mountFilmA(theme: Theme) {
       if (grey <= 0 && !(id === PULLED && toProbe > 0)) e7.setColor(id, null); else e7.setColor(id, c);
     }
     const [ax, rad] = pullAt(t);
-    e7.setTransform(PULLED, { position: [ax, radial.y * rad, radial.z * rad] });
-    return { ax, rad };
+    // The promoted blade sits outside the module groups, so it rides along with the turbine here.
+    e7.setTransform(PULLED, { position: [ax + EXPLODE.turbine * ex, radial.y * rad, radial.z * rad] });
+    return { ax, rad, ex, glass };
   }
   function captionHTML(t: number, slide: number) {
-    const A = '7 号发动机 · 总装中', B = '第一级涡轮叶环 · 其余部件半透明';
-    const toB = ease(seg(t, CAPTION_AT[0], CAPTION_AT[0] + CAPTION_FADE)) * (1 - ease(seg(t, CAPTION_AT[1], CAPTION_AT[1] + CAPTION_FADE)));
+    const A = '7 号发动机 · 总装中';
+    const B = t >= Q2_START ? '7 号发动机 · 按模块展开' : '第一级涡轮叶环 · 其余部件半透明';
+    const at = t >= Q2_START ? CAPTION2_AT : CAPTION_AT;
+    const toB = ease(seg(t, at[0], at[0] + CAPTION_FADE)) * (1 - ease(seg(t, at[1], at[1] + CAPTION_FADE)));
     const right = toB <= 0 ? `<span>${A}</span>` : toB >= 1 ? `<span>${B}</span>`
       : `<span class="xf"><span style="opacity:${(1 - toB).toFixed(3)}">${A}</span><span style="opacity:${toB.toFixed(3)}">${B}</span></span>`;
     caption.style.left = slide <= 0 ? '' : `${(40 + COL_X * slide).toFixed(2)}px`;
     return `<span>实物</span>${right}`;
   }
 
+  // A point on the top of the combustor casing, where the question-two tag hangs from.
+  const combAnchor = () => project(new THREE.Vector3(...COMB_ANCHOR).applyMatrix4(e7.root.matrixWorld));
   // Overlays, in model-column pixels.
   function overlays(t: number, bladeAt: { x: number; y: number }) {
     let svg = '', html = '';
@@ -479,6 +649,15 @@ export async function mountFilmA(theme: Theme) {
       svg += `<g opacity="${a.toFixed(3)}"><path d="M${bladeAt.x.toFixed(2)} ${bladeAt.y.toFixed(2)} L${TAG_X - 30} ${ty} H${TAG_X - 10}" fill="none" stroke="var(--lit)" stroke-width="1" opacity="0.8"/></g>`;
       html += `<div class="tag tone-lit" style="left:${TAG_X}px;top:${ty}px;opacity:${a.toFixed(3)}">${body}</div>`;
     });
+    // Question two: the amber tag beside the combustor, placed from its projected anchor.
+    const a2 = ease(seg(t, TAG2_AT, TAG2_AT + 0.3)) * (1 - ease(seg(t, TAG2_OUT[0], TAG2_OUT[1])));
+    if (a2 > 0) {
+      const p = combAnchor();
+      const lx = p.x + TAG2_DX, ly = p.y + TAG2_DY;
+      svg += `<g opacity="${a2.toFixed(3)}"><circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.5" fill="var(--amber)"/>
+        <path d="M${p.x.toFixed(2)} ${p.y.toFixed(2)} L${(lx - 14).toFixed(2)} ${ly.toFixed(2)}" fill="none" stroke="var(--amber)" stroke-width="1" opacity="0.8"/></g>`;
+      html += `<div class="tag tone-amber" style="left:${lx.toFixed(2)}px;top:${ly.toFixed(2)}px;opacity:${a2.toFixed(3)}"><small>燃烧室组件 · 外购</small><span class="tag-count"><b>02:40</b></span><small>PO-26-1187 · 在途</small></div>`;
+    }
     if (tags.some((_, i) => t >= TAGS_AT[i]) && out > 0) svg += `<circle cx="${bladeAt.x.toFixed(2)}" cy="${bladeAt.y.toFixed(2)}" r="2.5" fill="var(--lit)" opacity="${(ease(seg(t, TAGS_AT[0], TAGS_AT[0] + 0.3)) * out).toFixed(3)}"/>`;
     return { svg, html, open };
   }
@@ -502,12 +681,12 @@ export async function mountFilmA(theme: Theme) {
   const panel = dialogRoot;
   let lastGraph: GraphState = NET_GRAPH;
   let lastT = START;
-  let last = { pose: cameraAt(START), ax: 0, rad: 0, open: 0, turn: 0, slide: 0 };
+  let last = { pose: cameraAt(START), ax: 0, rad: 0, open: 0, turn: 0, slide: 0, ex: 0, glass: 1 };
   function seek(input: number) {
-    const t = clamp(input, START, Q2_START);   // 5.3 not built yet: hold 49.0
+    const t = clamp(input, START, DURATION);
     lastT = t;
     const slide = slideAt(t);
-    const { ax, rad } = engineAt(t);
+    const { ax, rad, ex, glass } = engineAt(t);
     const pose = applyCamera(t);
     view.cutaway(e7, 1 - ease(seg(t, UNSHELL[0], UNSHELL[1])));
     setCanvas(slide >= 1);
@@ -518,7 +697,7 @@ export async function mountFilmA(theme: Theme) {
     view.render();
     const turn = ease(seg(t, TURN[0], TURN[1]));
     const rows = FILM_ROWS.map((_, i) => ease(seg(t, ROWS_AT + i * ROW_STEP, ROWS_AT + (i + 1) * ROW_STEP)));
-    const bladeWorld = new THREE.Vector3(pulledMeta.center[0] + ax, pulledMeta.center[1] + radial.y * rad, pulledMeta.center[2] + radial.z * rad).applyMatrix4(e7.root.matrixWorld);
+    const bladeWorld = new THREE.Vector3(pulledMeta.center[0] + ax + EXPLODE.turbine * ex, pulledMeta.center[1] + radial.y * rad, pulledMeta.center[2] + radial.z * rad).applyMatrix4(e7.root.matrixWorld);
     const o = overlays(t, project(bladeWorld));
     inset.draw(o.open, turn, rows);
     overlay.innerHTML = o.svg;
@@ -529,7 +708,7 @@ export async function mountFilmA(theme: Theme) {
     dialogRoot.innerHTML = dialogHTML(t);
     lastGraph = graphAt(t);
     renderGraph(graphRoot, lastGraph);
-    last = { pose, ax, rad, open: o.open, turn, slide };
+    last = { pose, ax, rad, open: o.open, turn, slide, ex, glass: glass?.opacity ?? 1 };
   }
 
   const filmProbe = () => {
@@ -546,13 +725,14 @@ export async function mountFilmA(theme: Theme) {
       graph: { lit: lastGraph.lit, litEdges: lastGraph.litEdges, drawing: (lastGraph.drawing ?? []).map(d => [d.from, d.to, +d.progress.toFixed(4)]), counter: graphRoot.querySelector('text:nth-of-type(2)')?.textContent ?? '' },
       hero: { visible: last.open > 0, opacity: last.open > 0 ? 1 : 0, reveal: +last.open.toFixed(4), cutaway: +last.turn.toFixed(4) },
       pulled: { id: PULLED, axial: +last.ax.toFixed(6), radial: +last.rad.toFixed(6), world: e7.partRestWorldMatrix(PULLED) ? new THREE.Vector3().setFromMatrixPosition(e7.partRestWorldMatrix(PULLED)!).toArray().map(v => +v.toFixed(6)) : null },
-      explode: {} as Record<string, number>,
+      explode: Object.fromEntries(e7.modules.map(m => [m.meta.id, +(m.group.position.x).toFixed(6)])) as Record<string, number>,
+      combustorOpacity: +last.glass.toFixed(4),
       engineY: e7.root.position.y,
     };
   };
 
   // For the checks: section profiles and opacities come from the live engine.
   const ghostOf = (partId: string) => ghostNow.get(e7.getPart(partId)?.component ?? '') ?? 0;
-  const debug = { view, e7, colCam, PULLED, NEIGHBOURS, ringParts, project, ghostOf, THREE };
+  const debug = { view, e7, colCam, PULLED, NEIGHBOURS, ringParts, project, ghostOf, EXPLODE, COMB_COMPS, CORE_COMPS, THREE };
   return { seek, probe: filmProbe, events: buildEvents(), debug };
 }
