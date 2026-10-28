@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { renderGraph } from './graph';
 import { fleetBlocks, type GraphState } from './data';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { createModelView, type Theme, type Pose } from './scene';
+import { createModelView, type Theme, type Pose, type ModelView } from './scene';
+import type { Engine } from '../model';
+import { typedTimes } from './timing';
 import { createHeroBlade, HERO_COMPONENT } from '../hero-blade';
 
 export const DURATION = 22;
@@ -242,8 +244,9 @@ function graphAt(t: number): GraphState {
   if (t >= 0.8) chip.coat = { text: 'CT-1024-03', tone: 'red' };
   if (t >= 4.2) chip.powder = { text: t >= 16.95 ? 'YSZ-2410 · 已冻结' : 'YSZ-2410', tone: 'red' };
   if (t >= 5.0 && t < 16.9) chip.spray = { text: 'PT-0817 · PT-0903' };
-  if (t >= 11.55) chip.e7 = { text: t >= 19.0 ? '暂不能上试车台' : `${tick(16, t, 11.55, 0.3)} 枚`, tone: 'red' };
-  if (t >= 11.85) chip.e3 = t >= 17.7 ? { text: '孔探间隔减半', tone: 'amber' } : { text: `${tick(30, t, 11.85, 0.3)} 枚`, tone: 'red' };
+  // The engine chips sit clear of the lit links below their nodes (主时间轴一 12.2).
+  if (t >= 11.55) chip.e7 = { text: t >= 19.0 ? '暂不能上试车台' : `${tick(16, t, 11.55, 0.3)} 枚`, tone: 'red', dx: -4, anchor: 'end' };
+  if (t >= 11.85) chip.e3 = t >= 17.7 ? { text: '孔探间隔减半', tone: 'amber', dx: 8, dy: 6 } : { text: `${tick(30, t, 11.85, 0.3)} 枚`, tone: 'red' };
   if (t >= 17.2) chip.awo = { text: '+ 更换 16 枚叶片', tone: 'amber' };
   if (t >= 17.1) chip.disposal = { text: 'CZ-1024-01', tone: 'red' };
 
@@ -368,25 +371,42 @@ function insetOverlay(t: number, anchor: { x: number; y: number }, ceramic: { x:
   return { svg, html: label + ceramicLabel, reveal: open };
 }
 
-export async function mountClip(theme: Theme) {
+/**
+ * What frame=film hands over so this clip draws into the page it already has:
+ * its one view, its 7 号发动机, its model caption and a 720-column projection.
+ * `ghost7` and `cut7` stand in for setGhost and cutaway on that engine
+ * (everything but the first-stage ring and disk).
+ */
+export type ClipHost = {
+  view: ModelView; e7: Engine; caption: HTMLElement;
+  project: (world: THREE.Vector3) => { x: number; y: number };
+  ghost7: (amount: number) => void; cut7: (amount: number) => void;
+};
+
+export async function mountClip(theme: Theme, host?: ClipHost) {
   const dialogRoot = document.querySelector<HTMLElement>('#dialog')!;
   const graphRoot = document.querySelector<SVGSVGElement>('#graph')!;
   const overlay = document.querySelector<SVGSVGElement>('#callouts')!;
   const labels = document.querySelector<HTMLElement>('#callout-labels')!;
-  const caption = document.createElement('div');
-  caption.className = 'model-caption';
-  document.querySelector('.col-model')!.append(caption);
+  const caption = host?.caption ?? document.createElement('div');
+  if (!host) {
+    caption.className = 'model-caption';
+    document.querySelector('.col-model')!.append(caption);
+  }
   overlay.setAttribute('viewBox', '0 0 720 1080');
 
   const ink = theme === 'dark'
     ? { red: '#ff4a3a', amber: '#f0a93a', ring: '#c9d2d8', probe: '#9fd6f0' }
     : { red: '#e0362a', amber: '#d98a12', ring: '#9aa6af', probe: '#1c5fb8' };
-  const view = await createModelView(document.querySelector('#model')!, theme);
+  const view = host?.view ?? await createModelView(document.querySelector('#model')!, theme);
   const inset = await createInset(view.renderer, theme);
   const shell = { solid: [RING, 'turbine.stage-1-disk'] };
-  const e7 = view.addEngine({ ...shell, ghostAmount: 0 }, new THREE.Vector3(0, 1.05, 0), 1);
+  const e7 = host?.e7 ?? view.addEngine({ ...shell, ghostAmount: 0 }, new THREE.Vector3(0, 1.05, 0), 1);
   const e3 = view.addEngine(shell, new THREE.Vector3(0.5, -1.25, 0.35), 0.6);
-  for (const engine of [e7, e3]) engine.setColor(engine.listParts(RING), ink.ring);
+  for (const engine of host ? [e3] : [e7, e3]) engine.setColor(engine.listParts(RING), ink.ring);
+  const project = host?.project ?? view.project;
+  const ghost7 = host?.ghost7 ?? ((a: number) => view.setGhost(e7, a));
+  const cut7 = host?.cut7 ?? ((a: number) => view.cutaway(e7, a));
   e3.setColor(hit3.map(slot), ink.red);
 
   const dir = new THREE.Vector3(-0.88, 0.3, 0.42);
@@ -419,8 +439,8 @@ export async function mountClip(theme: Theme) {
   function partOnScreen(engine: typeof e7, id: string, extra?: THREE.Vector3) {
     const meta = engine.getPart(id)!;
     const local = new THREE.Vector3(...meta.center);
-    if (extra) return view.project(local.add(extra).applyMatrix4(engine.root.matrixWorld));
-    return view.project(local.applyMatrix4(ringGroup(engine).matrixWorld));
+    if (extra) return project(local.add(extra).applyMatrix4(engine.root.matrixWorld));
+    return project(local.applyMatrix4(ringGroup(engine).matrixWorld));
   }
   const clusterOnScreen = (engine: typeof e7, ids: string[], extras?: THREE.Vector3[]) => {
     const pts = ids.map((id, i) => partOnScreen(engine, id, extras?.[i]));
@@ -440,7 +460,7 @@ export async function mountClip(theme: Theme) {
   function seek(t: number) {
     t = clamp(t, 0, DURATION);
     // Model state
-    view.setGhost(e7, ease(seg(t, 1.0, 2.6)));
+    ghost7(ease(seg(t, 1.0, 2.6)));
     e3.root.visible = t >= 11.3;
     view.setSweep(e3, t >= 12.4 ? null : THREE.MathUtils.lerp(-0.75, 1.95, ease(seg(t, 11.3, 12.4))));
     for (const g of rotorGroups) g.rotation.x = -0.07 * t;
@@ -455,13 +475,14 @@ export async function mountClip(theme: Theme) {
     e3.setColor(hit3.map(slot), new THREE.Color(ink.red).lerp(new THREE.Color(ink.amber), amber));
     const extras = bladeOut.map(b => {
       const offset = b.dir.clone().multiplyScalar(0.5 * ease(seg(t, b.at, b.at + 0.7)));
-      if (t >= 16.9 || moved) e7.setTransform(b.id, { position: [offset.x, offset.y, offset.z] });
+      // In frame=film the blades are always placed (they are promoted from the start there).
+      if (t >= 16.9 || moved || host) e7.setTransform(b.id, { position: [offset.x, offset.y, offset.z] });
       return offset;
     });
     moved = t >= 16.9;
 
     view.applyPose(cameraAt(t));
-    view.cutaway(e7, ease(seg(t, 1.2, 2.8)));
+    cut7(ease(seg(t, 1.2, 2.8)));
     view.cutaway(e3, 1);
     view.render();
     const zoom = insetOverlay(t, partOnScreen(e7, COUPON_BLADE), inset.ceramicOnScreen());
@@ -500,5 +521,35 @@ export async function mountClip(theme: Theme) {
     renderGraph(graphRoot, graphAt(t));
   }
 
-  return { seek, duration: DURATION };
+  return { seek, duration: DURATION, e3, hit7: hit7.map(slot), bladeOut, cameraAt, P0, P1, P2, ink, events: clipEvents() };
+}
+
+/** Sound events of this clip, local time (主时间轴二 9.7 format). */
+export type ClipEvent = { t: number; kind: 'type' | 'line' | 'tick' | 'path' | 'part' | 'alert'; gain: number; src: 'dialog' | 'graph' | '3d' };
+/** First 60 fps frame from which a ticking number stays on its final value. */
+function settle(final: number, at: number, dur: number) {
+  let last = Math.ceil(at * 60);
+  for (let f = Math.ceil(at * 60); f <= Math.ceil((at + dur) * 60); f++) if (tick(final, f / 60, at, dur) !== final) last = f + 1;
+  return last / 60;
+}
+function clipEvents(): ClipEvent[] {
+  const out: ClipEvent[] = [];
+  const add = (t: number, kind: ClipEvent['kind'], gain: number, src: ClipEvent['src']) => out.push({ t, kind, gain, src });
+  add(0.6, 'alert', 0.6, 'dialog');                                  // the automatic quality alert
+  add(Q3_ASK_AT - 0.15, 'line', 0.4, 'dialog');
+  for (const at of typedTimes(Q3_ASK, Q3_ASK_AT, 0.13, 13)) add(at, 'type', 0.32, 'dialog');
+  for (const h of hops) add(h.a, 'path', 0.5, 'graph');
+  for (const at of [5.0, 7.35, 11.55, 11.85]) add(at, 'line', 0.7, 'dialog');
+  add(settle(2, 5.0, 0.25), 'tick', 0.5, 'dialog');
+  add(10.6, 'tick', 0.5, 'dialog');                                  // the scan ends on 46
+  add(settle(16, 11.55, 0.3), 'tick', 0.5, 'dialog');
+  add(settle(30, 11.85, 0.3), 'tick', 0.5, 'dialog');
+  add(FOLLOW_AT - 0.2, 'line', 0.4, 'dialog');
+  for (const at of typedTimes(FOLLOW_ASK, FOLLOW_AT, 0.055, 29)) add(at, 'type', 0.32, 'dialog');
+  for (const at of [16.9, 17.7, 18.5]) add(at, 'line', 0.7, 'dialog');
+  add(settle(16, 16.9, 0.3), 'tick', 0.5, 'dialog');
+  add(settle(200, 17.95, 0.3), 'tick', 0.5, 'dialog');
+  for (let i = 0; i < hit7.length; i++) add(16.9 + i * 0.04 + noise(i + 5) * 0.06, 'part', 0.35, '3d');
+  add(19.0, 'alert', 0.7, 'dialog');                                 // question two's answer turns red
+  return out.sort((a, b) => a.t - b.t);
 }
