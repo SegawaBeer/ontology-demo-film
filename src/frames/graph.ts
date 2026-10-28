@@ -104,6 +104,8 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   el('line', { x1: 32, x2: 608, y1: 84, y2: 84, stroke: 'var(--rule)' }, svg);
 
   for (const g of only ? [] : groups) {
+    const shown = state.groupAppear?.[g.id];
+    if (shown !== undefined && shown <= 0) continue;
     const gLit = all.some(n => n.group === g.id && lit.has(n.id));
     let fill = gLit || strong ? 'var(--ink-2)' : 'var(--ink-3)';
     // Blends: the net's strong style easing into the soft one, and lit groups easing back.
@@ -113,6 +115,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const t = el('text', { x: g.x, y: g.y, 'font-size': 12, 'letter-spacing': '0.12em', 'text-anchor': g.align, fill }, svg);
     t.textContent = g.label;
     if (!gLit && dimming) t.style.opacity = String(0.5 + 0.5 * Math.max(0, (dimValue - 0.22) / 0.78));
+    if (shown !== undefined && shown < 1) t.style.opacity = String(shown);
   }
   for (const c of only ? captions.filter(x => (state.captions ?? []).includes(x.text)) : captions) {
     const t = el('text', { x: c.x, y: c.y + 12, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--ink-3)' }, svg);
@@ -146,6 +149,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
         'stroke-width': on ? litWidth : 1,
         'stroke-dasharray': e.kind === 'rel' && !on ? dash : 'none',
       }, on ? litLayer : dimLayer);
+      path.setAttribute('data-edge', `${e.from}>${e.to}`);
       const appear = Math.min(appearOf.get(e.from) ?? 1, appearOf.get(e.to) ?? 1);
       if (appear < 1) path.style.opacity = String(Math.max(0, appear));
       if (releasing && lit && on) path.style.opacity = String(1 - release);
@@ -162,14 +166,29 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
       : linkPath(e, a, b, forward);
     const path = el('path', { d: dpath, fill: 'none', stroke: 'var(--lit)', 'stroke-width': state.edgeWidth ?? 1.6 }, litLayer);
+    path.setAttribute('data-draw', `${d.from}>${d.to}`);
     const length = path.getTotalLength();
     const p = Math.min(1, d.progress);
     path.setAttribute('stroke-dasharray', `${length * p} ${length}`);
     if (p < 1) {
       const head = path.getPointAtLength(length * p);
       el('circle', { cx: head.x, cy: head.y, r: 6, fill: 'var(--lit)', opacity: 0.16 }, litLayer);
-      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: 'var(--lit)' }, litLayer);
+      el('circle', { cx: head.x, cy: head.y, r: 2.6, fill: 'var(--lit)' }, litLayer).setAttribute('data-head', `${d.from}>${d.to}`);
     }
+  }
+
+  // Finished edges whose lit stroke is fading back to the resting look.
+  for (const f of state.fading ?? []) {
+    if (f.amount <= 0) continue;
+    const e = allEdges.find(x => same(x.from, x.to, [[f.from, f.to]]));
+    if (!e) continue;
+    const a = byId.get(f.from)!, b = byId.get(f.to)!;
+    const forward = e.from === f.from;
+    const d = e.kind === 'tree'
+      ? (forward ? treePath(a, b) : reversePath(svg, treePath(b, a)))
+      : linkPath(e, a, b, forward);
+    const path = el('path', { d, fill: 'none', stroke: 'var(--lit)', 'stroke-width': f.width ?? litWidth }, litLayer);
+    path.style.opacity = String(Math.min(1, f.amount));
   }
 
   for (const t of state.timing) {
@@ -177,26 +196,22 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   }
 
   const fresh = new Set(state.fresh ?? []);
-  // `plain`: drawn without its status colour (the unlit layer under a releasing node).
-  const drawNode = (n: GraphNode, on: boolean, overlay?: number, plain = false) => {
-    const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
-    if (appear !== undefined && appear <= 0) return;
-    const g = el('g', {}, svg);
-    const floor = state.nodeAlpha?.[n.id];
-    if (dimming && !on) g.style.opacity = floor !== undefined ? String(Math.max(dimValue, floor)) : dim;
-    if (overlay !== undefined) g.style.opacity = String(overlay);
-    if (appear !== undefined) {
-      g.style.opacity = String(appear);
-      g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
-    }
+  // `extras`: fresh ring, pulses and chip (style-frames' lit copy leaves them out).
+  // `plain`: drawn without its status colour (film-main's unlit layer under a releasing node).
+  const drawNode = (n: GraphNode, on: boolean, g: SVGGElement, extras = true, plain = false) => {
     const r = radius[n.kind];
     const tone = plain ? undefined : state.status[n.id];
     const ring = tone ? toneVar[tone] : on ? 'var(--lit)' : 'var(--node-ring)';
     if (on && n.kind !== 'component') el('circle', { cx: n.x, cy: n.y, r: r + 6, fill: tone ? toneVar[tone] : 'var(--lit)', opacity: 0.12 }, g);
-    if (fresh.has(n.id)) el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
+    if (extras && fresh.has(n.id)) {
+      const ringEl = el('circle', { cx: n.x, cy: n.y, r: r + 11, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1, opacity: 0.45 }, g);
+      const k = state.freshAmount?.[n.id];
+      if (k !== undefined && k < 1) ringEl.setAttribute('opacity', String(0.45 * Math.max(0, k)));
+    }
     const pulse = state.pulse?.[n.id];
-    if (pulse !== undefined && pulse > 0 && pulse < 1) {
-      el('circle', { cx: n.x, cy: n.y, r: r + 4 + 18 * pulse, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1.4, opacity: 0.7 * (1 - pulse) }, g);
+    for (const v of extras ? [...(pulse !== undefined ? [pulse] : []), ...(state.pulses?.[n.id] ?? [])] : []) {
+      if (v <= 0 || v >= 1) continue;
+      el('circle', { cx: n.x, cy: n.y, r: r + 4 + 18 * v, fill: 'none', stroke: tone ? toneVar[tone] : 'var(--lit)', 'stroke-width': 1.4, opacity: 0.7 * (1 - v) }, g);
     }
     if (n.kind === 'biz') {
       el('circle', { cx: n.x, cy: n.y, r, fill: 'var(--bg-col)', stroke: ring, 'stroke-width': on ? 1.6 : 1.1 }, g);
@@ -207,27 +222,55 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
       el('circle', { cx: n.x, cy: n.y, r, fill: on ? ring : 'var(--node)', stroke: ring, 'stroke-width': n.kind === 'engine' ? 1.5 : 1.1 }, g);
     }
     label(n, g, on, state.sub?.[n.id]);
-    const chip = releasing && lit.has(n.id) && !on ? undefined : state.chip[n.id];
+    const chip = extras && !(releasing && lit.has(n.id) && !on) ? state.chip[n.id] : undefined;
     if (chip) {
       const fill = chip.tone ? toneVar[chip.tone] : 'var(--lit)';
+      let text: SVGTextElement;
       if (n.kind === 'engine') {
-        el('text', { x: n.x, y: n.y + r + 20, 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': 'middle', fill }, g).textContent = chip.text;
+        text = el('text', { x: n.x, y: n.y + r + 20, 'font-size': 12.5, class: 'mono', 'font-weight': 600, 'text-anchor': 'middle', fill }, g);
+        text.textContent = chip.text;
       } else {
         const toLeft = n.anchor === 'left';
         const below = n.anchor === 'below';
-        el('text', {
+        text = el('text', {
           x: below ? n.x : toLeft ? n.x - r - 12 : n.x + r + 10, y: below ? n.y + r + 34 : n.y + 22,
           'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': below ? 'middle' : toLeft ? 'end' : 'start', fill,
-        }, g).textContent = chip.text;
+        }, g);
+        text.textContent = chip.text;
       }
+      const k = state.chipAmount?.[n.id];
+      if (k !== undefined && k < 1) text.style.opacity = String(Math.max(0, k));
     }
   };
   for (const n of visible) {
     const on = lit.has(n.id);
-    if (releasing && on) {
-      drawNode(n, false, 1, true);
-      if (release < 1) drawNode(n, true, 1 - release);
-    } else drawNode(n, on);
+    const appear = state.appear?.[n.id] ?? appearOf.get(n.id);
+    if (appear !== undefined && appear <= 0) continue;
+    // While releasing, a lit node is drawn plain underneath and lit on top, fading out.
+    const layers: [boolean, number | undefined, boolean][] = releasing && on
+      ? (release < 1 ? [[false, 1, true], [true, 1 - release, false]] : [[false, 1, true]])
+      : [[on, undefined, false]];
+    let g!: SVGGElement;
+    for (const [o, overlay, plain] of layers) {
+      g = el('g', {}, svg);
+      g.setAttribute('data-node', n.id);
+      const floor = state.nodeAlpha?.[n.id];
+      if (dimming && !o) g.style.opacity = floor !== undefined ? String(Math.max(dimValue, floor)) : dim;
+      if (overlay !== undefined) g.style.opacity = String(overlay);
+      if (appear !== undefined) {
+        g.style.opacity = String(appear);
+        g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${0.4 + 0.6 * appear}) translate(${-n.x} ${-n.y})`);
+      }
+      drawNode(n, o, g, true, plain);
+    }
+    // A lit copy on top, for a node crossing between lit and resting.
+    const k = state.litAmount?.[n.id];
+    if (!on && k !== undefined && k > 0) {
+      const top = el('g', {}, svg);
+      top.style.opacity = String(Math.min(1, k) * (appear ?? 1));
+      if (appear !== undefined) top.setAttribute('transform', g.getAttribute('transform')!);
+      drawNode(n, true, top, false);
+    }
   }
 
   if (state.dots && (state.dots.appear ?? 1) > 0) drawDots(svg, byId.get('blade')!, state.dots);

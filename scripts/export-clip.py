@@ -9,6 +9,10 @@ import sys, time, subprocess
 from playwright.sync_api import sync_playwright
 
 url, out = sys.argv[1], sys.argv[2]
+# Without play=0 the page's own clock keeps painting while the exporter seeks,
+# and whatever lands in the screenshot depends on who ran last.
+if 'play=' not in url:
+    url += ('&' if '?' in url else '?') + 'play=0'
 fps = int(sys.argv[3]) if len(sys.argv) > 3 else 60
 scale = int(sys.argv[4]) if len(sys.argv) > 4 else 2
 limit = int(sys.argv[5]) if len(sys.argv) > 5 else None
@@ -21,6 +25,21 @@ with sync_playwright() as p:
     page.goto(url)
     page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=120000)
     page.evaluate("document.fonts.ready")
+    # Nothing may still be moving the picture: two frames apart, same pixels and
+    # same probe.
+    steady = False
+    for _ in range(10):
+        a = page.screenshot()
+        probe_a = page.evaluate('window.__openingProbe ? JSON.stringify(window.__openingProbe()) : ""')
+        page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+        b = page.screenshot()
+        probe_b = page.evaluate('window.__openingProbe ? JSON.stringify(window.__openingProbe()) : ""')
+        if a == b and probe_a == probe_b:
+            steady = True
+            break
+        time.sleep(0.2)
+    if not steady:
+        raise SystemExit('the page is still playing; the export would not be deterministic')
     duration = page.evaluate("window.__duration")
     total = int(round((duration - start_at) * fps))
     if limit: total = min(total, limit)

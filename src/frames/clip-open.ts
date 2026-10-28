@@ -9,8 +9,13 @@ import { bladePoint } from '../hero-blade';
 import { renderGraph } from './graph';
 import type { GraphState } from './data';
 import type { Theme } from './scene';
+import {
+  netGraph, highlightAt, flashAt as flashTrain, rotorSpeed, RING_FLASHES, ENGINE_FLASHES, RING_FLASH, ENGINE_FLASH,
+  CAPTION_FADE, REL_PLAN, BIZ_PLAN, GROUP_START, E3_START, relProgress, HIGHLIGHT_IN,
+} from './opening-net';
+import { createFlow } from './opening-flow';
 
-export const DURATION = 23.0;
+export const DURATION = 30.0;
 
 const RING = 'turbine.stage-1-blades';
 const DISC = 'turbine.stage-1-disk';
@@ -20,6 +25,15 @@ const VIEW_DIR = new THREE.Vector3(0.836, 0.271, 0.477).normalize();
 const LIT = new THREE.Color('#1c5fb8');
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+// Opening 3B: 23.0-30.0.
+const M3B = 23.0;
+const GHOST_END = 24.6;
+const GHOST: [number, number] = [23.0, 24.6];
+const CUT: [number, number] = [24.0, 25.6];
+const GHOST_COMPONENTS = new Set(['nacelle.duct', 'fan-cowl.aft', 'fan-cowl.lip', 'fan-cowl.shell', 'core-casing.bolts', 'core-casing.drum', 'core-casing.inner-wall', 'core-casing.tiles']);
+const TAG_HTML = '<small>燃烧室 · 外购</small><span class="tag-count"><b class="mono-sm">PO-26-1187</b></span><small>刚连上：采购订单 → 燃烧室</small>';
+const CAPTION_OLD = '第一级涡轮叶片';
+const CAPTION_NEW = '7 号发动机 · 总装中';
 const seg = (t: number, a: number, b: number) => clamp01((t - a) / (b - a));
 const smoother = (p: number) => p * p * p * (p * (p * 6 - 15) + 10);
 const smootherAt = (t: number, a: number, b: number) => smoother(seg(t, a, b));
@@ -42,6 +56,10 @@ function bladesShown(t: number) {
 // Integral of the decaying spin rate, so the landing starts at 8°/s exactly.
 const spinIntegral = (u: number) => u - u ** 6 + 3 * u ** 5 - 2.5 * u ** 4;
 
+// Depth shells and outlines are also drawn in the second pass; everything else
+// is already on screen by then.
+const SECOND = 1;
+
 export async function mountOpening(theme: Theme) {
   const params = new URLSearchParams(location.search);
   const maskMode = params.get('mask');
@@ -49,6 +67,9 @@ export async function mountOpening(theme: Theme) {
   const diskMode = maskMode === 'disk' || maskMode === 'disk-solid';
   const partMask = maskMode && maskMode.startsWith('part:') ? maskMode.slice(5).split(',') : null;
   const solo = params.get('solo') ? params.get('solo')!.split(',') : null;
+  // Debug: hide the depth-only shells ('1' or 'all' for every kind).
+  const noShells = params.get('noshells') ?? '';
+  const hideShell = (kind: string) => noShells === '1' || noShells === 'all' || noShells === kind;
   const open = await createOpenScene(theme, mask);
   const { view, scene, camera, hero, tilt, spin, center, Y3 } = open;
 
@@ -64,6 +85,23 @@ export async function mountOpening(theme: Theme) {
     const inst = o as THREE.InstancedMesh;
     if (inst.isInstancedMesh) instanceSnapshots.set(inst, Float32Array.from(inst.instanceMatrix.array));
   });
+  // The assembled-engine framing is measured here, while every part still sits
+  // visible in assembly position and nothing hangs under the engine: that is the
+  // box treeToNet() frames, and it has to be measured in engine space, not in the
+  // opening rig's scaled space.
+  const m3FitPos = new THREE.Vector3();
+  const m3FitTarget = new THREE.Vector3();
+  {
+    engine.root.updateMatrixWorld(true);
+    const pos = camera.position.clone();
+    const quat = camera.quaternion.clone();
+    const pose = view.fit([engine], new THREE.Vector3(0.78, 0.34, 0.92), { x: 0.78, y: 0.70 }, new THREE.Vector2(-0.06, 0.02));
+    camera.position.copy(pos);
+    camera.quaternion.copy(quat);
+    camera.updateMatrixWorld();
+    m3FitPos.copy(pose.position);
+    m3FitTarget.copy(pose.target);
+  }
   engine.setVisible(allComponentIds, false);
   engine.root.updateMatrixWorld(true);
 
@@ -196,11 +234,6 @@ export async function mountOpening(theme: Theme) {
   let m2Target = new THREE.Vector3();
   let m2Distance = 6;
 
-  const m3FitPos = new THREE.Vector3();
-  const m3FitTarget = new THREE.Vector3();
-  let m3Distance = 1;
-
-
   function cameraAt(t: number) {
     if (t <= 5.0) {
       camera.position.copy(camStart);
@@ -251,6 +284,12 @@ export async function mountOpening(theme: Theme) {
     );
     camera.near = Math.max(0.001, dist * nearFarRatio.near);
     camera.far = dist * nearFarRatio.far;
+    if (t > M3B) {
+      // frame=net renders with the view's own clip range; reach it by 24.6.
+      const u = smootherAt(t, M3B, GHOST_END);
+      camera.near = lerp(camera.near, 0.05, u);
+      camera.far = lerp(camera.far, 80, u);
+    }
     camera.updateProjectionMatrix();
   }
 
@@ -299,6 +338,13 @@ export async function mountOpening(theme: Theme) {
       cam.bottom = bt * lerp(s, ext, u);
       cam.near = Math.max(0.01, nr * lerp(s, 1, u));
       cam.far = fr * lerp(s, 8, u);
+      if (t > M3B) {
+        // Back to the view's own shadow frustum, which frame=net renders with.
+        const w = smootherAt(t, M3B, GHOST_END);
+        cam.left = lerp(cam.left, l, w); cam.right = lerp(cam.right, r, w);
+        cam.top = lerp(cam.top, tp, w); cam.bottom = lerp(cam.bottom, bt, w);
+        cam.near = lerp(cam.near, nr, w); cam.far = lerp(cam.far, fr, w);
+      }
       cam.updateProjectionMatrix();
       void k;
     }
@@ -370,6 +416,7 @@ export async function mountOpening(theme: Theme) {
       lines.computeLineDistances();
       lines.visible = false;
       scene.add(lines);
+      lines.layers.enable(SECOND);
       ringOutlines.push(lines);
     }
     edges.dispose();
@@ -391,6 +438,7 @@ export async function mountOpening(theme: Theme) {
     shell.receiveShadow = false;
     shell.renderOrder = -1;
     bladeMesh.parent!.add(shell);
+    shell.layers.enable(SECOND);
     ringShell = shell;
   }
 
@@ -410,6 +458,7 @@ export async function mountOpening(theme: Theme) {
       const lines = new LineSegments2(new LineSegmentsGeometry().fromEdgesGeometry(edges), ringLineMat);
       lines.computeLineDistances();
       lines.visible = false;
+      lines.layers.enable(SECOND);
       mesh.add(lines);
       discLines.push(lines);
       edges.dispose();
@@ -458,7 +507,7 @@ export async function mountOpening(theme: Theme) {
   }
   let solidNow = -1;
   function ringAt(t: number) {
-    if (solo) { engine.setVisible(RING, false); if (ringShell) ringShell.visible = false; return; }
+    if (solo && !solo.includes(RING)) { engine.setVisible(RING, false); if (ringShell) ringShell.visible = false; return; }
     const shown = bladesShown(t);
     const solid = solidBlades(t);
     if (shown !== shownNow || solid !== solidNow) {
@@ -473,7 +522,7 @@ export async function mountOpening(theme: Theme) {
       const width = n === 1 ? 0 : outlineFor(n);
       outline.visible = n <= shown && t < start + width && !noLines;
     }
-    if (ringShell) ringShell.visible = t < 8.75;
+    if (ringShell) ringShell.visible = t < 8.75 && !hideShell('ring');
   }
 
   // ---- flash --------------------------------------------------------------
@@ -539,6 +588,15 @@ export async function mountOpening(theme: Theme) {
     const two = t >= 8.8;
     const appear = smootherAt(t, 1.0, 1.4);
     if (mask) return;
+    if (t >= M3B) {
+      const net = netGraph(t);
+      renderGraph(graphEl, net.state);
+      lastGraphNodes = net.nodes;
+      lastPulse = Object.keys(net.state.pulses ?? {});
+      lastEdges = net.progress;
+      return;
+    }
+    lastEdges = {};
     if (appear <= 0) {
       renderGraph(graphEl, { focus: false, lit: [], litEdges: [], chip: {}, status: {}, timing: [], only: [], counter: '0 个节点 · 0 条关系' });
       return;
@@ -629,6 +687,7 @@ export async function mountOpening(theme: Theme) {
     }
     edges.dispose();
     const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(out), mat);
+    lines.layers.enable(SECOND);
     lines.computeLineDistances();
     lines.visible = false;
     return lines;
@@ -666,6 +725,7 @@ export async function mountOpening(theme: Theme) {
         if (!mask) {
           const l = buildEdges(mesh, lineMat);
           mesh.add(l);
+          l.layers.enable(SECOND);
           lines.push(l);
           // Depth-only twin of the unswept half, so interior lines stay hidden.
           const twin = mesh.clone() as THREE.Mesh & { instanceMatrix?: THREE.InstancedBufferAttribute };
@@ -678,6 +738,7 @@ export async function mountOpening(theme: Theme) {
           twin.receiveShadow = false;
           twin.renderOrder = -1;
           mesh.parent!.add(twin);
+          twin.layers.enable(SECOND);
           shells.push(twin);
         }
       }
@@ -751,6 +812,7 @@ export async function mountOpening(theme: Theme) {
         }
       }
       const lines = new LineSegments2(new LineSegmentsGeometry().setPositions(arr), fanMat);
+      lines.layers.enable(SECOND);
       lines.computeLineDistances();
       lines.visible = false;
       scene.add(lines);
@@ -770,6 +832,7 @@ export async function mountOpening(theme: Theme) {
     shell.receiveShadow = false;
     shell.renderOrder = -1;
     fanMesh.parent!.add(shell);
+    shell.layers.enable(SECOND);
     fanShell = shell;
   }
   let fanSolidNow = -1;
@@ -788,7 +851,7 @@ export async function mountOpening(theme: Theme) {
     }
     const tips = components.find(c => c.meta.id === 'fan.blade-tips');
     if (tips) engine.setVisible('fan.blade-tips', t >= fanStart(1) + fanOutline);
-    if (fanShell) fanShell.visible = t < 21.0;
+    if (fanShell) fanShell.visible = t < 21.0 && !hideShell('fan');
   }
   engineGroup.matrix.copy(Qinv);
   engineGroup.updateMatrixWorld(true);
@@ -809,7 +872,7 @@ export async function mountOpening(theme: Theme) {
       mat.clippingPlanes = [p.linePlane];
     }
     for (const sh of p.shells) {
-      sh.visible = linesOn;
+      sh.visible = linesOn && !hideShell('piece');
       (sh.material as THREE.Material).clippingPlanes = [p.linePlane];
     }
     if (p.axis === 'y') {
@@ -886,8 +949,10 @@ export async function mountOpening(theme: Theme) {
     }
   }
   const flashOf = (piece: Piece) => piece.start + piece.sweepTo;
+  // Every piece flashes as it finishes laying metal. The spinner has no node of
+  // its own (it belongs to the fan), so its pulse lands on a name no node has.
   const M2_FLASH: { id: string; time: number; pieces: Piece[]; amp?: number; dur?: number }[] = [
-    ...m3Pieces.filter(m => m.node).map(m => ({ id: m.node, time: m.piece.start + m.piece.sweepTo, pieces: [m.piece] })),
+    ...m3Pieces.map(m => ({ id: m.node ?? 'fan-spinner', time: m.piece.start + m.piece.sweepTo, pieces: [m.piece] })),
     { id: 'e7', time: 22.00, pieces: [...stagePieces, ...compPieces, ...m3Pieces.map(m => m.piece)], amp: 0.15, dur: 0.5 },
     ...STAGE_GROUPS.map((g, i) => ({ id: g.node, time: flashOf(stagePieces[i]), pieces: [stagePieces[i]] })),
     { id: 'm-turb', time: 12.60, pieces: stagePieces },
@@ -908,7 +973,8 @@ export async function mountOpening(theme: Theme) {
       tint.mat.color.copy(colour);
     }
   }
-  for (const p of pieces) m2Box.union(p.box);
+  // Only the milestone-two pieces, so the aim matches a15ba3a.
+  for (const p of [...stagePieces, shaftPiece, ...compPieces]) m2Box.union(p.box);
   m2Target = m2Box.getCenter(new THREE.Vector3());
   for (const x of [m2Box.min.x, m2Box.max.x]) for (const y of [m2Box.min.y, m2Box.max.y]) for (const z of [m2Box.min.z, m2Box.max.z]) m2Corners.push(new THREE.Vector3(x, y, z));
   for (let i = 0; i < 10; i++) {
@@ -943,6 +1009,8 @@ export async function mountOpening(theme: Theme) {
     for (let pi = 0; pi < pieces.length; pi++) {
       const a = amounts.get(pieces[pi]) ?? 0;
       const piece = pieces[pi];
+      // From 3B on, m3bAt() writes every piece colour itself.
+      if (t >= M3B) continue;
       if (a <= 0.0005) {
         if (piece.idle !== 1) {
           for (const tint of pieceTints[pi]) writeTint(tint, tint.base);
@@ -957,54 +1025,219 @@ export async function mountOpening(theme: Theme) {
     }
   }
 
-  function computeM3Fit() {
-    const detached: { obj: THREE.Object3D; parent: THREE.Object3D }[] = [];
-    const take = (obj: THREE.Object3D | null) => {
-      if (obj && obj.parent) { detached.push({ obj, parent: obj.parent }); obj.removeFromParent(); }
-    };
-    for (const p of pieces) { for (const l of p.lines) take(l); for (const sh of p.shells) take(sh); }
-    for (const l of ringOutlines) take(l);
-    take(ringShell);
-    for (const l of fanOutlines) take(l);
-    take(fanShell);
-    const pos = camera.position.clone();
-    const quat = camera.quaternion.clone();
-    const pose = view.fit([engine], new THREE.Vector3(0.78, 0.34, 0.92), { x: 0.78, y: 0.70 }, new THREE.Vector2(-0.06, 0.02));
-    camera.position.copy(pos);
-    camera.quaternion.copy(quat);
-    camera.updateMatrixWorld();
-    for (const d of detached) d.parent.add(d.obj);
-    m3FitPos.copy(pose.position);
-    m3FitTarget.copy(pose.target);
-    m3Distance = m3FitPos.distanceTo(m3FitTarget);
+  // Metal first, with the shells and outlines out of the way, so a depth shell
+  // can never erase a part that is already solid. The second pass starts the
+  // depth buffer over and draws the whole scene again: the shells fill depth
+  // first and clip the outlines exactly as before, while the metal colour from
+  // the first pass stays on screen.
+  function drawFrame() {
+    // Before milestone two the picture has to stay exactly what frame=open
+    // draws, so the first 9.6 seconds keep the single pass.
+    if (mask || appliedT < 9.6) { view.render(); passesNow = 1; return; }
+    const hidden: THREE.Object3D[] = [];
+    const hide = (o: THREE.Object3D | null) => { if (o && o.visible) { hidden.push(o); o.visible = false; } };
+    for (const p of pieces) { for (const l of p.lines) hide(l); for (const sh of p.shells) hide(sh); }
+    for (const l of ringOutlines) hide(l);
+    for (const l of discLines) hide(l);
+    for (const l of fanOutlines) hide(l);
+    hide(ringShell);
+    hide(fanShell);
+    if (!hidden.length && blendNow > 0 && blendNow < 1) { drawBlend(); passesNow = 1; return; }
+    view.render();
+    // With no outline or depth shell on screen the second pass would only draw
+    // every translucent surface a second time.
+    if (!hidden.length) { passesNow = 1; return; }
+    for (const o of hidden) o.visible = true;
+    view.renderSecond();
+    passesNow = 2;
   }
-  computeM3Fit();
+  let passesNow = 1;
 
   // ---- frame --------------------------------------------------------------
   let lastBladeState = '';
   let appliedT = 0;
   let lastGraphNodes: string[] = [];
   let lastPulse: string[] = [];
+  let lastEdges: Record<string, number> = {};
   function attached(t: number) {
     appliedT = t;
     discAt(t);
     ringAt(t);
   }
-  const OMEGA = 360 / 5.4;
+  // Spin up 22.0-23.2, cruise to 26.0, ease out by 28.0: the integral is
+  // 0.6 + 2.8 + 1.0 = 4.4 turns at omega, so the blades stop on 360 degrees.
+  const OMEGA = 360 / 4.4;
   const rotorIntegral = (u: number) => u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
   function rotorDegrees(t: number) {
     if (t <= 22.0) return 0;
+    if (t >= 28.0) return 360;
     const ramp = Math.min(1, (t - 22.0) / 1.2);
-    const after = Math.max(0, t - 23.2);
-    return OMEGA * (1.2 * rotorIntegral(ramp) + after);
+    const cruise = Math.max(0, Math.min(t, 26.0) - 23.2);
+    const easeOut = t > 26.0 ? (t - 26.0) - 2 * rotorIntegral((t - 26.0) / 2) : 0;
+    return OMEGA * (1.2 * rotorIntegral(ramp) + cruise + easeOut);
   }
   const rotorGroups = engine.modules.flatMap(m => m.components).filter(c => c.rotor).map(c => c.group);
   let rotorNow = 0;
   function rotorAt(t: number) {
     const deg = params.get('norotor') === '1' ? 0 : rotorDegrees(t);
     rotorNow = deg;
-    for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg);
+    for (const g of rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg % 360);
   }
+
+  // ---- opening 3B: shells to ghosts, cutaway, airflow, highlight, flashes ----
+  const flowMask = maskMode === 'flow';
+  const noFlow = params.get('noflow') === '1';
+  const flow = createFlow(engineGroup);
+  if (flowMask) {
+    // Where flow lines can show at all: the full paths, solid black, on top.
+    const fm = flow.material;
+    fm.color.set(0x000000); fm.linewidth = 7; fm.depthTest = false; fm.transparent = false; fm.dashed = false;
+    fm.needsUpdate = true;
+  }
+  const ghostColor = view.ghostColor;
+  const ghostMats: THREE.MeshStandardMaterial[] = [];
+  const ghostMeshes: THREE.Mesh[] = [];
+  const ghostTints = new Set<Tint>();
+  for (let pi = 0; pi < pieces.length; pi++) {
+    const p = pieces[pi];
+    for (const mesh of p.meshes) {
+      if (!GHOST_COMPONENTS.has(mesh.parent?.name ?? '')) continue;
+      ghostMeshes.push(mesh);
+      ghostMats.push(mesh.material as THREE.MeshStandardMaterial);
+    }
+    for (const tint of pieceTints[pi]) {
+      const owner = tint.mesh ?? p.meshes.find(m => m.material === tint.mat);
+      if (owner && GHOST_COMPONENTS.has(owner.parent?.name ?? '')) ghostTints.add(tint);
+    }
+  }
+  const combIndex = pieces.indexOf(m3Pieces[0].piece);
+  const e7Set = new Set<Piece>([...stagePieces, ...compPieces, ...m3Pieces.map(m => m.piece)]);
+  const cutPlane = new THREE.Plane();
+  const tint3 = new THREE.Color();
+  let ghostNow = 0, cutNow = 0, highlightNow = 0;
+  const calloutSvg = document.querySelector<SVGSVGElement>('#callouts')!;
+  const calloutLabels = document.querySelector<HTMLElement>('#callout-labels')!;
+  const captionRight = document.querySelector<HTMLElement>('.col-model .model-caption span + span');
+  let captionKey = '';
+  let tagKey = '';
+  function captionAt(t: number) {
+    if (!captionRight) return;
+    const k = smootherAt(t, CAPTION_FADE[0], CAPTION_FADE[1]);
+    const key = k <= 0 ? 'old' : k >= 1 ? 'new' : k.toFixed(5);
+    if (key === captionKey) return;
+    captionKey = key;
+    if (k <= 0) captionRight.textContent = CAPTION_OLD;
+    else if (k >= 1) captionRight.textContent = CAPTION_NEW;
+    else captionRight.innerHTML = '<span style="display:inline-grid;justify-items:end">'
+      + `<span style="grid-area:1/1;opacity:${1 - k}">${CAPTION_OLD}</span>`
+      + `<span style="grid-area:1/1;opacity:${k}">${CAPTION_NEW}</span></span>`;
+  }
+  // The PO-26-1187 tag, written exactly as treeToNet() writes it once it is full.
+  function tagAt(t: number) {
+    const h = highlightAt(t);
+    const key = h <= 0 ? 'off' : h.toFixed(5);
+    if (key === tagKey) return;
+    tagKey = key;
+    calloutSvg.innerHTML = '';
+    calloutLabels.innerHTML = '';
+    if (h <= 0) return;
+    const p = view.project(view.worldOf(engine, 'combustor.inner-shell.001')!);
+    const lx = 780, ly = 250, colour = 'var(--lit)';
+    const marks = `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${colour}"/>`
+      + `<path d="M${p.x} ${p.y} L${lx - 30} ${ly} H${lx - 10}" fill="none" stroke="${colour}" stroke-width="1" opacity="0.8"/>`;
+    calloutSvg.insertAdjacentHTML('beforeend', h >= 1 ? marks : `<g style="opacity:${h}">${marks}</g>`);
+    calloutLabels.insertAdjacentHTML('beforeend',
+      `<div class="tag tone-lit" style="left:${lx}px;top:${ly}px${h >= 1 ? '' : `;opacity:${h}`}">${TAG_HTML}</div>`);
+  }
+  // setGhost turns shadows off at 0.5 and depth writes off at 0.6. Each switch
+  // alone is a visible jump, so across both the picture is a crossfade of the
+  // frame with the switches still on and the frame with them off.
+  const SWITCH: [number, number] = [0.35, 0.75];
+  let blendNow = 0;
+  let blendTex: THREE.FramebufferTexture | null = null;
+  const blendScene = new THREE.Scene();
+  const blendCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const blendMat = new THREE.ShaderMaterial({
+    uniforms: { map: { value: null }, alpha: { value: 1 } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform float alpha; varying vec2 vUv; void main() { gl_FragColor = vec4(texture2D(map, vUv).rgb, alpha); }',
+    transparent: true, depthTest: false, depthWrite: false, toneMapped: false,
+  });
+  blendScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blendMat));
+  function setSwitches(off: boolean) {
+    for (const m of ghostMats) m.depthWrite = !off;
+    for (const mesh of ghostMeshes) { mesh.castShadow = !off; mesh.receiveShadow = !off; }
+  }
+  function drawBlend() {
+    const r = view.renderer;
+    setSwitches(false);
+    view.render();
+    const size = r.getDrawingBufferSize(new THREE.Vector2());
+    if (!blendTex || blendTex.image.width !== size.x || blendTex.image.height !== size.y) {
+      blendTex?.dispose();
+      blendTex = new THREE.FramebufferTexture(size.x, size.y);
+    }
+    r.copyFramebufferToTexture(blendTex);
+    setSwitches(true);
+    view.render();
+    blendMat.uniforms.map.value = blendTex;
+    blendMat.uniforms.alpha.value = 1 - blendNow;
+    r.autoClear = false;
+    r.render(blendScene, blendCam);
+    r.autoClear = true;
+  }
+  function m3bAt(t: number) {
+    const g = smootherAt(t, GHOST[0], GHOST[1]);
+    blendNow = mask ? 0 : smoother(clamp01((g - SWITCH[0]) / (SWITCH[1] - SWITCH[0])));
+    const c = smootherAt(t, CUT[0], CUT[1]);
+    const h = highlightAt(t);
+    ghostNow = g; cutNow = c; highlightNow = h;
+    flow.set(rotorSpeed(t), rotorDegrees(t), noFlow || mask);
+    if (mask) return;
+    for (const m of ghostMats) view.ghostMaterial(m, g);
+    for (const mesh of ghostMeshes) { mesh.castShadow = g < 0.5; mesh.receiveShadow = g < 0.5; }
+    if (c > 0) {
+      // view.cutaway()'s plane, from the camera that stands still after 21.9 s.
+      engine.root.updateMatrixWorld(true);
+      const axis = new THREE.Vector3(1, 0, 0).transformDirection(engine.root.matrixWorld);
+      const origin = new THREE.Vector3().setFromMatrixPosition(engine.root.matrixWorld);
+      const toCamera = camera.position.clone().sub(origin);
+      const normal = toCamera.sub(axis.clone().multiplyScalar(toCamera.dot(axis))).normalize().negate();
+      cutPlane.setFromNormalAndCoplanarPoint(normal, origin);
+      cutPlane.constant += (1 - c) * 1.4 * engine.root.scale.x;
+      for (const m of ghostMats) m.clippingPlanes = [cutPlane];
+    }
+    captionAt(t);
+    tagAt(t);
+    if (t < M3B) return;
+    const e7a = noFlash ? 0 : flashTrain(ENGINE_FLASHES, ENGINE_FLASH, t);
+    const ringA = noFlash ? 0 : flashTrain(RING_FLASHES, RING_FLASH, t);
+    for (let pi = 0; pi < pieces.length; pi++) {
+      const piece = pieces[pi];
+      // So m2At writes the base colours again if the playhead goes back.
+      piece.idle = 0;
+      const a = e7Set.has(piece) ? e7a : 0;
+      const comb = pi === combIndex && h > 0;
+      for (const tint of pieceTints[pi]) {
+        tint3.copy(tint.base);
+        if (ghostTints.has(tint)) tint3.lerp(ghostColor, g);
+        if (comb) {
+          if (h >= 1) tint3.copy(LIT);
+          else tint3.convertLinearToSRGB().lerp(LIT_SRGB, h).convertSRGBToLinear();
+        }
+        if (a > 0.0005) tint3.convertLinearToSRGB().lerp(LIT_SRGB, a).convertSRGBToLinear();
+        writeTint(tint, tint3);
+      }
+    }
+    if (ringA > 0.0005) {
+      for (let n = 1; n <= 100; n++) {
+        const state = engine.parts.get(bladeId(n));
+        if (!state) continue;
+        engine.setColor(bladeId(n), tint3.copy(state.baseColor).convertLinearToSRGB().lerp(LIT_SRGB, ringA).convertSRGBToLinear());
+      }
+    }
+  }
+  if (!mask) calloutSvg.setAttribute('viewBox', '0 0 1280 1080');
 
   function apply(t: number, render = true) {
     appliedT = t;
@@ -1026,8 +1259,10 @@ export async function mountOpening(theme: Theme) {
       open.hero.root.visible = true;
       discAt(t);
       ringAt(t);
+      // So a seek back from 3B leaves no flow, caption or tag behind.
+      m3bAt(t);
       if (!mask) { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     {
@@ -1047,15 +1282,31 @@ export async function mountOpening(theme: Theme) {
       : smootherAt(t, 7.30, 7.60);
     hero.root.updateMatrixWorld(true);
     open.hero.root.visible = fade < 0.999;
+    if (flowMask) {
+      hero.root.visible = false;
+      open.hero.root.visible = false;
+      engine.setVisible(allComponentIds, false);
+      cameraAt(t);
+      lightsAt(t);
+      flow.set(rotorSpeed(t), rotorDegrees(t), false);
+      // Opaque in the mask, or the canvas alpha lets the page show through.
+      flow.group.visible = true;
+      flow.material.opacity = 1;
+      if (render) drawFrame();
+      return;
+    }
     if (partMask) {
       hero.root.visible = false;
       open.hero.root.visible = false;
-      engine.setVisible(RING, false);
+      // Before 3B a ring mask stays empty, as the 3A checks were measured with.
+      engine.setVisible(RING, t >= M3B && partMask.includes(RING));
       engine.setVisible(DISC, false);
       cameraAt(t);
       lightsAt(t);
+      // From 3B on the masks follow the turning rotor.
+      if (t >= M3B) rotorAt(t);
       appliedT = t;
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     if (diskMode) {
@@ -1065,7 +1316,7 @@ export async function mountOpening(theme: Theme) {
       cameraAt(t);
       lightsAt(t);
       discAt(t);
-      if (render) view.render();
+      if (render) drawFrame();
       return;
     }
     cameraAt(t);
@@ -1104,6 +1355,7 @@ export async function mountOpening(theme: Theme) {
     lastBladeState = bladeState;
     if (t >= 9.6) m2At(t);
     rotorAt(t);
+    m3bAt(t);
     graphAt(t);
     if (!mask) {
       const first = firstBladeTip();
@@ -1115,7 +1367,7 @@ export async function mountOpening(theme: Theme) {
       if (tip && threadFade > 0.002) line(secondPath, secondDot, tip, { x: 1573, y: 330 }, 6, seg(t, 8.8, 9.2), 0.85 * threadFade);
       else { secondPath.style.opacity = '0'; secondDot.style.opacity = '0'; }
     }
-    if (render) view.render();
+    if (render) drawFrame();
   }
 
   function firstBladeTip() {
@@ -1125,7 +1377,10 @@ export async function mountOpening(theme: Theme) {
     return a.x >= b.x ? a : b;
   }
 
-  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => apply(t);
+  // A seek is the exporter driving the picture; the live loop must get out of
+  // its way from then on, even if the address forgot play=0.
+  let seeked = false;
+  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => { seeked = true; apply(t); };
   (window as unknown as { __duration: number }).__duration = DURATION;
   if (mask) {
     document.querySelector<HTMLElement>('.col-graph')!.style.visibility = 'hidden';
@@ -1140,6 +1395,12 @@ export async function mountOpening(theme: Theme) {
       d.setAttribute('r', '2.5'); d.setAttribute('fill', 'var(--lit)'); d.setAttribute('opacity', '0.85');
     }
   }
+  // For the cross-section check: drawn flow segments and the parts on screen.
+  (window as unknown as { __flowGeometry: () => unknown }).__flowGeometry = () => ({
+    segments: flow.segments(engine.root),
+    visible: [...engine.parts.entries()].filter(([, st]) => st.visible).map(([id]) => id),
+    ghost: ghostNow,
+  });
   (window as unknown as { __openingProbe: () => unknown }).__openingProbe = () => {
     const threads = [firstPath, secondPath].map(p => {
       const d = p.getAttribute('d');
@@ -1184,6 +1445,20 @@ export async function mountOpening(theme: Theme) {
       threads,
       disc: { top: discTop, bottom: discBottom, parts: engine.listParts(DISC).length },
       rotor: rotorNow,
+      passes: passesNow,
+      partsVisible: [...engine.parts.values()].filter(st => st.visible).length,
+      m3b: {
+        ghost: ghostNow, cut: cutNow, highlight: highlightNow, flow: flow.opacity(), crossfade: blendNow,
+        edges: lastEdges,
+        caption: captionRight ? captionRight.textContent : null,
+        tag: calloutLabels.querySelector('.tag') ? (calloutLabels.querySelector<HTMLElement>('.tag')!.style.opacity || '1') : '0',
+        plane: cutPlane.normal.toArray().concat([cutPlane.constant]),
+        near: camera.near, far: camera.far,
+      },
+      shellsOn: [...pieces.filter(p => p.shells.some(sh => sh.visible)).map(p => p.ids[0]),
+        ...(ringShell && ringShell.visible ? ['ring'] : []),
+        ...(fanShell && fanShell.visible ? ['fan'] : [])],
+      rotorIds: components.filter(c => c.rotor).map(c => c.meta.id),
       fit: { position: m3FitPos.toArray(), target: m3FitTarget.toArray() },
       boxes: pieces.map(p => ({ ids: p.ids[0], y: [p.box.min.y, p.box.max.y], x: [p.box.min.x, p.box.max.x], start: p.start, dur: p.dur })),
       components: Object.fromEntries(pieces.flatMap(p => p.ids.map(id => [id, appliedT >= p.start]))),
@@ -1250,6 +1525,7 @@ export async function mountOpening(theme: Theme) {
   } else {
     const start = performance.now();
     const loop = (now: number) => {
+      if (seeked) return;
       apply(((now - start) / 1000) % (DURATION + 1.5));
       requestAnimationFrame(loop);
     };
