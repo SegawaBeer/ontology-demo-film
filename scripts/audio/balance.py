@@ -45,24 +45,24 @@ RANGES = {
     'line': (-8.0, -5.0), 'part': (-9.0, -6.0), 'slide': (-11.0, -8.0),
     'path': (None, -8.0), 'spin': (-13.0, -10.0), 'type': (-15.0, -12.0),
 }
-# Where fit_mix puts each category: 0.3 LU inside the loud end of its range
-# (room for ebur128's 0.1 LU rounding).  T can only rise by limiting the
-# thud (see CLEAN_LIMIT_DB), so the louder the others sit against T, the less
-# limiting -16 LUFS needs.
-AIM = {'thud': 0.0, 'alert': -2.3, 'tone': -3.3, 'line': -5.3, 'part': -6.3,
+# Where fit_mix puts each category, LU from T.  Mostly 0.3 LU inside the
+# loud end of the range (room for ebur128's 0.1 LU rounding): T is capped by
+# the thud's true peak, so this keeps the film as loud as the table allows.
+# line / tick-num sit 0.3 LU inside the quiet end instead: the small-speaker
+# check (九.5) wants the 250 Hz high-passed thud at least as loud as them,
+# and the high-pass takes about 6.8 dB off the thud and nothing off them.
+AIM = {'thud': 0.0, 'alert': -2.3, 'tone': -3.3, 'line': -7.7, 'part': -6.3,
        'slide': -8.3, 'path': -8.3, 'spin': -10.3, 'type': -12.3}
 ORDER = ['thud', 'alert', 'tone', 'line', 'part', 'slide', 'path', 'spin', 'type']
 TOL_LU = 0.05               # ebur128 prints 0.1 LU steps
 THUD_BODY = 0.9             # s: the thud's decay; M windows over it are "at 21.9 s"
-# How much the true-peak limiter may take off any sample.  The thud is a
-# 55 Hz decay: K-weighting takes 3.4 dB off it and its true peak is 12 dB
-# above its momentary loudness, so T is capped by the thud's true peak, and
-# the 8.1 table keeps everything else 2-12 LU under T.  Reaching -16 LUFS
-# (the default, no cap) takes about 48 dB off the thud for 0-64 s, holding
-# it near full level for about 0.85 s before it falls.  With CLEAN_LIMIT_DB
-# the thud keeps its decay and 0-64 s comes out at -21.7 LUFS, which fails
-# the -16 LUFS check (build_film_audio --max-limit-db 3).
+# Most the true-peak limiter may take off any sample (声音任务说明 九.1).  The
+# mix's output gain is the one at which the limiter takes exactly this off
+# the loudest true peak, the thud's; the integrated loudness then follows
+# from the 8.1 table (九.2: anywhere in -23 to -15 LUFS).  More limiting held
+# the thud near full level for most of a second (round three's default).
 CLEAN_LIMIT_DB = 3.0
+SMALL_SPEAKER_HZ = 250.0    # 九.5: 4th-order high-pass, roughly a laptop speaker
 FIT_TOL_LU = 0.02          # fit_mix: offsets from AIM, at a fixed output gain
 LUFS_TOL = 0.02            # fit_mix: integrated loudness from the target
 
@@ -161,13 +161,18 @@ def _at_gain(mx, st, m, gain_db, rounds=8):
     return m, env, mix, off, err
 
 
-def fit_mix(mx, st, target, max_limit_db=None, steps=24):
+def fit_mix(mx, st, target=None, max_limit_db=CLEAN_LIMIT_DB, steps=24):
     """Multipliers (dB, thud 0) and output gain that put every category at
-    AIM from T and the mix at `target` LUFS.  Returns (multipliers, record);
-    the record's gain_db is the output gain, where make_audio starts its
-    normalisation (it then stops at once, on the same mix).
+    AIM from T.  Returns (multipliers, record); the record's gain_db is the
+    output gain, which make_audio then uses as it is.
 
-    Searched over the output gain G: at a fixed G the multipliers follow
+    target None (the default): the output gain is the one at which the
+    limiter takes exactly max_limit_db off the balanced mix's loudest true
+    peak.  The thud's multiplier is fixed, so that gain hardly moves while
+    the others are placed; a few rounds settle it.
+
+    With a target (LUFS):
+    searched over the output gain G: at a fixed G the multipliers follow
     directly (_at_gain), and the integrated loudness I(G) of the balanced mix
     rises with G (more gain, more of the thud held at the limiter, T and
     everything set against it higher).  I(G) = target is solved by false
@@ -190,6 +195,23 @@ def fit_mix(mx, st, target, max_limit_db=None, steps=24):
                       'limit_db': g + tp - mx.CEILING_DBTP}
 
     mix0 = sum(x.astype(np.float64) * synth.db(m[c]) for c, x in st.items())
+    if target is None:
+        if max_limit_db is None:
+            raise SystemExit('balance: without a loudness target the limiter needs a cap')
+        g = mx.CEILING_DBTP + max_limit_db - 20 * np.log10(max(float(mx.true_peak_env(mix0).max()), 1e-12))
+        for _ in range(steps):
+            lufs, rec = loud(g)
+            cap = rec['gain_db'] - rec['limit_db'] + max_limit_db
+            if abs(cap - g) < 0.005:
+                break
+            g = cap
+        if rec['err'] >= 5 * FIT_TOL_LU:
+            raise SystemExit(f'balance: could not place the categories (error {rec["err"]:.2f} LU)')
+        out = {'evaluations': len(trail), 'max_error_lu': round(rec['err'], 3), 'capped': True,
+               'gain_db': rec['gain_db'], 'lufs': round(rec['lufs'], 2), 'max_limit_db': max_limit_db,
+               'limiter_on_loudest_peak_db': round(rec['limit_db'], 2),
+               'offsets': {c: round(v, 2) for c, v in rec['off'].items()}, 'trail': trail}
+        return {c: round(v, 4) for c, v in rec['m'].items()}, out
     g = target - integrated_np(mix0)                       # no limiting at all
     cap = None
     if max_limit_db is not None:
@@ -274,6 +296,41 @@ def rebuild(mx, cfg, x):
     g = cfg.get('gain_db_exact', cfg['gain_db'])
     env = synth.db(g) * mx.limit_gain(mix * synth.db(g))
     return st, env, float(np.abs(mix * env[:, None] - x).max())
+
+
+def small_speaker(st, env, x, start, thud_times):
+    """九.5: the output and each category stem through a 4th-order
+    SMALL_SPEAKER_HZ high-pass.  ok when the thud stem's momentary maximum is
+    at least the line / tick-num stem's.  Also reports the high-passed mix's
+    maximum over the thud and away from it."""
+    hp = signal.butter(4, SMALL_SPEAKER_HZ, 'highpass', fs=SR, output='sos')
+    lv = {c: _max_m(signal.sosfilt(hp, st[c] * env[:, None], axis=0), False)
+          for c in ('thud', 'line') if c in st}
+    t, m = momentary(signal.sosfilt(hp, x, axis=0))
+    t = t + start
+    at = np.zeros(len(t), dtype=bool)
+    for th in thud_times:
+        at |= (t > th) & (t - 0.4 < th + THUD_BODY)
+    res = {'highpass_hz': SMALL_SPEAKER_HZ,
+           'thud_M': round(lv['thud'][0], 1) if 'thud' in lv else None,
+           'line_M': round(lv['line'][0], 1) if 'line' in lv else None,
+           'mix_at_thud_M': round(float(m[at].max()), 1) if at.any() else None,
+           'mix_away_M': round(float(m[~at].max()), 1) if (~at).any() else None}
+    if 'thud' in lv and 'line' in lv:
+        res['margin_lu'] = round(lv['thud'][0] - lv['line'][0], 2)
+        res['ok'] = bool(lv['thud'][0] >= lv['line'][0] - TOL_LU)
+    else:
+        res['ok'] = 'thud' in lv
+    return res
+
+
+def limiter_record(cfg, env, start):
+    """Largest gain reduction of the limiter (dB) and when."""
+    g = cfg.get('gain_db_exact', cfg['gain_db'])
+    red = -20 * np.log10(np.maximum(env / synth.db(g), 1e-12))
+    k = int(np.argmax(red))
+    return {'max_reduction_db': round(float(red[k]), 2), 'at_s': round(start + k / SR, 3),
+            'seconds_reduced': round(float((red > 0.001).sum()) / SR, 3), 'limit_db': CLEAN_LIMIT_DB}
 
 
 def report(mx, cfg, x, built=None):

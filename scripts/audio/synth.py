@@ -7,6 +7,8 @@ at LEVELS[kind] dBFS (before the final loudness normalisation).
 
     python synth.py      # self-test of every voice
 """
+import functools
+
 import numpy as np
 from scipy import signal
 
@@ -35,6 +37,17 @@ SPIN_BLADES = 16
 SPIN_PITCH = 15.125
 SPIN_NOISE_CUT_HZ = 150.0
 SPIN_NOISE_CUT_DB = 6.0
+
+# Thud partials (声音任务说明 九.3): harmonic number of 55 Hz, level in dB.
+# 九.3 gives 330 Hz at -18 dB.  At those levels a 250 Hz high-pass (九.5)
+# takes 13 dB off the thud's momentary loudness, and the 8.1 table keeps
+# line / tick-num at least 5 LU under T, so the thud would fall 5-8 LU under
+# them on a small speaker.  330 Hz passes that high-pass best, so it alone is
+# raised, to -8 dB: the high-pass then takes 6.8 dB off, 83 % of the energy
+# stays at 55 and 110 Hz, and the spectral centre goes from 72 to 100 Hz.
+THUD_PARTIALS = ((1, 0.0), (2, -10.0), (4, -12.0), (6, -8.0))
+THUD_CLICK_S = 0.008        # noise transient through 300 Hz-1.5 kHz
+THUD_CLICK_DB = -16.0
 
 LN1000 = np.log(1000.0)          # exp(-LN1000 * t / t60) is -60 dB at t60
 
@@ -148,17 +161,59 @@ def tick(gain=1.0, pan=0.0, rng=None):
     return _out(burst / np.max(np.abs(burst)) + ping, 'tick', gain * level, pan)
 
 
+@functools.lru_cache(maxsize=None)
+def min_crest_phases(levels):
+    """Phases (rad) of partials 2.. that minimise the peak of
+    sum a_k sin(k w t + p_k), the fundamental at phase 0.  Coarse grid over
+    every phase, then Nelder-Mead; deterministic.  Returns (phases, peak,
+    peak with all phases 0)."""
+    from scipy.optimize import minimize
+    ks = np.array([k for k, _ in levels], dtype=np.float64)
+    amps = np.array([db(lv) for _, lv in levels])
+
+    def peaks(p, ph):
+        p = np.atleast_2d(p)
+        full = np.concatenate([np.zeros((len(p), 1)), p], axis=1)
+        x = (amps[None, :, None] * np.sin(ks[None, :, None] * ph[None, None, :] + full[:, :, None])).sum(axis=1)
+        return np.abs(x).max(axis=1)
+
+    coarse = np.linspace(0.0, 2 * np.pi, 1024, endpoint=False)
+    steps = np.linspace(0.0, 2 * np.pi, 16, endpoint=False)
+    grid = np.array(np.meshgrid(*[steps] * (len(ks) - 1), indexing='ij')).reshape(len(ks) - 1, -1).T
+    pk = np.concatenate([peaks(g, coarse) for g in np.array_split(grid, 16)])
+    fine = np.linspace(0.0, 2 * np.pi, 20000, endpoint=False)
+    f = lambda p: float(peaks(p, fine)[0])
+    best = None
+    for start in grid[np.argsort(pk)[:8]]:          # refine the 8 best grid points
+        simplex = np.vstack([start, start + 0.4 * np.eye(len(start))])
+        r = minimize(f, start, method='Nelder-Mead',
+                     options={'xatol': 1e-7, 'fatol': 1e-10, 'maxiter': 4000, 'initial_simplex': simplex})
+        if best is None or r.fun < best.fun:
+            best = r
+    r = best
+    return tuple(float(v) for v in np.mod(r.x, 2 * np.pi)), float(r.fun), float(peaks(np.zeros(len(ks) - 1), fine)[0])
+
+
 def thud(gain=1.0, pan=0.0, rng=None):
-    """55 Hz + 110 Hz (-10 dB), 5 ms attack, 0.9 s decay, plus 60 ms of noise
-    low-passed at 200 Hz."""
+    """Low thud, 5 ms attack, 0.9 s decay (声音任务说明 九.3): 55 Hz with
+    110 Hz (-10 dB), 220 Hz (-12 dB) and 330 Hz (THUD_PARTIALS) at the
+    phases with the smallest peak; 60 ms of noise low-passed at 200 Hz; and an
+    8 ms noise transient through 300 Hz-1.5 kHz, 16 dB under the 55 Hz tone,
+    so small speakers that cannot play 55 Hz still hear it."""
     rng = _rng(rng)
     t = np.arange(_n(0.92)) / SR
     env = _rise(t, 0.005) * np.exp(-LN1000 * np.maximum(0.0, t - 0.005) / 0.9)
-    body = env * (np.sin(2 * np.pi * 55.0 * t) + db(-10.0) * np.sin(2 * np.pi * 110.0 * t))
+    levels = THUD_PARTIALS
+    phases = (0.0,) + min_crest_phases(levels)[0]
+    body = sum(db(lv) * np.sin(2 * np.pi * 55.0 * k * t + p) for (k, lv), p in zip(levels, phases))
+    body = env * body
     noise = rng.standard_normal(len(t)) * np.exp(-LN1000 * t / 0.06) * (t < 0.06)
     noise = signal.sosfilt(_sos('lowpass', 200.0, 4), noise)
     noise *= db(-6.0) / np.max(np.abs(noise))
-    return _out(body + noise, 'thud', gain, pan)
+    click = rng.standard_normal(len(t)) * _gate(t, 0.0005, THUD_CLICK_S, 0.003)
+    click = signal.sosfilt(_sos('bandpass', (300.0, 1500.0), 2), click)
+    click *= db(THUD_CLICK_DB) / np.max(np.abs(click))
+    return _out(body + noise + click, 'thud', gain, pan)
 
 
 def _spin_scale():

@@ -35,7 +35,8 @@ import synth  # noqa: E402
 
 FFMPEG = '/opt/homebrew/bin/ffmpeg'
 SR = synth.SR
-TARGET_LUFS = -16.0
+TARGET_LUFS = -16.0                 # make_audio.py on its own (no balance)
+LUFS_RANGE = (-23.0, -15.0)         # 声音任务说明 九.2: the film's integrated loudness
 MAX_DBTP = -1.0
 CEILING_DBTP = -1.4                 # limiter ceiling, margin under -1 dBTP
 PAN = {'3d': 0.0, 'graph': 0.35, 'dialog': -0.35}

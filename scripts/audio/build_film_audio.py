@@ -12,15 +12,14 @@
    Adds the rotor's spin events after 30 s.  Everything goes into one table,
    OUT.events.json.
 3. Balances the categories against the 21.9 s thud (balance.py, 声音任务说明
-   8), synthesises, mixes and normalises (make_audio.py) from 0 to the last
-   page's __duration: 120 s for the whole film, 5,760,000 samples.
-   By default nothing caps the true-peak limiter, so every check passes:
-   with the 8.1 balance, -16 LUFS takes about 48 dB off the thud, whose
-   decay is then held near full level for about 0.85 s.  --max-limit-db 3
-   keeps the thud's decay; the mix then comes out near -22 LUFS and the
-   -16 LUFS check fails.  See balance.CLEAN_LIMIT_DB.
+   8.1), synthesises and mixes (make_audio.py) from 0 to the last page's
+   __duration: 120 s for the whole film, 5,760,000 samples.  The output gain
+   is the one at which the true-peak limiter takes 3 dB off the thud's peak
+   and never more anywhere (九.1); the integrated loudness follows from the
+   table (九.2 allows -23 to -15 LUFS).
 4. Runs every check (check_audio.py plus the samples and found checks of 7.5
-   and the balance and mix-peak checks of 8.2) and writes OUT.mix.json,
+   the balance and mix-peak checks of 8.2, the limiter and small-speaker
+   checks of 九) and writes OUT.mix.json,
    OUT.check.json and OUT.build.json.
 
 The output must be the full 120 s unless --out names another file (for
@@ -84,8 +83,8 @@ def write_table(path, events):
         f.write('[\n' + ',\n'.join(json.dumps(e, ensure_ascii=False) for e in events) + '\n]\n')
 
 
-def build(film_url, ending_url=None, out=None, target=make_audio.TARGET_LUFS,
-          max_limit_db=None):
+def build(film_url, ending_url=None, out=None, target=None,
+          max_limit_db=balance.CLEAN_LIMIT_DB):
     checks, info = {}, {}
 
     # 1. rotor and opening table
@@ -163,14 +162,8 @@ def main():
     ap.add_argument('--film', required=True, help='film page URL with &play=0')
     ap.add_argument('--ending', help='ending page URL with &play=0')
     ap.add_argument('--out', help=f'output WAV (default {DEFAULT_OUT})')
-    ap.add_argument('--lufs', type=float, default=make_audio.TARGET_LUFS,
-                    help='integrated loudness target (default -16)')
-    ap.add_argument('--max-limit-db', default='none',
-                    help="most the true-peak limiter may take off any sample, dB, or 'none' "
-                         f"(default none; {balance.CLEAN_LIMIT_DB} keeps the thud's decay)")
     a = ap.parse_args()
-    cap = None if a.max_limit_db.lower() == 'none' else float(a.max_limit_db)
-    r = build(a.film, a.ending, a.out, a.lufs, cap)
+    r = build(a.film, a.ending, a.out)
     for k, v in r['checks'].items():
         detail = r['check'].get(k, '')
         print(f"{'PASS' if v else 'FAIL'}  {k:16s} {json.dumps(detail, ensure_ascii=False)[:300]}")

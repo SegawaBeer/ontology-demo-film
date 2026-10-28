@@ -19,8 +19,11 @@
               overlaps from 25 ms before to 40 ms after.
   spin and slide follow a motion that starts from rest, so their sound rises
   with the motion; for them only the locate position is checked.
-- Loudness -16 +- 0.5 LUFS and true peak <= -1 dBTP (ffmpeg ebur128; loudnorm
-  as a second reading).
+- Loudness -23 to -15 LUFS integrated (九.2) and true peak <= -1 dBTP (ffmpeg
+  ebur128; loudnorm as a second reading).
+- Limiter (九.1): the true-peak limiter takes at most 3 dB off any sample.
+- Small speaker (九.5): through a 4th-order 250 Hz high-pass, the thud's
+  momentary maximum is at least the line / tick-num category's.
 - Balance (8.2): each category's momentary maximum from its solo stem, against
   the thud's (T) and the 8.1 ranges; and the mix's own momentary maximum away
   from the thud must not be above T (balance.py).
@@ -232,12 +235,10 @@ def run(path, expect_samples=None):
 
     lufs, tp = mx.ebur128(path)
     ln_i, ln_tp = loudnorm_reading(path)
-    target = cfg.get('target_lufs', mx.TARGET_LUFS)
-    # Always judged against the spec's -16 LUFS, whatever the mix aimed at.
-    ok['loudness'] = abs(lufs - mx.TARGET_LUFS) <= 0.5
+    lo, hi = mx.LUFS_RANGE
+    ok['loudness'] = lo <= lufs <= hi                     # 九.2
     ok['true_peak'] = tp <= mx.MAX_DBTP
-    res['loudness'] = {'ebur128_lufs': lufs, 'loudnorm_lufs': ln_i, 'target_lufs': target,
-                       'gain_capped': cfg.get('capped', False)}
+    res['loudness'] = {'ebur128_lufs': lufs, 'loudnorm_lufs': ln_i, 'range': [lo, hi]}
     res['true_peak'] = {'ebur128_dbtp': tp, 'loudnorm_dbtp': ln_tp}
 
     # 声音任务说明 8.2: each category's momentary maximum against T, and the
@@ -248,6 +249,17 @@ def run(path, expect_samples=None):
                       'rows': rows_b}
     ok['mix_peak'] = peak['ok']
     res['mix_peak'] = peak
+
+    # 九.1: the limiter never takes more than CLEAN_LIMIT_DB off; 九.5: on a
+    # small speaker (250 Hz high-pass) the thud is not quieter than line / tick-num.
+    st, env, _ = built
+    lim = balance.limiter_record(cfg, env, cfg['start'])
+    ok['limiter'] = lim['max_reduction_db'] <= balance.CLEAN_LIMIT_DB + 0.05
+    res['limiter'] = lim
+    thuds = [e['t'] for e in mx.load_events(cfg['events']) if e['kind'] == 'thud']
+    small = balance.small_speaker(st, env, x, cfg['start'], thuds)
+    ok['small_speaker'] = small['ok']
+    res['small_speaker'] = small
 
     full = 1.0 - 1.5 / (1 << 23)
     clipped = int((np.abs(x) >= full).sum())
