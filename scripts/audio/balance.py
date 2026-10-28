@@ -8,7 +8,7 @@ true-peak limiter's gain, sample by sample, so the stems add up exactly to
 the output file).  T is the thud's level.
 
     fit_mix(...)  per-category multipliers (dB) that put every category at
-                  AIM relative to T, with the limiter in the loop
+                  AIM relative to T, with normalisation and limiter in the loop
     report(...)   for a written mix: each category's level, offset from T and
                   whether it is in range; the mix's highest M, and its highest
                   M away from the thud (must be <= T)
@@ -45,18 +45,26 @@ RANGES = {
     'line': (-8.0, -5.0), 'part': (-9.0, -6.0), 'slide': (-11.0, -8.0),
     'path': (None, -8.0), 'spin': (-13.0, -10.0), 'type': (-15.0, -12.0),
 }
-# Where fit_mix puts each category: 0.5 LU inside the loud end of its range.
-# The overall level is limited by the thud (see MAX_LIMIT_DB), so every other
-# category is kept as loud as its range allows, with room for rounding.
-AIM = {'thud': 0.0, 'alert': -2.5, 'tone': -3.5, 'line': -5.5, 'part': -6.5,
-       'slide': -8.5, 'path': -8.5, 'spin': -10.5, 'type': -12.5}
+# Where fit_mix puts each category: 0.3 LU inside the loud end of its range
+# (room for ebur128's 0.1 LU rounding).  T can only rise by limiting the
+# thud (see CLEAN_LIMIT_DB), so the louder the others sit against T, the less
+# limiting -16 LUFS needs.
+AIM = {'thud': 0.0, 'alert': -2.3, 'tone': -3.3, 'line': -5.3, 'part': -6.3,
+       'slide': -8.3, 'path': -8.3, 'spin': -10.3, 'type': -12.3}
 ORDER = ['thud', 'alert', 'tone', 'line', 'part', 'slide', 'path', 'spin', 'type']
 TOL_LU = 0.05               # ebur128 prints 0.1 LU steps
-FIT_TOL_LU = 0.03
 THUD_BODY = 0.9             # s: the thud's decay; M windows over it are "at 21.9 s"
-# Most the limiter may take off any sample.  More than a few dB flattens the
-# thud's decay into a held low note (声音任务说明 一: short and clean).
-MAX_LIMIT_DB = 3.0
+# How much the true-peak limiter may take off any sample.  The thud is a
+# 55 Hz decay: K-weighting takes 3.4 dB off it and its true peak is 12 dB
+# above its momentary loudness, so T is capped by the thud's true peak, and
+# the 8.1 table keeps everything else 2-12 LU under T.  Reaching -16 LUFS
+# (the default, no cap) takes about 48 dB off the thud for 0-64 s, holding
+# it near full level for about 0.85 s before it falls.  With CLEAN_LIMIT_DB
+# the thud keeps its decay and 0-64 s comes out at -21.7 LUFS, which fails
+# the -16 LUFS check (build_film_audio --max-limit-db 3).
+CLEAN_LIMIT_DB = 3.0
+FIT_TOL_LU = 0.02          # fit_mix: offsets from AIM, at a fixed output gain
+LUFS_TOL = 0.02            # fit_mix: integrated loudness from the target
 
 
 def category(kind):
@@ -132,48 +140,92 @@ def stems(mx, events, start, end, spin, seed, cat_db=None):
     return out
 
 
-def output_gain(mx, x, target, max_limit_db, gain_db=None, meter=integrated_np):
-    """Per-sample output gain of make_audio.normalise_gain (same rule), metered
-    with `meter`.  Returns (envelope, gain_db, capped)."""
-    gain_db = target - meter(x) if gain_db is None else gain_db
-    cap = None
-    if max_limit_db is not None:
-        cap = mx.CEILING_DBTP + max_limit_db - 20 * np.log10(max(float(mx.true_peak_env(x).max()), 1e-12))
-    capped = False
-    for _ in range(12):
-        if cap is not None and gain_db >= cap:
-            gain_db, capped = cap, True
-        used = gain_db
-        env = synth.db(used) * mx.limit_gain(x * synth.db(used))
-        lufs = meter(x * env[:, None])
-        if capped or abs(lufs - target) < 0.02:
-            break
-        gain_db += target - lufs
-    return env, used, capped
-
-
-def fit_mix(mx, st, target, max_limit_db=MAX_LIMIT_DB, rounds=30):
-    """Multipliers (dB, thud 0) that put every category's level at AIM from
-    T after normalisation and limiting.  Returns (multipliers, record)."""
-    if 'thud' not in st:
-        return {c: 0.0 for c in st}, {'note': 'no thud in the table; levels left as they are'}
-    lv = {c: _max_m(x, True)[0] for c, x in st.items()}
-    m = {c: (0.0 if c == 'thud' else lv['thud'] + AIM[c] - lv[c]) for c in st}
-    gain_db, err, off = None, None, {}
+def _at_gain(mx, st, m, gain_db, rounds=8):
+    """Multipliers m corrected until every category sits at AIM from T with
+    the output gain fixed at gain_db (the limiter computed on the whole mix).
+    Each category's offset depends almost only on its own multiplier, so the
+    direct correction converges in a few rounds.  Returns (m, envelope,
+    offsets, error)."""
+    m = dict(m)
     for r in range(rounds):
         mix = sum(x.astype(np.float64) * synth.db(m[c]) for c, x in st.items())
-        env, gain_db, capped = output_gain(mx, mix, target, max_limit_db, gain_db)
+        env = synth.db(gain_db) * mx.limit_gain(mix * synth.db(gain_db))
         lv = {c: _max_m(x * (synth.db(m[c]) * env)[:, None], True)[0] for c, x in st.items()}
         off = {c: lv[c] - lv['thud'] for c in st}
         err = max(abs(off[c] - AIM[c]) for c in st)
-        if err < FIT_TOL_LU:
-            break
+        if err < FIT_TOL_LU or r == rounds - 1:
+            break                                   # m is the one just measured
         for c in st:
             if c != 'thud':
                 m[c] += AIM[c] - off[c]
-    rec = {'rounds': r + 1, 'max_error_lu': round(err, 3), 'capped': capped,
-           'offsets': {c: round(v, 2) for c, v in off.items()}}
-    return {c: round(v, 2) for c, v in m.items()}, rec
+    return m, env, mix, off, err
+
+
+def fit_mix(mx, st, target, max_limit_db=None, steps=24):
+    """Multipliers (dB, thud 0) and output gain that put every category at
+    AIM from T and the mix at `target` LUFS.  Returns (multipliers, record);
+    the record's gain_db is the output gain, where make_audio starts its
+    normalisation (it then stops at once, on the same mix).
+
+    Searched over the output gain G: at a fixed G the multipliers follow
+    directly (_at_gain), and the integrated loudness I(G) of the balanced mix
+    rises with G (more gain, more of the thud held at the limiter, T and
+    everything set against it higher).  I(G) = target is solved by false
+    position on a bracket.  With max_limit_db, G may not go above the gain at
+    which the limiter would take that much off the loudest true peak."""
+    others = [c for c in st if c != 'thud']
+    if 'thud' not in st or not others:
+        return {c: 0.0 for c in st}, {'note': 'nothing to balance against the thud'}
+    lv0 = {c: _max_m(x, True)[0] for c, x in st.items()}
+    m = {'thud': 0.0, **{c: lv0['thud'] + AIM[c] - lv0[c] for c in others}}
+    trail = []
+
+    def loud(g):
+        nonlocal m
+        m, env, mix, off, err = _at_gain(mx, st, m, g)
+        lufs = integrated_np(mix * env[:, None])
+        tp = 20 * np.log10(max(float(mx.true_peak_env(mix).max()), 1e-12))
+        trail.append((round(g, 3), round(lufs, 3), round(err, 3)))
+        return lufs, {'m': dict(m), 'off': off, 'err': err, 'gain_db': g, 'lufs': lufs,
+                      'limit_db': g + tp - mx.CEILING_DBTP}
+
+    mix0 = sum(x.astype(np.float64) * synth.db(m[c]) for c, x in st.items())
+    g = target - integrated_np(mix0)                       # no limiting at all
+    cap = None
+    if max_limit_db is not None:
+        cap = mx.CEILING_DBTP + max_limit_db - 20 * np.log10(max(float(mx.true_peak_env(mix0).max()), 1e-12))
+    lo = hi = None
+    best = None
+    for _ in range(steps):
+        if cap is not None:
+            g = min(g, cap)
+        lufs, rec = loud(g)
+        if best is None or abs(lufs - target) < abs(best['lufs'] - target):
+            best = rec
+        if abs(lufs - target) < LUFS_TOL:
+            break
+        if lufs < target:
+            if cap is not None and g >= cap - 1e-9:
+                best = rec                                  # as loud as the cap allows
+                break
+            lo = (g, lufs)
+        else:
+            hi = (g, lufs)
+        if lo and hi:
+            g = lo[0] + (hi[0] - lo[0]) * (target - lo[1]) / (hi[1] - lo[1])
+            g = min(max(g, lo[0] + 0.05 * (hi[0] - lo[0])), hi[0] - 0.05 * (hi[0] - lo[0]))
+        elif lo:
+            g = lo[0] + max(2.0, 2.0 * (target - lo[1]))   # step up until above the target
+        else:
+            g = hi[0] - max(2.0, 2.0 * (hi[1] - target))
+    if best['err'] >= 5 * FIT_TOL_LU:
+        raise SystemExit(f'balance: could not place the categories (error {best["err"]:.2f} LU)')
+    capped = cap is not None and best['gain_db'] >= cap - 1e-9
+    rec = {'evaluations': len(trail), 'max_error_lu': round(best['err'], 3), 'capped': bool(capped),
+           'gain_db': best['gain_db'], 'lufs': round(best['lufs'], 2), 'max_limit_db': max_limit_db,
+           'limiter_on_loudest_peak_db': round(best['limit_db'], 1),
+           'offsets': {c: round(v, 2) for c, v in best['off'].items()}, 'trail': trail}
+    return {c: round(v, 4) for c, v in best['m'].items()}, rec
 
 
 # ---- judging a written mix ----------------------------------------------------------

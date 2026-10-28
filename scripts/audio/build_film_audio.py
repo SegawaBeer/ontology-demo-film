@@ -13,11 +13,12 @@
    OUT.events.json.
 3. Balances the categories against the 21.9 s thud (balance.py, 声音任务说明
    8), synthesises, mixes and normalises (make_audio.py) from 0 to the last
-   page's __duration: 120 s for the whole film, 5,760,000 samples.  The
-   true-peak limiter may take at most --max-limit-db (default 3 dB) off any
-   sample, so the thud keeps its decay; with the 8.1 balance that leaves the
-   mix near -22 LUFS.  --max-limit-db none reaches -16 LUFS by limiting the
-   thud by about 34 dB instead (its decay flattens).
+   page's __duration: 120 s for the whole film, 5,760,000 samples.
+   By default nothing caps the true-peak limiter, so every check passes:
+   with the 8.1 balance, -16 LUFS takes about 48 dB off the thud, whose
+   decay is then held near full level for about 0.85 s.  --max-limit-db 3
+   keeps the thud's decay; the mix then comes out near -22 LUFS and the
+   -16 LUFS check fails.  See balance.CLEAN_LIMIT_DB.
 4. Runs every check (check_audio.py plus the samples and found checks of 7.5
    and the balance and mix-peak checks of 8.2) and writes OUT.mix.json,
    OUT.check.json and OUT.build.json.
@@ -84,7 +85,7 @@ def write_table(path, events):
 
 
 def build(film_url, ending_url=None, out=None, target=make_audio.TARGET_LUFS,
-          max_limit_db=balance.MAX_LIMIT_DB):
+          max_limit_db=None):
     checks, info = {}, {}
 
     # 1. rotor and opening table
@@ -142,7 +143,8 @@ def build(film_url, ending_url=None, out=None, target=make_audio.TARGET_LUFS,
     del st
     info['balance_fit'] = dict(fit, category_db=cat_db, target_lufs=target, max_limit_db=max_limit_db)
     mix = make_audio.mix([stem + '.events.json'], out, 'rotor:rotor_rps', 0.0, end, 0,
-                         cat_db=cat_db, target=target, max_limit_db=max_limit_db)
+                         cat_db=cat_db, target=target, max_limit_db=max_limit_db,
+                         start_gain_db=fit.get('gain_db'))
     info['mix'] = {k: v for k, v in mix.items() if k not in ('events',)}
 
     # 4. checks
@@ -163,9 +165,9 @@ def main():
     ap.add_argument('--out', help=f'output WAV (default {DEFAULT_OUT})')
     ap.add_argument('--lufs', type=float, default=make_audio.TARGET_LUFS,
                     help='integrated loudness target (default -16)')
-    ap.add_argument('--max-limit-db', default=str(balance.MAX_LIMIT_DB),
+    ap.add_argument('--max-limit-db', default='none',
                     help="most the true-peak limiter may take off any sample, dB, or 'none' "
-                         f'(default {balance.MAX_LIMIT_DB})')
+                         f"(default none; {balance.CLEAN_LIMIT_DB} keeps the thud's decay)")
     a = ap.parse_args()
     cap = None if a.max_limit_db.lower() == 'none' else float(a.max_limit_db)
     r = build(a.film, a.ending, a.out, a.lufs, cap)

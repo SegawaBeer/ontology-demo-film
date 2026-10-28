@@ -241,15 +241,22 @@ def limit(x, ceiling_db=CEILING_DBTP, window=0.010):
     return x * total[:, None], -20 * np.log10(total.min()), float((total < 0.9999).sum()) / SR
 
 
-def normalise_gain(x, target=TARGET_LUFS, max_limit_db=None):
+def normalise_gain(x, target=TARGET_LUFS, max_limit_db=None, start_gain_db=None):
     """Output gain per sample: the gain to the target integrated loudness
     times the true-peak limiter's gain; repeated until the measured loudness
     is within 0.05 LU.  With max_limit_db, the gain is capped where the
     limiter would have to take more than that off any sample (声音任务说明 8:
     the thud must stay clean); the result is then quieter than the target.
+    start_gain_db: balance.fit_mix's gain, used as it is (one pass, no
+    re-iteration).  Under heavy limiting the loudness hardly moves with the
+    gain, so re-iterating on a second meter's 0.05 LU difference would move
+    the gain by several dB and the balance with it.
     Returns (envelope (n,), output, info)."""
-    lufs, _ = measure(x)
-    gain_db = target - lufs
+    if start_gain_db is None:
+        lufs, _ = measure(x)
+        gain_db = target - lufs
+    else:
+        gain_db = start_gain_db
     cap = None
     if max_limit_db is not None:
         cap = CEILING_DBTP + max_limit_db - 20 * np.log10(max(float(true_peak_env(x).max()), 1e-12))
@@ -262,7 +269,7 @@ def normalise_gain(x, target=TARGET_LUFS, max_limit_db=None):
         env = synth.db(used) * lim
         y = x * env[:, None]
         lufs, peak = measure(y)
-        if capped or abs(lufs - target) < 0.05:
+        if capped or start_gain_db is not None or abs(lufs - target) < 0.05:
             break
         gain_db += target - lufs
     info = {'gain_db': round(used, 2), 'gain_db_exact': used,
@@ -273,16 +280,16 @@ def normalise_gain(x, target=TARGET_LUFS, max_limit_db=None):
     return env, y, info
 
 
-def normalise(x, target=TARGET_LUFS, max_limit_db=None):
+def normalise(x, target=TARGET_LUFS, max_limit_db=None, start_gain_db=None):
     """normalise_gain's output and info."""
-    _, y, info = normalise_gain(x, target, max_limit_db)
+    _, y, info = normalise_gain(x, target, max_limit_db, start_gain_db)
     return y, info
 
 
 # ---- main ----------------------------------------------------------------------
 
 def mix(event_paths, out, spin_spec=None, start=0.0, end=None, seed=0, cat_db=None, target=TARGET_LUFS,
-        max_limit_db=None):
+        max_limit_db=None, start_gain_db=None):
     """Render, reverb, normalise to `target` LUFS and write `out` (48 kHz
     24-bit stereo) plus OUT.mix.json, the record check_audio.py reads.
     cat_db: per-category levels (balance.fit_mix); max_limit_db: see
@@ -291,7 +298,7 @@ def mix(event_paths, out, spin_spec=None, start=0.0, end=None, seed=0, cat_db=No
     spin = load_spin(spin_spec)
     end = end if end is not None else max(e['t'] for e in events) + 2.0
     dry, info = render(events, start, end, spin, seed, cat_db)
-    y, norm = normalise(reverb(dry), target, max_limit_db)
+    y, norm = normalise(reverb(dry), target, max_limit_db, start_gain_db)
     write_wav(out, y)
     lufs, peak = ebur128(out)
     report = {
