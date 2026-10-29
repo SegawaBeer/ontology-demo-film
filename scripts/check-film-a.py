@@ -16,9 +16,11 @@ OPEN_BASE = 'http://127.0.0.1:5193/frames.html'  # 89aca04: opening 3B accepted 
 HERE = os.path.dirname(os.path.abspath(__file__))
 F15_JS = open(os.path.join(HERE, 'f15-lines.js')).read()
 FOLD_JS = open(os.path.join(HERE, 'fold-check.js')).read()
-FILM = f'{NEW}?frame=film-a&theme=light'
 FPS = 60
 args = sys.argv[1:]
+# --frame film runs the same checks on the whole-film page (主时间轴二 第五节: F1–F15 again, 30–64 here).
+FRAME = args[args.index('--frame') + 1] if '--frame' in args else 'film-a'
+FILM = f'{NEW}?frame={FRAME}&theme=light'
 ONLY = set(args[args.index('--only') + 1].split(',')) if '--only' in args else None
 OUT = args[args.index('--out') + 1] if '--out' in args else os.path.join(os.path.dirname(__file__), '..', 'review', 'film-a')
 os.makedirs(OUT, exist_ok=True)
@@ -121,6 +123,8 @@ def edge_mask(page):
 # film-a frames allowed to differ from 1dc6a6c (主时间轴一 12.1, 12.2): moved chips and timing
 # labels from 36.8 s, the question-one fold; the moved ZP-0707 chip and the question-two fold.
 FILM_A_EXCEPTIONS = [(36.8, 48.4), (57.5, 61.8)]
+# frame=clip from 11.55 s: chips moved off lit links (主时间轴二 9.3); only the graph column may differ.
+CLIP_EXCEPTION_FROM, CLIP_EXCEPTION_X = 11.55, 1281
 
 
 def f1(browser):
@@ -135,9 +139,11 @@ def f1(browser):
         load(pa, NEW + q); load(pb, base + q)
         m = diffmax(shot(pa), shot(pb))
         n = over(m, 1)
-        good = n == 0
+        box = m.point(lambda v: 255 if v > 1 else 0).getbbox()
+        excepted = frame == 'clip' and float(extra.split('=')[1]) >= CLIP_EXCEPTION_FROM and box is not None and box[0] >= CLIP_EXCEPTION_X
+        good = n == 0 or excepted
         ok &= good
-        rows.append({'frame': frame + extra, 'against': '89aca04' if frame == 'opening' else '1dc6a6c', 'diff>1': n, 'bbox': m.point(lambda v: 255 if v > 1 else 0).getbbox(), 'pass': good})
+        rows.append({'exception': excepted, 'frame': frame + extra, 'against': '89aca04' if frame == 'opening' else '1dc6a6c', 'diff>1': n, 'bbox': m.point(lambda v: 255 if v > 1 else 0).getbbox(), 'pass': good})
     # film-a itself against 1dc6a6c every 0.5 s: zero outside the listed exception spans.
     load(pa, FILM + '&play=0'); load(pb, f'{BASE}?frame=film-a&theme=light&play=0')
     film = []
@@ -357,7 +363,11 @@ def f6(browser):
     for t in (33.0, 45.0, 55.0, 63.0):
         seek(page, t); rows[t] = page.evaluate(COUNT_JS)
     # Section 六.7: no outline lines or depth shells from the opening after 30 s.
-    lines = page.evaluate("() => { let n = 0; window.__filmDebug.view.scene.traverse(o => { if (o.isLine || o.isLineSegments || o.type === 'LineSegments2') n++; }); return n; }")
+    # Drawn ones only: frame=film carries question four's red slot outlines, hidden before 86.6 s.
+    LINES_JS = "() => { let n = 0; window.__filmDebug.view.scene.traverse(o => { if (!(o.isLine || o.isLineSegments || o.type === 'LineSegments2')) return; for (let p = o; p; p = p.parent) if (!p.visible) return; n++; }); return n; }"
+    lines = 0
+    for t in (33.0, 45.0, 55.0, 63.0):
+        seek(page, t); lines += page.evaluate(LINES_JS)
     page.close()
     ok = all(r['drawn'] == 2027 for r in rows.values()) and all(rows[t]['shown'] == 2027 for t in (33.0, 55.0, 63.0)) and lines == 0
     record('F6', ok, rows={str(k): v for k, v in rows.items()}, outline_objects_in_scene=lines,
@@ -729,7 +739,8 @@ GRAPH_DOM_JS = r"""() => { const svg = document.querySelector('#graph');
 def f12_f13(browser):
     page = new_page(browser, 'f12')
     load(page, FILM + '&play=0')
-    events = page.evaluate('window.__events')
+    # The whole-film page lists events to 120 s; this part checks those up to 64 s.
+    events = [e for e in page.evaluate('window.__events') if e['t'] <= 64.0]
     timeline = []
     for f in range(int(32.9 * FPS), int(64.0 * FPS) + 1):
         seek(page, f / FPS); timeline.append((f, page.evaluate(FRAME_JS)))

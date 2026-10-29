@@ -547,7 +547,10 @@ export function clipEvents(): ClipEvent[] {
   for (const h of hops) add(h.a, 'path', 0.5, 'graph');
   for (const at of [5.0, 7.35, 11.55, 11.85]) add(at, 'line', 0.7, 'dialog');
   add(settle(2, 5.0, 0.25), 'tick', 0.5, 'dialog');
-  add(10.6, 'tick', 0.5, 'dialog');                                  // the scan ends on 46
+  // The hit count lands on 46 once the scan passes the last hit blade (before the scan itself ends at 10.6).
+  let at46 = Math.ceil(7.4 * 60);
+  while (hitsBefore(scanAt(at46 / 60)) < 46) at46++;
+  add(at46 / 60, 'tick', 0.5, 'dialog');
   add(settle(16, 11.55, 0.3), 'tick', 0.5, 'dialog');
   add(settle(30, 11.85, 0.3), 'tick', 0.5, 'dialog');
   add(FOLLOW_AT - 0.2, 'line', 0.4, 'dialog');

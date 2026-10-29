@@ -12,7 +12,7 @@ import { seg, ease } from './timing';
 import { STEP1, FLY_AT, FLY_GAP, landAt } from './q4';
 
 export const TAGS_OUT = [86.0, 86.2] as const;     // clip-q3's two engine tags
-export const CAM4 = [86.2, 87.4] as const;         // push in to 7 号's first-stage ring
+export const CAM4 = [86.0, 87.0] as const;         // push in to 7 号's first-stage ring
 export const E3_OUT = [86.2, 87.2] as const;       // 3 号 shrinks and fades
 export const RED_OUT = [86.4, 87.0] as const;      // the 16 stopped blades fade
 export const FRAMES_IN = [86.6, 87.2] as const;    // red outlines in the 16 empty slots

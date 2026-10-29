@@ -246,6 +246,9 @@ html.fit .frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .film-subtitle {
   position: absolute; left: 0; right: 0; bottom: 96px; text-align: center; pointer-events: none;
   font-family: var(--mono); font-size: 26px; letter-spacing: 0.14em; color: var(--ink-2);
+  /* Optical centring, measured on the picture: the closing 。 inks only the left half of its
+     box and the letter spacing trails after it, so the line is moved right by half of that. */
+  padding-left: 16px;
 }
 /* Question two turning green again (q4.ts): the old answer and its second row close up in the slot. */
 .turn.changing .answer.reanswer { display: grid; }

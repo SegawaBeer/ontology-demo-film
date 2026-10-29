@@ -191,6 +191,11 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
     }
   }
 
+  /** Ghost amount a `layered` component was last given (0 = solid; glass and untouched count as 0). */
+  function layerAmount(engine: Engine, id: string) {
+    return Math.max(0, layers.get(engine)?.get(id)?.amount ?? 0);
+  }
+
   /** Opacity a part is drawn with right now (0 when hidden). */
   function partOpacity(engine: Engine, id: string) {
     const state = engine.parts.get(id);
@@ -351,7 +356,7 @@ export async function createModelView(canvas: HTMLCanvasElement, theme: Theme, w
 
   return {
     scene, camera, renderer, width, height,
-    addEngine, setGhost, setGhostOf, setGlassOf, layerIds, partOpacity, cutaway, cutLayers, setSweep, worldOf, project, fit, applyPose, frame,
+    addEngine, setGhost, setGhostOf, setGlassOf, layerIds, layerAmount, partOpacity, cutaway, cutLayers, setSweep, worldOf, project, fit, applyPose, frame,
     ghostMaterial, ghostColor: ghostColor.clone(),
     render: () => renderer.render(scene, camera),
     // Second pass onto the picture already on screen: depth starts over, colour

@@ -158,7 +158,8 @@ export async function mountEnding(theme: Theme) {
       o.apply(4.0, true, { yaw: yawAt(t), thread: clamp((t - THREAD[0]) / (THREAD[1] - THREAD[0])) });
       subtitle.style.opacity = ease(seg(t, SUBTITLE[0], SUBTITLE[1])).toFixed(3);
       bladesNow = 1;
-      lastPose = { position: camera.position.clone(), target: o.open.openTarget.clone() };
+      // The opening draws t < 5 in its own frame; reported in engine space, as from 5.0 on.
+      lastPose = { position: o.camStart.clone(), target: o.targetStart.clone() };
       return;
     }
     subtitle.style.opacity = '0';
@@ -212,7 +213,9 @@ export async function mountEnding(theme: Theme) {
     heroLook(1);
     o.firstPath.style.opacity = '0';
     o.firstDot.style.opacity = '0';
-    lastPose = { position: camera.position.clone(), target: new THREE.Vector3() };
+    // In engine space; the target is one unit ahead along the view (only the direction is used).
+    const ahead = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
+    lastPose = { position: camera.position.clone(), target: ahead };
   }
   function caption(t: number) {
     const cap = ease(seg(t, CAPTION[0], CAPTION[1]));

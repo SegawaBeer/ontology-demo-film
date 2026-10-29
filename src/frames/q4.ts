@@ -85,7 +85,7 @@ function pointerHTML(t: number) {
 
 function plansHTML(t: number) {
   if (t < PLANS[0]) return '';
-  const pick = ease(seg(t, POINTER_MOVE[1] - 0.15, POINTER_MOVE[1] + 0.1));
+  const pick = ease(seg(t, POINTER_MOVE[1], POINTER_MOVE[1] + 0.25));   // the click lands at 95.8
   const cards = PLAN_TEXT.map(([head, note], i) => {
     if (t < PLANS[i]) return `<div class="plan" style="visibility:hidden"><b>${head}</b><span>${note}</span></div>`;
     const style = [appear(t, PLANS[i])];
@@ -209,7 +209,7 @@ export function q4Events(settle: (n: [number, number, number]) => number) {
   const out: Ev[] = [];
   const add = (t: number, kind: Ev['kind'], gain: number, src: Ev['src'], dur?: number) => out.push(dur === undefined ? { t, kind, gain, src } : { t, kind, gain, src, dur });
   add(FOLD3[0], 'line', 0.3, 'dialog');
-  add(86.2, 'slide', 0.45, '3d', 1.2);                     // push-in to the ring (CAM4)
+  add(86.0, 'slide', 0.45, '3d', 1.0);                     // push-in to the ring (CAM4)
   add(META, 'line', 0.4, 'dialog');
   for (const at of typedTimesOf(ASK, TYPE, PER_CHAR, SEED)) add(at, 'type', 0.32, 'dialog');
   for (const h of hops4) add(h.a, 'path', 0.5, 'graph');

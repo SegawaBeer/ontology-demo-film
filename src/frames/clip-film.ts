@@ -162,12 +162,19 @@ export async function mountFilm(theme: Theme) {
     renderGraph(f.graphRoot, graphBack(t, q4Graph));
   }
 
-  const probe = () => ({
-    ...a.probe(),
-    t: lastT,
-    camera: { position: lastPose.position.toArray(), target: lastPose.target.toArray() },
+  // From 64 on the graph column is drawn here, so the probe reads it back from the DOM.
+  const graphDOM = () => ({
+    lit: [], litEdges: [], counter: [...f.graphRoot.querySelectorAll('text')].find(x => x.textContent?.includes('个节点'))?.textContent ?? '',
+    drawing: [...f.graphRoot.querySelectorAll('[data-draw]')].map(x => [...x.getAttribute('data-draw')!.split('>'), 0]),
   });
+  const probe = () => {
+    const p = a.probe();
+    return { ...p, t: lastT, camera: { position: lastPose.position.toArray(), target: lastPose.target.toArray() },
+      ...(lastT >= CLIP_AT ? { graph: graphDOM(), engineY: e7.root.position.y } : {}) };
+  };
   const events: FilmEvent[] = filmEvents();
-  const debug = { ...a.debug, clip, film: f, q4 };
+  // Ghost amounts as the engine has them (clip-q3 and question four ghost through setGhostOf too).
+  const ghostOf = (partId: string) => view.layerAmount(e7, e7.getPart(partId)?.component ?? '');
+  const debug = { ...a.debug, ghostOf, clip, film: f, q4 };
   return { seek, probe, events, debug };
 }
