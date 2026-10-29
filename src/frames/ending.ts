@@ -251,6 +251,8 @@ export async function mountEnding(theme: Theme) {
   function leave(t: number) {
     o.apply(7.3 - 2.3 * seg(t, LEAVE[0], LEAVE[1]), false);
     heroLook(1);
+    // The swap is done: ring blade 001 stays hidden (the opening's 7.3 keeps it at opacity 0, still drawn).
+    engine.setVisible(bladeId(1), false);
     o.firstPath.style.opacity = '0';
     o.firstDot.style.opacity = '0';
     liftBladeName(o.open.thread, null, 0, 0);
