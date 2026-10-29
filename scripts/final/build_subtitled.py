@@ -79,7 +79,9 @@ def stills(args):
 
 
 def framemd5(path):
-    out = run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', path, '-map', '0:v:0', '-f', 'framemd5', '-']).stdout
+    """Hash of every decoded frame; path is a file, or ffmpeg input options (a list, e.g. a concat list)."""
+    inp = path if isinstance(path, list) else ['-i', path]
+    out = run(['ffmpeg', '-hide_banner', '-loglevel', 'error', *inp, '-map', '0:v:0', '-f', 'framemd5', '-']).stdout
     return [line.rsplit(',', 1)[1].strip() for line in out.splitlines() if line and not line.startswith('#')]
 
 
@@ -139,8 +141,9 @@ def assemble(args):
     listing = os.path.join(tmp, 'list.txt')
     with open(listing, 'w') as f:
         f.writelines(f"file '{os.path.abspath(p)}'\n" for p in files)
-    combined = os.path.join(tmp, 'combined.mp4')
-    run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', listing, '-c', 'copy', combined])
+    # No joined copy on disk (it would be another ~2 GB): the concat list itself is the input of
+    # the checks and of both encodes, so what is checked is exactly what is encoded.
+    combined = ['-f', 'concat', '-safe', '0', '-i', listing]
     record['steps']['cut and join'] = round(time.time() - t0, 1)
     print(f'joined in {record["steps"]["cut and join"]}s', flush=True)
 
@@ -153,15 +156,15 @@ def assemble(args):
     bad = [i for i, (x, y) in enumerate(zip(hashes['combined'], expect)) if x != y]
     if len(hashes['combined']) != total or bad:
         raise SystemExit(f'join differs from its sources: {len(hashes["combined"])} frames, first bad {bad[:5]}')
-    from assemble import frame_png, frame_diff
+    from assemble import frame_diff
     edge = 0
     for name, a, b, t_0, _ in pieces()[:-1]:
         edge += b - a
-        frame_png(combined, edge - 1, os.path.join(tmp, 'b.png'))
-        frame_png(combined, edge, os.path.join(tmp, 'a.png'))
+        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *combined, '-vf',
+             f'select=eq(n\\,{edge - 1})+eq(n\\,{edge})', '-fps_mode', 'passthrough', os.path.join(tmp, 'seam%d.png')])
         record['seams'].append({'frame': edge, 't': round(edge / FPS, 4), 'after': name,
                                 'same_as_source': [edge - 2, edge - 1, edge, edge + 1],
-                                'step_diff': round(frame_diff(os.path.join(tmp, 'b.png'), os.path.join(tmp, 'a.png')), 3)})
+                                'step_diff': round(frame_diff(os.path.join(tmp, 'seam1.png'), os.path.join(tmp, 'seam2.png')), 3)})
     record['steps']['frame check'] = round(time.time() - t0, 1)
     print(f'all {total} frames equal their sources; {len(record["seams"])} seams', flush=True)
     finish(args, record, combined, tmp, total, t_all)
@@ -179,7 +182,7 @@ def finish(args, record, combined, tmp, total, t_all):
               '-ac', '2', '-movflags', '+faststart', '-t', f'{length}']
     for path, vf, crf in ((fourk, [], '14'), (small, ['-vf', 'scale=1920:1080:flags=lanczos'], '16')):
         t0 = time.time()
-        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', combined, '-i', args.audio, *common, *vf,
+        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *combined, '-i', args.audio, *common, *vf,
              '-c:v', 'libx264', '-profile:v', 'high', '-crf', crf, '-preset', 'slow', '-pix_fmt', 'yuv420p', path])
         record['steps'][f'encode {os.path.basename(path)}'] = round(time.time() - t0, 1)
         print(f'{path} in {record["steps"][f"encode {os.path.basename(path)}"]}s', flush=True)
