@@ -264,6 +264,13 @@ def g6(browser):
         seek(page, t); tl.append((round(t * FPS), page.evaluate(EVT_JS)))
     load(page, END + '&play=0')
     events_end = page.evaluate('window.__events')
+    film_range = [min(e['t'] for e in events), max(e['t'] for e in events)]
+    end_range = [min(e['t'] for e in events_end), max(e['t'] for e in events_end)]
+    # Each page lists only its own range ([30, 103] and [103, 120]); together they are the 30-120 table.
+    in_range = film_range[0] >= 30 - 1e-9 and film_range[1] <= HANDOFF + 1e-9 and end_range[0] >= HANDOFF - 1e-9 and end_range[1] <= 120 + 1e-9
+    # The whole table: the film page's list, then the ending page's after the hand-off (events at
+    # exactly 103 are on both pages; identical events at one moment, like the four paths, are real).
+    events = sorted(events + [e for e in events_end if e['t'] > HANDOFF + 1e-9], key=lambda e: e['t'])
     page.close()
     bad = []
     near = lambda et, f, tol=1: f is not None and abs(f - et * FPS) <= tol
@@ -311,10 +318,10 @@ def g6(browser):
             'q4 parts': count('part', 86, 101) == 16, 'q4 ticks': count('tick', 86, 101) == 2, 'slide 101': any(e['kind'] == 'slide' and e['t'] == 101 and e['dur'] == 2.0 and e['src'] == 'dialog' for e in events),
             'four paths 103': count('path', 103, 103.01) == 4, 'tone 105': any(e['kind'] == 'tone' and e['t'] == 105 and e['gain'] == 0.5 for e in events),
             'swap': count('swap', 112, 115) == 1, 'tone 116.4': any(e['kind'] == 'tone' and abs(e['t'] - 116.4) < 1e-9 and e['gain'] == 0.8 for e in events),
-            'same list on ending page': events == events_end}
+            'each page in its own range': in_range}
     ok = not bad and set(kinds) <= allowed and fields_ok and all(need.values()) and span[0] >= 30 and span[1] <= 120
     counts = {k: sum(1 for e in events if e['kind'] == k) for k in kinds}
-    record('G6', ok, counts=counts, span=span, required=need, fields_ok=fields_ok, problems=bad[:20],
+    record('G6', ok, counts=counts, span=span, film_page_range=film_range, ending_page_range=end_range, required=need, fields_ok=fields_ok, problems=bad[:20],
            note='every frame 64-101: type events vs characters appearing, path events vs links starting to draw, dialog line events vs lines and plan cards appearing')
 
 

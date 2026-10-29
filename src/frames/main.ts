@@ -312,7 +312,8 @@ async function film() {
   w.__seek = (t: number) => { driven = true; player.seek(t); };
   w.__duration = DURATION;
   w.__start = START;
-  w.__events = player.events;
+  // Only this page's own range (the audio tool rejects events outside [__start, __duration]).
+  w.__events = player.events.filter(e => e.t <= DURATION + 1e-9);
   w.__filmProbe = player.probe;
   w.__filmDebug = player.debug;
   const hold = params.get('t');
@@ -337,7 +338,8 @@ async function ending() {
   w.__seek = (t: number) => { driven = true; player.seek(t); };
   w.__duration = DURATION;
   w.__start = START;
-  w.__events = player.events;
+  // Only this page's own range; an event at exactly 103 may be on both pages.
+  w.__events = player.events.filter(e => e.t >= START - 1e-9);
   w.__filmProbe = player.probe;
   w.__filmDebug = player.debug;
   const hold = params.get('t');
