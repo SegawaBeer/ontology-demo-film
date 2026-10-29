@@ -80,7 +80,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     ...edges,
     ...(state.spawned ?? []).flatMap(s => s.edges.map(([from, to, bend]) => ({ from, to, kind: 'rel' as const, bend }))),
   ];
-  const lit = new Set([...state.lit, ...spawnedNodes.map(n => n.id)]);
+  const lit = new Set([...state.lit, ...(state.spawnedPlain ? [] : spawnedNodes.map(n => n.id))]);
   const appearOf = new Map((state.spawned ?? []).map(s => [s.node.id, s.appear ?? 1]));
   const same = (a: string, b: string, pairs: [string, string][] = []) => pairs.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
   const dimming = state.dimLevel !== undefined ? state.dimLevel < 0.999 : state.focus;
@@ -90,7 +90,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
   const litWidth = state.edgeWidth ?? 1.5;
   const drawing = state.drawing ?? [];
   const drawingPairs = drawing.map(d => [d.from, d.to] as [string, string]);
-  const spawnedPairs = (state.spawned ?? []).flatMap(s => s.edges.map(([f, t]) => [f, t] as [string, string]));
+  const spawnedPairs = state.spawnedPlain ? [] : (state.spawned ?? []).flatMap(s => s.edges.map(([f, t]) => [f, t] as [string, string]));
   const shownEdges = allEdges.filter(e => {
     if (same(e.from, e.to, state.hidden) || same(e.from, e.to, drawingPairs)) return false;
     if (!only) return true;
@@ -109,7 +109,9 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
     const gLit = all.some(n => n.group === g.id && lit.has(n.id));
     let fill = gLit || strong ? 'var(--ink-2)' : 'var(--ink-3)';
     // Blends: the net's strong style easing into the soft one, and lit groups easing back.
-    const toSoft = state.relMix !== undefined && !gLit ? state.relMix : state.release !== undefined && gLit ? state.release : null;
+    // Both at once (the ending's way back to the net): a lit group is already at the strong look's colour and stays.
+    const toSoft = state.relMix !== undefined && gLit && strong && state.release !== undefined ? null
+      : state.relMix !== undefined && !gLit ? state.relMix : state.release !== undefined && gLit ? state.release : null;
     if (toSoft !== null && toSoft > 0 && toSoft < 1) fill = `color-mix(in srgb, var(--ink-2) ${(100 * (1 - toSoft)).toFixed(2)}%, var(--ink-3))`;
     else if (toSoft !== null && toSoft >= 1) fill = 'var(--ink-3)';
     const t = el('text', { x: g.x, y: g.y, 'font-size': 12, 'letter-spacing': '0.12em', 'text-anchor': g.align, fill }, svg);

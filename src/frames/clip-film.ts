@@ -6,19 +6,25 @@
 // Every frame is a pure function of t; the few checks of engine state below only
 // mirror what the engine already shows.
 import * as THREE from 'three';
-import { mountFilmA, settleAt, type FilmEvent } from './clip-q12';
+import { mountFilmA, type FilmEvent } from './clip-q12';
 import { mountClip, dialogHTML, graphAt as clipGraphAt } from './clip-q3';
-import { q4DialogHTML, q4GraphAt, q4Events, GAP_TAGS_OUT } from './q4';
+import { q4DialogHTML, q4GraphAt, GAP_TAGS_OUT } from './q4';
 import { createQ4Model, TAGS_OUT, GAP_TAGS } from './q4-model';
 import { seg, ease } from './timing';
 import { renderGraph } from './graph';
+import { filmEvents } from './film-events';
+import { graphBack } from './ending-graph';
+import { blendPose, shiftPose, LIFT } from './clip-q12';
 import type { Theme, Pose } from './scene';
 import { clamp } from './timing';
 
 export const START = 30;
-export const DURATION = 120;
+export const DURATION = 103;   // see END_AT
 export const CLIP_AT = 64;
 export const Q4_AT = 86;
+/** frame=film ends here; frame=ending (built on the opening's engine) carries on from the same picture. */
+export const END_AT = 103;
+const BACK = [101.0, 103.0] as const, UNGHOST = [101.4, 103.0] as const, UNCUT = [101.0, 102.2] as const, CAPTION_BACK = [101.0, 101.3] as const;
 const RING = 'turbine.stage-1-blades';
 
 export async function mountFilm(theme: Theme) {
@@ -78,6 +84,7 @@ export async function mountFilm(theme: Theme) {
     if (t < CLIP_AT) { partOne(t); return; }
     // Part one's last state (columns settled, P0, solid engine), then the clip on top.
     a.seek(CLIP_AT, false);
+    if (t > BACK[0]) { backToSplit(t); return; }
     if (t > Q4_AT) { questionFour(t); return; }
     q4.apply(CLIP_AT);
     const local = t - CLIP_AT;
@@ -124,16 +131,43 @@ export async function mountFilm(theme: Theme) {
     renderGraph(f.graphRoot, q4GraphAt(t, graphEnd));
   }
 
+  /** 101–103: part one's 30.3–32.4 run backwards, starting from where question four left the camera. */
+  const q4Dialog = q4DialogHTML(BACK[0], clipEnd);
+  const q4Graph = q4GraphAt(BACK[0], graphEnd);
+  const lift = new THREE.Vector3(0, LIFT, 0);
+  function backToSplit(input: number) {
+    const t = Math.min(input, END_AT);
+    clip.seek(22, false);
+    q4.apply(BACK[0]);
+    const s = 32.4 - 2.1 * seg(t, BACK[0], BACK[1]);
+    a.seek(s, false);
+    const p = ease(seg(s, 30.3, 32.4));
+    const pose = shiftPose(blendPose(f.NET, shiftPose(RING_POSE, lift.clone().negate()), p), lift.clone().multiplyScalar(p));
+    f.applyCamera(s, pose);
+    lastPose = pose;
+    // The net shell stays ghosted (it is in both pictures); everything else turns solid again.
+    const unghost = ease(seg(t, UNGHOST[0], UNGHOST[1]));
+    for (const id of f.layerIds) view.setGhostOf(e7, [id], f.netShell.has(id) ? 1 : 1 - unghost);
+    view.cutaway(e7, 1);
+    view.cutLayers(e7, 1 - ease(seg(t, UNCUT[0], UNCUT[1])), f.netShell);
+    view.render(); view.render();
+    colCam.position.copy(pose.position); colCam.lookAt(pose.target); colCam.updateMatrixWorld();
+    f.captionHTML(s, p);   // for its column position
+    const k = ease(seg(t, CAPTION_BACK[0], CAPTION_BACK[1]));
+    const A = '第一级涡轮叶环 · 其余部件半透明', B = '7 号发动机 · 总装中';
+    f.caption.innerHTML = `<span>实物</span>${k >= 1 ? `<span>${B}</span>` : `<span class="xf"><span style="opacity:${(1 - k).toFixed(3)}">${A}</span><span style="opacity:${k.toFixed(3)}">${B}</span></span>`}`;
+    f.overlay.innerHTML = '';
+    f.labels.innerHTML = '';
+    f.dialogRoot.innerHTML = q4Dialog;
+    renderGraph(f.graphRoot, graphBack(t, q4Graph));
+  }
+
   const probe = () => ({
     ...a.probe(),
     t: lastT,
     camera: { position: lastPose.position.toArray(), target: lastPose.target.toArray() },
   });
-  const events: FilmEvent[] = [
-    ...a.events,
-    ...clip.events.map(e => ({ ...e, t: e.t + CLIP_AT })),
-    ...q4Events(settleAt),
-  ].sort((x, y) => x.t - y.t);
+  const events: FilmEvent[] = filmEvents();
   const debug = { ...a.debug, clip, film: f, q4 };
   return { seek, probe, events, debug };
 }

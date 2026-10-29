@@ -538,7 +538,7 @@ function settle(final: number, at: number, dur: number) {
   for (let f = Math.ceil(at * 60); f <= Math.ceil((at + dur) * 60); f++) if (tick(final, f / 60, at, dur) !== final) last = f + 1;
   return last / 60;
 }
-function clipEvents(): ClipEvent[] {
+export function clipEvents(): ClipEvent[] {
   const out: ClipEvent[] = [];
   const add = (t: number, kind: ClipEvent['kind'], gain: number, src: ClipEvent['src']) => out.push({ t, kind, gain, src });
   add(0.6, 'alert', 0.6, 'dialog');                                  // the automatic quality alert

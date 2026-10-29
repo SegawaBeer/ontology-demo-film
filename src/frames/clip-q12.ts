@@ -335,7 +335,7 @@ export type FilmEvent = {
   /** Slides only: length of the move in seconds. */
   dur?: number;
 };
-function buildEvents(): FilmEvent[] {
+export function buildEvents(): FilmEvent[] {
   const out: FilmEvent[] = [];
   const add = (t: number, kind: FilmEvent['kind'], gain: number, src: FilmEvent['src'], dur?: number) => out.push(dur === undefined ? { t, kind, gain, src } : { t, kind, gain, src, dur });
   add(SLIDE[0], 'slide', 0.6, 'dialog', SLIDE[1] - SLIDE[0]);
@@ -583,9 +583,10 @@ export async function mountFilmA(theme: Theme) {
     return b > 0 ? blendPose(P1d, REST, b) : blendPose(REST, P1d, a);
   }
 
-  function applyCamera(t: number) {
+  /** `given` replaces cameraAt(t) (frame=film's way back to the split view, 101–103). */
+  function applyCamera(t: number, given?: Pose) {
     const p = slideAt(t);
-    const pose = cameraAt(t);
+    const pose = given ?? cameraAt(t);
     view.applyPose(pose);
     colCam.position.copy(pose.position); colCam.lookAt(pose.target); colCam.updateMatrixWorld();
     if (p <= 0) {

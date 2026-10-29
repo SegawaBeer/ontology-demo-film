@@ -105,6 +105,8 @@ export type GraphState = {
   /** Opacity factor of the two ring captions (absent = 1). */
   captionAppear?: number;
   spawned?: { node: GraphNode; edges: [string, string, number][]; appear?: number }[];
+  /** Spawned nodes and links drawn like any resting one instead of lit. */
+  spawnedPlain?: boolean;
   dots?: { hits: number[]; caption: string; scan?: number; appear?: number };
   /** Numeric opacity for unlit items; overrides `focus` when set. */
   dimLevel?: number;

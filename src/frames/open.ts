@@ -276,9 +276,11 @@ export async function createOpenScene(theme: Theme, mask: boolean, host?: { view
     });
   }
 
-  function drawThread(t: number) {
+  /** `o` (frame=ending): the yaw and thread progress to draw instead of the ones t gives. */
+  type Override = { yaw?: number; thread?: number; sweep?: number };
+  function drawThread(t: number, o?: Override) {
     if (mask) return;
-    const m = matrixFor(Number(params.get('yaw') ?? Y3 + YAW_RATE * (t - 3)));
+    const m = matrixFor(o?.yaw ?? Number(params.get('yaw') ?? Y3 + YAW_RATE * (t - 3)));
     const a = view.project(bladePoint(0, 0.55, 1).clone().applyMatrix4(m));
     const b = view.project(bladePoint(1, 0.55, 1).clone().applyMatrix4(m));
     const start = a.x >= b.x ? a : b;
@@ -290,24 +292,24 @@ export async function createOpenScene(theme: Theme, mask: boolean, host?: { view
     nodeDot.setAttribute('cx', String(start.x));
     nodeDot.setAttribute('cy', String(start.y));
     const total = nodePath.getTotalLength();
-    const p = params.has('thread') ? Number(params.get('thread')) : clamp01((t - 1.8) / 1.4);
+    const p = o?.thread ?? (params.has('thread') ? Number(params.get('thread')) : clamp01((t - 1.8) / 1.4));
     nodePath.style.strokeDasharray = `${total}`;
     nodePath.style.strokeDashoffset = `${total * (1 - p)}`;
     nodePath.style.opacity = p > 0 ? '1' : '0';
     nodeDot.style.opacity = p > 0 ? '1' : '0';
   }
 
-  function setTime(t: number, render = true) {
-    const yaw = params.has('yaw') ? Number(params.get('yaw')) : Y3 + YAW_RATE * (t - 3);
+  function setTime(t: number, render = true, o?: Override) {
+    const yaw = o?.yaw ?? (params.has('yaw') ? Number(params.get('yaw')) : Y3 + YAW_RATE * (t - 3));
     spin.rotation.y = THREE.MathUtils.degToRad(yaw);
     tilt.updateMatrixWorld(true);
-    const sweep = params.has('sweep') ? Number(params.get('sweep')) : smoothstep(0.6, 2.2, t);
+    const sweep = o?.sweep ?? (params.has('sweep') ? Number(params.get('sweep')) : smoothstep(0.6, 2.2, t));
     setSweep(sweep);
     const alpha = smoothstep(0, 1.2, t);
     lineMat.opacity = alpha;
     lineMat.visible = alpha > 0.001;
     drawGraph(t);
-    drawThread(t);
+    drawThread(t, o);
     if (render) view.render();
   }
 

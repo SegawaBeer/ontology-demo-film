@@ -60,7 +60,8 @@ const spinIntegral = (u: number) => u - u ** 6 + 3 * u ** 5 - 2.5 * u ** 4;
 // is already on screen by then.
 const SECOND = 1;
 
-export async function mountOpening(theme: Theme) {
+/** `hosted` (frame=ending): build everything, but leave the driving to the caller and return the parts it needs. */
+export async function mountOpening(theme: Theme, hosted = false) {
   const params = new URLSearchParams(location.search);
   const maskMode = params.get('mask');
   const mask = maskMode !== null;
@@ -319,8 +320,9 @@ export async function mountOpening(theme: Theme) {
       cam.updateProjectionMatrix();
     }
   }
-  function lightsAt(t: number) {
-    const u = smootherAt(t, 5.0, 7.3);
+  /** `uw` (frame=ending): the two blend amounts to use instead of the ones t gives. */
+  function lightsAt(t: number, uw?: [number, number]) {
+    const u = uw ? uw[0] : smootherAt(t, 5.0, 7.3);
     for (const entry of lights) {
       const moved = entry.pos.clone().multiplyScalar(s).add(T);
       entry.light.position.copy(moved.lerp(entry.pos, u));
@@ -338,9 +340,9 @@ export async function mountOpening(theme: Theme) {
       cam.bottom = bt * lerp(s, ext, u);
       cam.near = Math.max(0.01, nr * lerp(s, 1, u));
       cam.far = fr * lerp(s, 8, u);
-      if (t > M3B) {
+      if (uw ? uw[1] > 0 : t > M3B) {
         // Back to the view's own shadow frustum, which frame=net renders with.
-        const w = smootherAt(t, M3B, GHOST_END);
+        const w = uw ? uw[1] : smootherAt(t, M3B, GHOST_END);
         cam.left = lerp(cam.left, l, w); cam.right = lerp(cam.right, r, w);
         cam.top = lerp(cam.top, tp, w); cam.bottom = lerp(cam.bottom, bt, w);
         cam.near = lerp(cam.near, nr, w); cam.far = lerp(cam.far, fr, w);
@@ -1239,7 +1241,8 @@ export async function mountOpening(theme: Theme) {
   }
   if (!mask) calloutSvg.setAttribute('viewBox', '0 0 1280 1080');
 
-  function apply(t: number, render = true) {
+  /** `o` (frame=ending only): yaw, thread and sweep to draw instead of the ones t gives (t < 5). */
+  function apply(t: number, render = true, o?: { yaw?: number; thread?: number; sweep?: number }) {
     appliedT = t;
     if (t < 5.0 && !diskMode) {
       // Opening-frame space: untouched rig and camera, engine pulled in.
@@ -1254,7 +1257,7 @@ export async function mountOpening(theme: Theme) {
       camera.updateProjectionMatrix();
       camera.updateMatrixWorld();
       lightsOriginal();
-      open.setTime(t, false);
+      open.setTime(t, false, o);
       hero.root.updateMatrixWorld(true);
       open.hero.root.visible = true;
       discAt(t);
@@ -1380,8 +1383,10 @@ export async function mountOpening(theme: Theme) {
   // A seek is the exporter driving the picture; the live loop must get out of
   // its way from then on, even if the address forgot play=0.
   let seeked = false;
-  (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => { seeked = true; apply(t); };
-  (window as unknown as { __duration: number }).__duration = DURATION;
+  if (!hosted) {
+    (window as unknown as { __seek: (t: number) => void }).__seek = (t: number) => { seeked = true; apply(t); };
+    (window as unknown as { __duration: number }).__duration = DURATION;
+  }
   if (mask) {
     document.querySelector<HTMLElement>('.col-graph')!.style.visibility = 'hidden';
     thread.style.display = 'none';
@@ -1517,6 +1522,17 @@ export async function mountOpening(theme: Theme) {
     }
   }
 
+  if (hosted) {
+    // Forget what the cached switches last wrote, so the next apply() writes every one of them.
+    const resetCaches = () => { shownNow = -1; solidNow = -1; fanSolidNow = -1; lastBladeState = ''; captionKey = ''; tagKey = ''; };
+    return {
+      resetCaches, pieceAt, discAt, fanAt, drawFrame, stageAt, discMaterials, lightsAt, nearFarRatio, ringView: ring, m3FitPos, fanStart, fanTotal, fanOutline, ringShell, fanShell, firstBladeTip,
+      apply, view, scene, camera, engine, components, hero, heroColors, spin, tilt, Y3, open, pieces,
+      ringOutlines, ringLineMat, discMeshes, discLines, fanMesh, fanOutlines, bladeMesh, rotorGroups, flow,
+      lights, s, T, tiltRot, rigMatrix, seatMatrix, yaw64, camStart, targetStart, m3FitTarget, ghostMats, cutPlane,
+      captionRight, ringColor, ringPbr, bladeId, LIT, LIT_SRGB, firstPath, firstDot,
+    };
+  }
   const hold = params.get('t');
   if (hold !== null) {
     apply(Number(hold));
