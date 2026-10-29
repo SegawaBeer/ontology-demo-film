@@ -104,9 +104,18 @@ PROBE_JS = r"""(t) => {
 }"""
 
 
-def load(page, url):
-    page.goto(url)
-    page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
+def load(page, url, tries=3):
+    """Open url and wait for the page; a headless load now and then never gets ready (seen after many
+    WebGL pages in one browser), so it is retried."""
+    for k in range(tries):
+        page.goto(url)
+        try:
+            page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=60000)
+            break
+        except Exception:
+            if k == tries - 1:
+                raise
+            print(f'reload {url} (not ready after 60 s)', flush=True)
     page.evaluate('document.fonts.ready')
 
 
@@ -148,49 +157,84 @@ def n1_n2(browser):
 N3_TIMES = [round(0.4 + i * 4.0, 1) for i in range(30)]   # 0.4 .. 116.4, both with and without a line due
 
 
+K_NEW, K_BASE = 2, 4
+
+
 def n3(browser):
-    a = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=2)
-    b = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=2)
-    bad, cur = [], None
+    """The WebGL canvas comes out in one of a few variants per page load (072d37c itself: a few
+    hundred pixels, at most 55 levels, differ between two loads of the same page). So each moment
+    is shot on K_NEW loads of the new page and K_BASE loads of 072d37c, and passes when some new
+    shot equals some base shot exactly."""
+    mk = lambda: browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=2)
+    news, bases = [mk() for _ in range(K_NEW)], [mk() for _ in range(K_BASE)]
+    bad, rows, cur = [], [], None
     for t in N3_TIMES:
-        name = page_of(t)[0]
+        name, start, _ = page_of(t)
         if name != cur:
-            load(a, f'{NEW}?frame={name}&theme=light&play=0')
-            load(b, f'{BASE}?frame={name}&theme=light&play=0')
-            for p in (a, b):
-                p.evaluate(f'window.__seek({page_of(t)[1]})')
+            for p in news:
+                load(p, f'{NEW}?frame={name}&theme=light&play=0')
+            for p in bases:
+                load(p, f'{BASE}?frame={name}&theme=light&play=0')
+            for p in news + bases:
+                p.evaluate(f'window.__seek({start})')
             cur = name
-        a.evaluate(f'window.__seek({t})'); b.evaluate(f'window.__seek({t})')
-        ia, ib = shot(a), shot(b)
-        if not same(ia, ib):
-            bad.append({'t': t, 'bbox': ImageChops.difference(ia, ib).getbbox()})
-    record('N3', not bad, moments=len(N3_TIMES), scale=2, bad=bad)
+        shots = []
+        for p in news + bases:
+            p.evaluate(f'window.__seek({t})')
+            shots.append(shot(p))
+        ns, bs = shots[:K_NEW], shots[K_NEW:]
+        count = lambda x, y: sum(ImageChops.difference(x, y).convert('L').histogram()[1:])
+        pairs = [count(x, y) for x in ns for y in bs]
+        base_noise = max(count(bs[0], y) for y in bs[1:])
+        rows.append([t, min(pairs), base_noise])
+        if min(pairs):
+            bad.append({'t': t, 'min_pixels': min(pairs), 'base_vs_base_max': base_noise})
+    for p in news + bases:
+        p.close()
+    record('N3', not bad, moments=len(N3_TIMES), scale=2, loads=[K_NEW, K_BASE],
+           base_noise_moments=sum(1 for r in rows if r[2]), bad=bad)
 
 
 N4_TIMES = [1.0, 7.3, 21.95, 27.2, 36.4, 46.0, 53.3, 60.1, 73.2, 81.7, 92.1, 100.9, 104.9, 109.0, 110.9]
 
 
+NARR_STATE = """() => { const b = document.querySelector('.narration');
+  return b ? { text: [...b.children].map(s => s.textContent), display: b.style.display, opacity: b.style.opacity,
+    transform: b.style.transform, rect: (r => [r.left, r.top, r.right, r.bottom])(b.getBoundingClientRect()) } : null; }"""
+HIDE_CANVAS = "document.querySelector('#model').style.visibility = 'hidden'"
+SHOW_CANVAS = "document.querySelector('#model').style.visibility = ''"
+
+
 def n4(browser):
-    bad = []
+    """Fresh load seeked straight to t, against a second load that first seeks elsewhere and back.
+    Must be equal: the subtitle's state, and every pixel with the 3-D canvas hidden (subtitle, dialog,
+    graph, labels). The canvas itself is reported only: in 072d37c the opening's 3-D picture already
+    depends on where it was seeked before (a forward export never seeks back), and the canvas comes
+    out in a few variants per load (see n3)."""
+    bad, info = [], []
+    mk = lambda: browser.new_page(viewport={'width': 1920, 'height': 1080})
     for t in N4_TIMES:
-        name, start, _ = page_of(t)
+        name, start, end = page_of(t)
         url = f'{NEW}?frame={name}&theme=light&play=0&narration=1'
-        fresh = browser.new_page(viewport={'width': 1920, 'height': 1080})
-        load(fresh, url)
-        fresh.evaluate(f'window.__seek({start})')
-        fresh.evaluate(f'window.__seek({t})')
-        ref = shot(fresh)
-        fresh.close()
-        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
-        load(page, url)
-        for other in (start, min(t + 6.3, page_of(t)[2] - 0.05), max(start, t - 3.1), t + 0.05):
-            page.evaluate(f'window.__seek({other})')
-        page.evaluate(f'window.__seek({t})')
-        got = shot(page)
-        page.close()
-        if not same(ref, got):
-            bad.append({'t': t, 'bbox': ImageChops.difference(ref, got).getbbox()})
-    record('N4', not bad, moments=len(N4_TIMES), bad=bad)
+        out = []
+        for jumps in ((), (start, min(t + 6.3, end - 0.05), max(start, t - 3.1), t + 0.05)):
+            page = mk()
+            load(page, url)
+            for other in jumps:
+                page.evaluate(f'window.__seek({other})')
+            page.evaluate(f'window.__seek({t})')
+            full = shot(page)
+            page.evaluate(HIDE_CANVAS)
+            flat = shot(page)
+            page.evaluate(SHOW_CANVAS)
+            out.append((page.evaluate(NARR_STATE), flat, full))
+            page.close()
+        (s0, f0, g0), (s1, f1, g1) = out
+        canvas_px = sum(ImageChops.difference(g0, g1).convert('L').histogram()[9:])
+        info.append([t, canvas_px])
+        if s0 != s1 or not same(f0, f1):
+            bad.append({'t': t, 'state_same': s0 == s1, 'flat_bbox': ImageChops.difference(f0, f1).getbbox()})
+    record('N4', not bad, moments=len(N4_TIMES), canvas_pixels_over8=info, bad=bad)
 
 
 def c1_c2(browser):
