@@ -111,7 +111,11 @@ def load(page, url, tries=3):
         page.goto(url)
         try:
             page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=60000)
-            break
+            # a load that came up in a wrong-sized window draws the frame scaled ('fit'); retry it too
+            if page.evaluate("innerWidth === 1920 && innerHeight === 1080 && !document.documentElement.classList.contains('fit')"):
+                break
+            print(f'reload {url} (window {page.evaluate("[innerWidth, innerHeight]")})', flush=True)
+            continue
         except Exception:
             if k == tries - 1:
                 raise
@@ -199,7 +203,7 @@ N4_TIMES = [1.0, 7.3, 21.95, 27.2, 36.4, 46.0, 53.3, 60.1, 73.2, 81.7, 92.1, 100
 
 
 NARR_STATE = """() => { const b = document.querySelector('.narration');
-  return b ? { text: [...b.children].map(s => s.textContent), display: b.style.display, opacity: b.style.opacity,
+  return b ? { win: [innerWidth, innerHeight, document.documentElement.className], text: [...b.children].map(s => s.textContent), display: b.style.display, opacity: b.style.opacity,
     transform: b.style.transform, rect: (r => [r.left, r.top, r.right, r.bottom])(b.getBoundingClientRect()) } : null; }"""
 HIDE_CANVAS = "document.querySelector('#model').style.visibility = 'hidden'"
 SHOW_CANVAS = "document.querySelector('#model').style.visibility = ''"
@@ -233,7 +237,7 @@ def n4(browser):
         canvas_px = sum(ImageChops.difference(g0, g1).convert('L').histogram()[9:])
         info.append([t, canvas_px])
         if s0 != s1 or not same(f0, f1):
-            bad.append({'t': t, 'state_same': s0 == s1, 'flat_bbox': ImageChops.difference(f0, f1).getbbox()})
+            bad.append({'t': t, 'state_same': s0 == s1, 'states': [s0, s1], 'flat_bbox': ImageChops.difference(f0, f1).getbbox()})
     record('N4', not bad, moments=len(N4_TIMES), canvas_pixels_over8=info, bad=bad)
 
 
