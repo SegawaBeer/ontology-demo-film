@@ -87,7 +87,10 @@ export async function mountFilm(theme: Theme) {
     if (t > BACK[0]) { backToSplit(t); return; }
     if (t > Q4_AT) { questionFour(t); return; }
     q4.apply(CLIP_AT);
-    const local = t - CLIP_AT;
+    // On the 60 fps grid the clip gets exactly frame/60, as frame=clip does when it is exported:
+    // t − 64 in floating point can land a hair under it, and the ticking numbers' jitter is
+    // keyed to the frame number, so the flicker would run one frame off the clip's sound events.
+    const k = t * 60, local = Math.abs(k - Math.round(k)) < 1e-6 ? (Math.round(k) - CLIP_AT * 60) / 60 : t - CLIP_AT;
     clip.seek(local, 2);
     lastPose = clip.cameraAt(local);
     colCam.position.copy(view.camera.position);

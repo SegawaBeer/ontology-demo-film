@@ -251,7 +251,8 @@ EVT_JS = r"""() => { const p = window.__filmProbe();
   return { asks: asks.reduce((a, b) => a + b, 0), steps: document.querySelectorAll('#dialog .turn:not(.past) .step').length,
     plans: [...document.querySelectorAll('#dialog .plan')].filter(x => getComputedStyle(x).visibility !== 'hidden').length,   // like steps: in the DOM from its start time
     draws: [...document.querySelectorAll('#graph [data-draw]')].map(x => x.getAttribute('data-draw')),
-    green: (document.querySelector('#dialog .answer .now.green')?.textContent ?? '').length }; }"""
+    green: (document.querySelector('#dialog .answer .now.green')?.textContent ?? '').length,
+    ems: [...document.querySelectorAll('#dialog .turn:not(.past) .step em')].map(e => e.textContent).join('|') }; }"""
 
 
 def g6(browser):
@@ -272,6 +273,17 @@ def g6(browser):
     if len(tf) != len(te): bad.append(['type count', len(te), len(tf)])
     for et, f in zip(te, tf):
         if not near(et, f): bad.append(['type', et, f / FPS])
+    # Numbers: every tick event lands on a frame where some answer number stops changing for good.
+    settle = set()
+    for i, (f, st) in enumerate(tl[:-1]):
+        nxt = tl[i + 1][1]['ems'].split('|')
+        cur = st['ems'].split('|')
+        for k in range(min(len(cur), len(nxt))):
+            if cur[k] != nxt[k] and all(s2['ems'].split('|')[k:k + 1] == nxt[k:k + 1] for _, s2 in tl[i + 1:i + 120] if len(s2['ems'].split('|')) > k):
+                settle.add(tl[i + 1][0])
+    tk = sorted(e['t'] for e in events if e['kind'] == 'tick' and 64 <= e['t'] < 101)
+    for et in tk:
+        if not any(near(et, f) for f in settle): bad.append(['tick', et])
     # Links: one path event where each drawing starts.
     starts = {}
     for f, s in tl:
