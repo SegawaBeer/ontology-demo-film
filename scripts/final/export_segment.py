@@ -56,6 +56,9 @@ def main():
         page.goto(url)
         page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
         page.evaluate("document.fonts.ready")
+        # Seek once to the first frame so the page is driven before the steadiness test.
+        page.evaluate(f'window.__seek({args.start})')
+        page.evaluate(f'window.__seek({args.start})')
         steady = False
         for _ in range(10):
             a = page.screenshot()
