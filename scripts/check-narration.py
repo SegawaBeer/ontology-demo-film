@@ -201,7 +201,7 @@ def c1_c2(browser):
         load(page, f'{NEW}?frame=card&id={k}&theme=light&play=0&bg={CARDS_URL}/c{k}.png')
         info = page.evaluate("""() => ({ start: window.__start, duration: window.__duration, events: window.__events,
           label: document.querySelector('.card-label')?.textContent ?? null,
-          red: [...document.querySelectorAll('.card-label .alert')].map(e => [e.textContent, getComputedStyle(e).color]),
+          red: [...document.querySelectorAll('.card-label .card-alert')].map(e => [e.textContent, getComputedStyle(e).color]),
           labelColour: document.querySelector('.card-label') ? getComputedStyle(document.querySelector('.card-label')).color : null,
           title: document.querySelector('.card-title')?.textContent ?? null,
           sub: document.querySelector('.card-sub')?.textContent ?? null })""")

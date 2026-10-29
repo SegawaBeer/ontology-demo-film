@@ -57,7 +57,7 @@ export async function mountCard() {
     label = el('card-label', card.label);
     if (card.alert) {
       const red = document.createElement('span');
-      red.className = 'alert';
+      red.className = 'card-alert';
       red.textContent = card.alert;
       label.append(red);
     }
