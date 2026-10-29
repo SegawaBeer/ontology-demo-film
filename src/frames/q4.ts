@@ -53,10 +53,16 @@ function q2At(t: number, red: string) {
   const rows = 1 - ease(seg(c, 0.5, 0.8));
   const now = typed(GREEN_ANSWER, c, 0.55, 0.035, 71);
   const bar = ease(seg(c, 0.55, 0.8));
+  // 10.1: the red 「自动更新 · 02:17」 fades out (98.6–98.8), then the green 「自动更新 · 02:24」
+  // fades in at the same place (98.8–99.0); only one of them is ever on the page.
+  const flagOut = 1 - ease(seg(c, 0, 0.2)), flagIn = ease(seg(c, 0.2, 0.4));
+  const flag = c < 0.2
+    ? `<span class="flag" style="opacity:${opacity(flagOut)}">自动更新 · 02:17</span>`
+    : `<span class="flag" style="opacity:${opacity(flagIn)};color:var(--green)">自动更新 · 02:24</span>`;
   const oldStyle = old > 0 ? `opacity:${opacity(old)}` : 'visibility:hidden';
   return `<div class="turn past changing" style="opacity:1.000">
       <span class="bar" style="transform:scaleY(1.000)${bar > 0 ? `;background:color-mix(in srgb, var(--green) ${(100 * bar).toFixed(1)}%, var(--red))` : ''}"></span>
-      <div class="meta"><b>总装</b><span>02:11</span><span class="flag" style="opacity:1.000${bar > 0 ? `;color:color-mix(in srgb, var(--green) ${(100 * bar).toFixed(1)}%, var(--red))` : ''}">自动更新 · 02:17</span></div>
+      <div class="meta"><b>总装</b><span>02:11</span>${flag}</div>
       <p class="ask">7 号发动机明早 9 点能按时上试车台吗？</p>
       <p class="answer reanswer"><span class="old-rows" style="grid-template-rows:${rows.toFixed(4)}fr"><span class="old-clip"><span class="old" style="${oldStyle}"><span class="was" style="background-size:100.0% 1px">可以按时上试车台 09:00</span><span class="now struck" style="background-size:${(strike * 100).toFixed(1)}% 1px">暂不能上试车台 · 等待 16 枚叶片</span></span></span></span><span class="now green">${now}</span></p></div>`;
 }
@@ -194,7 +200,8 @@ export function q4GraphAt(t: number, at22: GraphState): GraphState {
   // The frozen batch's red chip makes way for the two good batches, then comes back.
   const green = ease(seg(t, POWDER_GREEN[0], POWDER_GREEN[1])) * (1 - ease(seg(t, POWDER_GREEN[2], POWDER_GREEN[3])));
   const red = t < POWDER_GREEN[0] ? 1 - ease(seg(t, POWDER_RED_OUT[0], POWDER_RED_OUT[1])) : ease(seg(t, POWDER_RED_IN[0], POWDER_RED_IN[1]));
-  if (green > 0) { chip.powder = { text: 'YSZ-2398 · YSZ-2421', tone: 'green' }; if (green < 1) chipAmount.powder = green; }
+  // 10.2: in status green (the stylesheet would turn a chip grey).
+  if (green > 0) { chip.powder = { text: 'YSZ-2398 · YSZ-2421', tone: 'green', inked: true }; if (green < 1) chipAmount.powder = green; }
   else if (red <= 0) delete chip.powder;
   else if (red < 1) chipAmount.powder = red;
 

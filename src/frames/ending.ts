@@ -11,6 +11,7 @@ import { mountOpening } from './clip-open';
 import { renderGraph } from './graph';
 import { endingGraphAt } from './ending-graph';
 import { filmEvents } from './film-events';
+import { createFlowPieces } from './opening-flow';
 import { blendPose } from './clip-q12';
 import type { Theme, Pose } from './scene';
 import { clamp, seg, ease } from './timing';
@@ -18,10 +19,13 @@ import { clamp, seg, ease } from './timing';
 export const START = 103, DURATION = 120;
 const SPIN = [103.0, 105.0, 105.8, 111.0] as const;
 const RING_FLASH = [105.0, 105.5] as const, FLASH_AMP = 0.25;
-const PARTS = [105.6, 110.6] as const;            // start of the first and the last part to go
+const PARTS = [105.6, 111.6] as const;            // start of the first and the last part to go (all but 001 gone by 111.8)
 const BLADE_LINE = 0.2;                            // a ring blade shows its outline this long
-const B = 112.0, TINT = [112.0, 113.0] as const, CROSS = [113.0, 113.3] as const, CAM_B = [112.0, 113.3] as const;
-const LEAVE = [113.3, 115.0] as const, C = 115.0;
+// 10.4: two camera moves. Whole engine -> whole ring (same viewing direction), the swap in the
+// ring shot, then ring -> the opening's t = 3 shot while 001 leaves the ring.
+const CAM1 = [109.0, 111.4] as const, RING_D = 0.55;   // ring outer diameter: 55 % of the column height
+const TINT = [111.4, 112.3] as const, CROSS = [112.3, 112.6] as const;
+const LEAVE = [112.6, 115.0] as const, C = 115.0;
 const CAPTION = [112.0, 112.3] as const, THREAD = [115.0, 116.4] as const, SUBTITLE = [116.4, 117.4] as const;
 const SPIN_JOIN = 117.4;                          // from here the opening's own 8°/s, Y3 + 8 × (t − 119)
 const OMEGA = 360 / 4.4;
@@ -74,6 +78,17 @@ export async function mountEnding(theme: Theme) {
   items.sort((a, b) => b.d - a.d);
   items.forEach((it, i) => { it.start = PARTS[0] + (PARTS[1] - PARTS[0]) * i / (items.length - 1); });
   const fanEnd = o.fanStart(o.fanTotal) + o.fanOutline + 0.01;
+  // 10.3: each airflow piece fades with the part it runs past (1 − its fade progress).
+  const flowPieces = createFlowPieces(o.flow.group.parent!);
+  const shown = (it: Item | undefined, t: number) => it ? 1 - seg(t, it.start, it.start + it.dur) : 1;
+  const itemOf = (id: string) => items.find(it => it.piece?.ids.includes(id));
+  const fanItems = [items.find(it => it.kind === 'fan'), itemOf('fan.hub'), itemOf('fan.spinner')];
+  const cowl = itemOf('fan-cowl.shell'), duct = itemOf('nacelle.duct'), nozzle = itemOf('exhaust.nozzle');
+  const flowShare = (t: number) => ({
+    intake: Math.max(...fanItems.map(it => shown(it, t)), shown(cowl, t)),
+    bypass: shown(duct, t),
+    core: shown(nozzle, t),
+  });
   /** Each item's own assembly timeline run backwards: r = 0 fully there, 1 gone. */
   function fadeItems(t: number) {
     let blades = 1;
@@ -136,16 +151,32 @@ export async function mountEnding(theme: Theme) {
     view.render();
     if (!extras.length) return;
     for (const x of extras) x.visible = true;
-    const off = [...ghostMeshes.filter(m => m.visible), ...(o.flow.group.visible ? [o.flow.group] : [])];
+    const off = [...ghostMeshes.filter(m => m.visible), ...[o.flow.group, flowPieces.group].filter(g => g.visible)];
     for (const x of off) x.visible = false;
     view.renderSecond();
     for (const x of off) x.visible = true;
   }
-  // Camera poses: the net framing (opening t = 30) and the ring view (opening t = 7.3).
+  // Camera poses (engine space): the net framing (opening t = 30), the whole-ring shot along the
+  // same direction, and the opening's own start shot (its t <= 5 camera carried into engine space).
   const NET: Pose = { position: o.m3FitPos.clone(), target: o.m3FitTarget.clone() };
+  const OPEN0: Pose = { position: o.camStart.clone(), target: o.targetStart.clone() };
   o.apply(7.3, false);
-  const RINGV: Pose = { position: camera.position.clone(), target: o.ringView.target.clone() };
-  const ringNear = camera.near, ringFar = camera.far;
+  const RINGSHOT: Pose = (() => {
+    const pts: THREE.Vector3[] = [];
+    for (let n = 1; n <= 100; n++) { const P = engine.partWorldPoints(bladeId(n))!; for (let i = 0; i < P.length; i += 30) pts.push(new THREE.Vector3(P[i], P[i + 1], P[i + 2])); }
+    const target = new THREE.Vector3(-1.355, 0, 0);
+    const dir = NET.position.clone().sub(NET.target).normalize();
+    const cam = new THREE.PerspectiveCamera(camera.fov, 1280 / 1080, 0.01, 100);
+    let dist = NET.position.distanceTo(NET.target);
+    for (let i = 0; i < 12; i++) {
+      cam.position.copy(target).addScaledVector(dir, dist); cam.lookAt(target); cam.updateMatrixWorld();
+      let y0 = 9, y1 = -9;
+      for (const p of pts) { const q = p.clone().project(cam); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+      dist *= (y1 - y0) / 2 / RING_D;
+    }
+    return { target, position: target.clone().addScaledVector(dir, dist) };
+  })();
+  const nearFar = (p: Pose) => { const d = p.position.distanceTo(p.target); return [d * o.nearFarRatio.near, d * o.nearFarRatio.far]; };
   let lastT = START, bladesNow = 100, lastPose: Pose = NET;
 
   function seek(input: number) {
@@ -153,6 +184,7 @@ export async function mountEnding(theme: Theme) {
     lastT = t;
     o.resetCaches();
     if (t >= C) {
+      flowPieces.set(0, 0, { intake: 0, bypass: 0, core: 0 });
       fadeItems(DURATION);
       heroLook(1);
       o.apply(4.0, true, { yaw: yawAt(t), thread: clamp((t - THREAD[0]) / (THREAD[1] - THREAD[0])) });
@@ -163,12 +195,14 @@ export async function mountEnding(theme: Theme) {
       return;
     }
     subtitle.style.opacity = '0';
+    flowPieces.set(0, 0, { intake: 0, bypass: 0, core: 0 });
     if (t >= LEAVE[0]) leave(t);
     else {
       o.apply(30.0, false);
       const deg = rotorDegrees(t);
       for (const g of o.rotorGroups) g.rotation.x = -THREE.MathUtils.degToRad(deg % 360);
-      o.flow.set(speedAt(t), 360 + deg, false);
+      o.flow.set(0, 0, true);
+      flowPieces.set(speedAt(t), 360 + deg, flowShare(t));
       lastPose = NET;
     }
     bladesNow = fadeItems(t);
@@ -177,23 +211,28 @@ export async function mountEnding(theme: Theme) {
       const a = Math.sin(Math.PI * f) * FLASH_AMP, c = new THREE.Color();
       for (let n = 1; n <= 100; n++) engine.setColor(bladeId(n), c.copy(engine.parts.get(bladeId(n))!.baseColor).convertLinearToSRGB().lerp(o.LIT_SRGB, a).convertSRGBToLinear());
     }
-    if (t >= B && t < LEAVE[0]) swap(t);
-    if (t >= B) caption(t);
+    if (t >= CAM1[0] && t < LEAVE[0]) ringShot(t);
+    if (t >= TINT[0] && t < LEAVE[0]) swap(t);
+    if (t >= CAPTION[0]) caption(t);
     renderGraph(graphEl, endingGraphAt(t, bladesNow));
     // After a jump some material state only lands on the next draw (as in film-a), so draw twice.
     draw();
     draw();
   }
 
-  /** 112–113.3: camera to the ring view; blade 001 takes the detailed blade's metal, then they cross-fade. */
-  function swap(t: number) {
-    const k = ease(seg(t, CAM_B[0], CAM_B[1]));
-    lastPose = blendPose(NET, RINGV, k);
+  /** 109–111.4: from the whole engine to the whole ring, same direction; lights back to the opening's ring set-up. */
+  function ringShot(t: number) {
+    const k = ease(seg(t, CAM1[0], CAM1[1]));
+    lastPose = blendPose(NET, RINGSHOT, k);
     view.applyPose(lastPose);
-    camera.near = THREE.MathUtils.lerp(0.05, ringNear, k);
-    camera.far = THREE.MathUtils.lerp(80, ringFar, k);
+    const [n1, f1] = nearFar(RINGSHOT);
+    camera.near = THREE.MathUtils.lerp(0.05, n1, k);
+    camera.far = THREE.MathUtils.lerp(80, f1, k);
     camera.updateProjectionMatrix();
     o.lightsAt(t, [1, 1 - k]);
+  }
+  /** 111.4–112.6, in the ring shot: blade 001 takes the detailed blade's metal, then they cross-fade. */
+  function swap(t: number) {
     const cross = ease(seg(t, CROSS[0], CROSS[1]));
     o.open.hero.root.visible = cross > 0;
     heroLook(cross);
@@ -207,15 +246,17 @@ export async function mountEnding(theme: Theme) {
     m.roughness = THREE.MathUtils.lerp(o.ringPbr.roughness, nickel.roughness, tint);
     m.envMapIntensity = THREE.MathUtils.lerp(o.ringPbr.env, nickel.env, tint);
   }
-  /** 113.3–115: the opening's 7.3 → 5.0 backwards: the blade leaves the ring and the camera goes back. */
+  /** 112.6–115: the opening's 7.3 -> 5.0 backwards (the blade leaves the ring); the camera goes from the ring shot to the opening's. */
   function leave(t: number) {
     o.apply(7.3 - 2.3 * seg(t, LEAVE[0], LEAVE[1]), false);
     heroLook(1);
     o.firstPath.style.opacity = '0';
     o.firstDot.style.opacity = '0';
-    // In engine space; the target is one unit ahead along the view (only the direction is used).
-    const ahead = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
-    lastPose = { position: camera.position.clone(), target: ahead };
+    lastPose = blendPose(RINGSHOT, OPEN0, ease(seg(t, LEAVE[0], LEAVE[1])));
+    view.applyPose(lastPose);
+    const [n, f] = nearFar(lastPose);
+    camera.near = n; camera.far = f;
+    camera.updateProjectionMatrix();
   }
   function caption(t: number) {
     const cap = ease(seg(t, CAPTION[0], CAPTION[1]));
@@ -224,7 +265,8 @@ export async function mountEnding(theme: Theme) {
   }
 
   const probe = () => ({ t: lastT, camera: { position: lastPose.position.toArray(), target: lastPose.target.toArray() },
-    rotor: rotorDegrees(lastT), speed: speedAt(lastT), blades: bladesNow, yaw: lastT >= C ? yawAt(lastT) : null,
+    rotor: rotorDegrees(lastT), speed: speedAt(lastT), blades: bladesNow,
+    flow: { intake: flowPieces.opacity('intake'), bypass: flowPieces.opacity('bypass'), core: flowPieces.opacity('core') }, yaw: lastT >= C ? yawAt(lastT) : null,
     partsVisible: [...engine.parts.values()].filter(s => s.visible).length });
-  return { seek, probe, events: filmEvents(), debug: { o, view, engine, items, yawAt, THREE } };
+  return { seek, probe, events: filmEvents(), debug: { o, view, engine, items, yawAt, RINGSHOT, THREE } };
 }

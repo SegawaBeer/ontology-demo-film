@@ -33,7 +33,8 @@ const GAP = 0.20;
 const TRAVEL = 0.0147;
 export const FLOW_COLOR = '#8fa6b8';
 
-function build(path: (typeof FLOW_PATHS)[number], material: LineMaterial) {
+/** `only`: keep just that piece of the path (same dash distances as the whole line). */
+function build(path: (typeof FLOW_PATHS)[number], material: LineMaterial, only?: number) {
   const positions: number[] = [];
   const distances: number[] = [];
   const period = DASH + GAP;
@@ -48,9 +49,11 @@ function build(path: (typeof FLOW_PATHS)[number], material: LineMaterial) {
       for (let j = 0; j < n; j++) {
         const xa = THREE.MathUtils.lerp(p.from, p.to, j / n), xb = THREE.MathUtils.lerp(p.from, p.to, (j + 1) / n);
         const ra = THREE.MathUtils.lerp(p.r0, p.r1, j / n), rb = THREE.MathUtils.lerp(p.r0, p.r1, (j + 1) / n);
-        positions.push(xa, ra * c, ra * s, xb, rb * c, rb * s);
         const len = Math.hypot(xb - xa, rb - ra);
-        distances.push(d, d + len);
+        if (only === undefined || only === k) {
+          positions.push(xa, ra * c, ra * s, xb, rb * c, rb * s);
+          distances.push(d, d + len);
+        }
         d += len;
       }
     });
@@ -119,5 +122,48 @@ export function createFlow(parent: THREE.Object3D) {
       return out;
     },
     material,
+  };
+}
+
+/**
+ * The same airflow cut into its pieces, each with its own material, so every piece can
+ * fade with the part it runs past (frame=ending, 主时间轴二 10.3). Keys: 'intake' (both
+ * lines in front of the intake), 'bypass' (behind the bypass duct), 'core' (behind the nozzle).
+ */
+export function createFlowPieces(parent: THREE.Object3D) {
+  const group = new THREE.Group();
+  group.name = 'flow-pieces';
+  const mats: Record<'intake' | 'bypass' | 'core', LineMaterial> = {} as never;
+  for (const key of ['intake', 'bypass', 'core'] as const) {
+    const m = new LineMaterial({
+      color: FLOW_COLOR, linewidth: 1, transparent: true, opacity: 0, depthTest: true, depthWrite: false,
+      dashed: true, dashSize: DASH, gapSize: GAP,
+    });
+    m.toneMapped = false;
+    m.resolution.set(1280, 1080);
+    mats[key] = m;
+  }
+  for (const path of FLOW_PATHS) {
+    group.add(build(path, mats.intake, 0));
+    group.add(build(path, path.name === 'bypass' ? mats.bypass : mats.core, 1));
+  }
+  parent.add(group);
+  group.visible = false;
+  return {
+    group,
+    /** `share`: each piece's opacity factor (the part next to it), 0..1. */
+    set(speed: number, degrees: number, share: Record<'intake' | 'bypass' | 'core', number>) {
+      const base = 0.35 * Math.max(0, speed);
+      let any = false;
+      for (const key of ['intake', 'bypass', 'core'] as const) {
+        const m = mats[key];
+        m.opacity = base * share[key];
+        m.dashOffset = -TRAVEL * degrees;
+        m.visible = m.opacity > 1e-4;
+        any ||= m.visible;
+      }
+      group.visible = any;
+    },
+    opacity: (key: 'intake' | 'bypass' | 'core') => (group.visible && mats[key].visible ? mats[key].opacity : 0),
   };
 }

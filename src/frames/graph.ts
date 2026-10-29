@@ -268,6 +268,7 @@ export function renderGraph(svg: SVGSVGElement, state: GraphState) {
             'font-size': 11.5, class: 'mono', 'font-weight': 500, 'text-anchor': chip.anchor ?? (below ? 'middle' : toLeft ? 'end' : 'start'), fill,
           }, g);
           text.textContent = row;
+          if (chip.inked) text.style.fill = fill;
           const k = state.chipAmount?.[n.id];
           if (i < rows.length - 1 && k !== undefined && k < 1) text.style.opacity = String(Math.max(0, k));
         });

@@ -87,7 +87,8 @@ export type GraphState = {
   lit: string[];
   litEdges: [string, string][];
   /** `dx`, `dy`, `anchor`: optional move of the chip off its default spot (to keep it clear of lines). */
-  chip: Record<string, { text: string; tone?: Tone; dx?: number; dy?: number; anchor?: 'start' | 'middle' | 'end' }>;
+  /** `inked`: drawn in its tone colour. Without it the stylesheet's grey text fill wins over the tone (the look of every accepted frame). */
+  chip: Record<string, { text: string; tone?: Tone; dx?: number; dy?: number; anchor?: 'start' | 'middle' | 'end'; inked?: boolean }>;
   status: Record<string, Tone>;
   timing: { text: string; x: number; y: number }[];
   counter?: string;
