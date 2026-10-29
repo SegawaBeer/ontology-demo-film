@@ -92,7 +92,8 @@ def srt(path):
     stamp = lambda s: f'{int(s // 3600):02d}:{int(s % 3600 // 60):02d}:{int(s % 60):02d},{int(round(s * 1000)) % 1000:03d}'
     cues = []
     for i, (_, a, b, text) in enumerate(rows, 1):
-        a, b = to_new(float(a)), to_new(float(b))
+        # A line that ends exactly at a cut (17 at 86.0, 20 at 101.0) ends before that card, not after it.
+        a, b = to_new(float(a)), float(b) + sum(d for at, d in zip(CARD_AT, CARD_DUR) if at < float(b) - 1e-9)
         cues.append(f'{i}\n{stamp(a)} --> {stamp(b)}\n' + '\n'.join(text.split('<br>')) + '\n')
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(cues))
