@@ -77,7 +77,7 @@ def verify_rotor():
     return res
 
 
-def page_events(url, out, tries=3):
+def page_events(url, out, tries=5):
     """film_events.py on one page (system python3 with Playwright), into OUT.  A headless load
     now and then never gets ready (it times out); that run is repeated, up to `tries` times."""
     import build_film_audio as bfa
