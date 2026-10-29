@@ -12,6 +12,7 @@ import { renderGraph } from './graph';
 import { endingGraphAt } from './ending-graph';
 import { filmEvents } from './film-events';
 import { createFlowPieces } from './opening-flow';
+import { liftBladeName } from './open';
 import { blendPose } from './clip-q12';
 import type { Theme, Pose } from './scene';
 import { clamp, seg, ease } from './timing';
@@ -252,6 +253,7 @@ export async function mountEnding(theme: Theme) {
     heroLook(1);
     o.firstPath.style.opacity = '0';
     o.firstDot.style.opacity = '0';
+    liftBladeName(o.open.thread, null, 0, 0);
     lastPose = blendPose(RINGSHOT, OPEN0, ease(seg(t, LEAVE[0], LEAVE[1])));
     view.applyPose(lastPose);
     const [n, f] = nearFar(lastPose);

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import { createOpenScene, type OpenScene } from './open';
+import { createOpenScene, liftBladeName, type OpenScene } from './open';
 import { bladePoint } from '../hero-blade';
 import { renderGraph } from './graph';
 import type { GraphState } from './data';
@@ -1363,8 +1363,10 @@ export async function mountOpening(theme: Theme, hosted = false) {
     if (!mask) {
       const first = firstBladeTip();
       const fade = 1 - seg(t, 6.6, 7.1);
-      if (first && t >= 1.8 && fade > 0) line(firstPath, firstDot, first, { x: 1573, y: 410 }, 9, clamp01((t - 1.8) / 1.4), 0.85 * fade);
-      else { firstPath.style.opacity = '0'; firstDot.style.opacity = '0'; }
+      if (first && t >= 1.8 && fade > 0) {
+        line(firstPath, firstDot, first, { x: 1573, y: 410 }, 9, clamp01((t - 1.8) / 1.4), 0.85 * fade);
+        liftBladeName(thread, firstPath, clamp01((t - 1.8) / 1.4), fade);   // 10.5: the line passes behind the node's name
+      } else { firstPath.style.opacity = '0'; firstDot.style.opacity = '0'; liftBladeName(thread, null, 0, 0); }
       const tip = t >= 8.8 ? bladeTipScreen(100) : null;
       const threadFade = 1 - smootherAt(t, 9.6, 10.1);
       if (tip && threadFade > 0.002) line(secondPath, secondDot, tip, { x: 1573, y: 330 }, 6, seg(t, 8.8, 9.2), 0.85 * threadFade);

@@ -297,6 +297,7 @@ export async function createOpenScene(theme: Theme, mask: boolean, host?: { view
     nodePath.style.strokeDashoffset = `${total * (1 - p)}`;
     nodePath.style.opacity = p > 0 ? '1' : '0';
     nodeDot.style.opacity = p > 0 ? '1' : '0';
+    liftBladeName(thread, nodePath, p, p > 0 ? 1 : 0);
   }
 
   function setTime(t: number, render = true, o?: Override) {
@@ -345,4 +346,41 @@ export async function mountOpen(theme: Theme) {
   const seek = (t: number) => scene.setTime(t);
   (window as unknown as { __seek: (t: number) => void }).__seek = seek;
   seek(Number(new URLSearchParams(location.search).get('t') ?? 3));
+}
+
+/**
+ * 主时间轴二 10.5: the thread from the blade runs into its node right through the node's
+ * name. While the drawn part of the thread reaches the name, the name is drawn again on
+ * top of the thread (in the thread's own layer) with a background-coloured halo, and the
+ * one in the graph is hidden, so the line reads as passing behind the words. Before the
+ * thread gets there nothing changes. Only open, opening and the ending call this.
+ */
+const BLADE_NAME = '第一级涡轮叶片';
+export function liftBladeName(thread: SVGSVGElement, path: SVGPathElement | null, progress: number, opacity: number) {
+  thread.querySelector('.lifted-name')?.remove();
+  const label = [...document.querySelectorAll<SVGTextElement>('#graph g[data-node="blade"] text')].find(t => t.textContent === BLADE_NAME);
+  if (!label) return;
+  label.style.visibility = '';
+  if (!path || progress <= 0 || opacity <= 0.001 || !path.getAttribute('d')) return;
+  const toThread = thread.getScreenCTM()!.inverse().multiply(label.getScreenCTM()!);
+  const b = label.getBBox(), pad = 3;
+  const corners = [[b.x - pad, b.y - pad], [b.x + b.width + pad, b.y + b.height + pad]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(toThread));
+  const [x0, y0, x1, y1] = [Math.min(corners[0].x, corners[1].x), Math.min(corners[0].y, corners[1].y), Math.max(corners[0].x, corners[1].x), Math.max(corners[0].y, corners[1].y)];
+  const total = path.getTotalLength(), drawn = total * Math.min(1, progress);
+  let reaches = false;
+  for (let s = 0; s <= drawn && !reaches; s += 1.5) { const q = path.getPointAtLength(s); reaches = q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1; }
+  if (!reaches) return;
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'lifted-name');
+  const m = toThread;
+  g.setAttribute('transform', `matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`);
+  const copy = label.cloneNode(true) as SVGTextElement;
+  const cs = getComputedStyle(label);
+  for (const k of ['font-family', 'font-size', 'font-weight', 'fill', 'letter-spacing', 'stroke-linejoin']) copy.style.setProperty(k, cs.getPropertyValue(k));
+  copy.style.setProperty('stroke', cs.getPropertyValue('stroke'));
+  copy.style.setProperty('stroke-width', '5px');
+  copy.style.setProperty('paint-order', 'stroke');
+  g.append(copy);
+  thread.append(g);
+  label.style.visibility = 'hidden';
 }
