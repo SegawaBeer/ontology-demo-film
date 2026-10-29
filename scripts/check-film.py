@@ -378,6 +378,7 @@ def why9x(t):
     if 91.4 <= t <= 91.8: return 'gap tags appear'
     if 96.0 <= t <= 98.5: return 'blades fly in'
     if 98.4 <= t <= 99.0: return 'blade colour back, gap tags out'
+    if 98.6 <= t <= 99.4: return 'question two turns green: its old row closes, the turns below move up'
     if 101.0 <= t <= 103.0: return 'back to the split view'
     if 103.0 <= t <= 105.0: return 'fan spins up, airflow'
     if 105.0 <= t <= 111.4: return 'parts go, farthest from blade 001 first'
