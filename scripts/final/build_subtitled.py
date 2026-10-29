@@ -13,13 +13,13 @@ segment is cut by frame number. Order: card 0, opening, card 1, film 30-33, card
 card 3, film 49-64, card 4, film 64-86, card 5, film 86-101, card 6, film 101-103, ending.
 
 assemble: checks every piece's frame count and that the pieces touch in film time; joins them
-losslessly (trim + concat, x264 qp 0 yuv444p); checks every frame of the join against its source
+in one filter graph (trim by frame number + concat, nothing written to disk); checks every frame of the join against its source
 frame by frame hash (so the two frames either side of each of the 14 seams too); writes the 4K
 (crf 14) and 1080p (crf 16) files with the audio, checks them with ffprobe, writes the contact
 sheets 拼版-字幕版-每3秒.jpg / -每0.5秒.jpg, the .srt (the 22 narration lines and the closing
 line of 字幕方案-v1.1 3.2 in film time), 成片记录-字幕版.json, and deletes its intermediates.
 """
-import argparse, json, os, re, subprocess, sys, tempfile, time
+import argparse, itertools, json, os, re, subprocess, sys, tempfile, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from assemble import probe, run  # noqa: E402
@@ -80,8 +80,8 @@ def stills(args):
 
 def framemd5(path):
     """Hash of every decoded frame; path is a file, or ffmpeg input options (a list, e.g. a concat list)."""
-    inp = path if isinstance(path, list) else ['-i', path]
-    out = run(['ffmpeg', '-hide_banner', '-loglevel', 'error', *inp, '-map', '0:v:0', '-f', 'framemd5', '-']).stdout
+    inp = path if isinstance(path, list) else ['-i', path, '-map', '0:v:0']
+    out = run(['ffmpeg', '-hide_banner', '-loglevel', 'error', *inp, '-f', 'framemd5', '-']).stdout
     return [line.rsplit(',', 1)[1].strip() for line in out.splitlines() if line and not line.startswith('#')]
 
 
@@ -101,8 +101,25 @@ def srt(path):
 # ---- assemble below ----
 
 
-def lossless(extra, out):
-    return ['-c:v', 'libx264', '-qp', '0', '-preset', 'ultrafast', '-pix_fmt', 'yuv444p', '-r', str(FPS), *extra, out]
+ORDER = [f'card{k}' for k in range(7)] + ['opening', 'film', 'ending']   # ffmpeg input order
+
+
+def graph(tail=None):
+    """Filter graph over the inputs in ORDER: each piece trimmed by frame number, all concatenated
+    into [c] with frame n at n/60 exactly (no frame can be dropped or doubled), then `tail`."""
+    idx = {n: i for i, n in enumerate(ORDER)}
+    uses = sum(1 for p in pieces() if p[0] == 'film')
+    parts = [f'[{idx["film"]}:v]split={uses}' + ''.join(f'[fs{j}]' for j in range(uses))]
+    labels, j = [], 0
+    for i, (name, a, b, _, _) in enumerate(pieces()):
+        if name == 'film':
+            inp, j = f'[fs{j}]', j + 1
+        else:
+            inp = f'[{idx[name]}:v]'
+        parts.append(f'{inp}trim=start_frame={a}:end_frame={b},setpts=PTS-STARTPTS,settb=1/{FPS}[p{i}]')
+        labels.append(f'[p{i}]')
+    parts.append(''.join(labels) + f'concat=n={len(labels)}:v=1:a=0,setpts=N/{FPS}/TB[c]')
+    return ';'.join(parts + ([tail] if tail else []))
 
 
 def assemble(args):
@@ -127,66 +144,56 @@ def assemble(args):
         raise SystemExit(f'{total} frames, not {frames(120.0 + sum(CARD_DUR))}')
     print(f'pieces ok: {len(record["pieces"])}, {total} frames', flush=True)
 
-    # 2. cut the film segment by frame number (lossless), join everything without re-encoding
-    t0 = time.time()
+    # 2. the join is one filter graph: trim by frame number, concat. Nothing is written to disk
+    #    (cut pieces would be another ~1 GB); the hash check, the seam frames and both encodes run
+    #    the same graph, so what is checked is exactly what is encoded.
     tmp = tempfile.mkdtemp(prefix='subtitled-')
-    files = []
-    for i, (name, a, b, _, _) in enumerate(pieces()):
-        if (a, b) == (0, want[name]):
-            files.append(src[name])
-            continue
-        part = os.path.join(tmp, f'piece{i:02d}.mp4')
-        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', src[name],
-             *lossless(['-vf', f'trim=start_frame={a}:end_frame={b},setpts=PTS-STARTPTS'], part)])
-        files.append(part)
-    listing = os.path.join(tmp, 'list.txt')
-    with open(listing, 'w') as f:
-        f.writelines(f"file '{os.path.abspath(p)}'\n" for p in files)
-    # No joined copy on disk (it would be another ~2 GB): the concat list itself is the input of
-    # the checks and of both encodes, so what is checked is exactly what is encoded.
-    combined = ['-f', 'concat', '-safe', '0', '-i', listing]
-    record['steps']['cut and join'] = round(time.time() - t0, 1)
-    print(f'joined in {record["steps"]["cut and join"]}s', flush=True)
+    inputs = [x for name in ORDER for x in ('-threads', '2', '-i', src[name])]
 
     # 3. every frame of the join is its source frame (decoded-frame hashes), and the step at each seam
     t0 = time.time()
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(4) as pool:
-        hashes = dict(zip(['combined', *src], pool.map(framemd5, [combined, *src.values()])))
+        joined = pool.submit(framemd5, [*inputs, '-filter_complex', graph(), '-map', '[c]'])
+        hashes = dict(zip(src, pool.map(framemd5, src.values())))
+        hashes['combined'] = joined.result()
     expect = [h for name, a, b, _, _ in pieces() for h in hashes[name][a:b]]
     bad = [i for i, (x, y) in enumerate(zip(hashes['combined'], expect)) if x != y]
     if len(hashes['combined']) != total or bad:
         raise SystemExit(f'join differs from its sources: {len(hashes["combined"])} frames, first bad {bad[:5]}')
     from assemble import frame_diff
-    edge = 0
-    for name, a, b, t_0, _ in pieces()[:-1]:
-        edge += b - a
-        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *combined, '-vf',
-             f'select=eq(n\\,{edge - 1})+eq(n\\,{edge})', '-fps_mode', 'passthrough', os.path.join(tmp, 'seam%d.png')])
-        record['seams'].append({'frame': edge, 't': round(edge / FPS, 4), 'after': name,
-                                'same_as_source': [edge - 2, edge - 1, edge, edge + 1],
-                                'step_diff': round(frame_diff(os.path.join(tmp, 'seam1.png'), os.path.join(tmp, 'seam2.png')), 3)})
+    edges = list(itertools.accumulate(b - a for _, a, b, _, _ in pieces()))[:-1]
+    sel = '+'.join(f'eq(n\\,{e - 1})+eq(n\\,{e})' for e in edges)
+    run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *inputs, '-filter_complex', graph(f'[c]select={sel}[s]'),
+         '-map', '[s]', '-fps_mode', 'passthrough', os.path.join(tmp, 'seam%d.png')])
+    for k, (e, piece) in enumerate(zip(edges, pieces())):
+        record['seams'].append({'frame': e, 't': round(e / FPS, 4), 'after': piece[0],
+                                'same_as_source': [e - 2, e - 1, e, e + 1],
+                                'step_diff': round(frame_diff(os.path.join(tmp, f'seam{2 * k + 1}.png'),
+                                                              os.path.join(tmp, f'seam{2 * k + 2}.png')), 3)})
     record['steps']['frame check'] = round(time.time() - t0, 1)
     print(f'all {total} frames equal their sources; {len(record["seams"])} seams', flush=True)
-    finish(args, record, combined, tmp, total, t_all)
+    finish(args, record, inputs, tmp, total, t_all)
 # ---- finish below ----
 
 
-def finish(args, record, combined, tmp, total, t_all):
+def finish(args, record, inputs, tmp, total, t_all):
     # 4. the two finished files, with the audio from zero
     length = total / FPS
     audio = probe(args.audio)['audio']['duration']
     if abs(audio - length) > 1 / FPS:
         raise SystemExit(f'audio lasts {audio:.3f}s, the film {length:.3f}s')
     fourk, small = f'{args.out}-4K60.mp4', f'{args.out}-1080p.mp4'
-    common = ['-map', '0:v:0', '-map', '1:a:0', '-r', str(FPS), '-c:a', 'aac', '-b:a', '320k', '-ar', '48000',
-              '-ac', '2', '-movflags', '+faststart', '-t', f'{length}']
-    for path, vf, crf in ((fourk, [], '14'), (small, ['-vf', 'scale=1920:1080:flags=lanczos'], '16')):
-        t0 = time.time()
-        run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *combined, '-i', args.audio, *common, *vf,
-             '-c:v', 'libx264', '-profile:v', 'high', '-crf', crf, '-preset', 'slow', '-pix_fmt', 'yuv420p', path])
-        record['steps'][f'encode {os.path.basename(path)}'] = round(time.time() - t0, 1)
-        print(f'{path} in {record["steps"][f"encode {os.path.basename(path)}"]}s', flush=True)
+    audio_in = f'{len(ORDER)}:a:0'
+    common = ['-map', audio_in, '-r', str(FPS), '-c:a', 'aac', '-b:a', '320k', '-ar', '48000', '-ac', '2',
+              '-movflags', '+faststart', '-t', f'{length}', '-c:v', 'libx264', '-profile:v', 'high',
+              '-preset', 'slow', '-pix_fmt', 'yuv420p']
+    t0 = time.time()
+    run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', *inputs, '-i', args.audio,
+         '-filter_complex', graph('[c]split=2[v4][vs];[vs]scale=1920:1080:flags=lanczos[v1]'),
+         '-map', '[v4]', *common, '-crf', '14', fourk, '-map', '[v1]', *common, '-crf', '16', small])
+    record['steps']['encode 4K and 1080p'] = round(time.time() - t0, 1)
+    print(f'encoded both in {record["steps"]["encode 4K and 1080p"]}s', flush=True)
     # 5. ffprobe both
     for path, size in ((fourk, (3840, 2160)), (small, (1920, 1080))):
         info = probe(path)
