@@ -229,10 +229,17 @@ def check(args):
     from assemble import frame_diff
     tmp = tempfile.mkdtemp(prefix='subtitled-check-')
     rows, T, length = [], 0.0, probe(args.video)['video']['frames'] / FPS
+    picks = [frames(k * args.step) for k in range(int((length - 1e-6) // args.step) + 1)]
+    # one decoding pass for every sampled frame
+    run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', args.video, '-vf',
+         'select=' + '+'.join(f'eq(n\\,{n})' for n in picks), '-fps_mode', 'passthrough', os.path.join(tmp, 'f%d.png')])
+    if len([f for f in os.listdir(tmp) if f.startswith('f')]) != len(picks):
+        raise SystemExit('could not decode every sampled frame')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
         page, current = browser.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=2), None
-        while T < length - 1e-6:
+        for idx, n in enumerate(picks, 1):
+            T = n / FPS
             url, t = page_at(T, args.pages, args.bg)
             if url != current:
                 for k in range(3):
@@ -247,12 +254,9 @@ def check(args):
                 current = url
             page.evaluate(f'window.__seek({t})')
             page.screenshot(path=os.path.join(tmp, 'page.png'))
-            subprocess.run(['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', args.video, '-vf',
-                            f'select=eq(n\\,{frames(T)})', '-frames:v', '1', os.path.join(tmp, 'film.png')], check=True)
-            d = frame_diff(os.path.join(tmp, 'film.png'), os.path.join(tmp, 'page.png'))
+            d = frame_diff(os.path.join(tmp, f'f{idx}.png'), os.path.join(tmp, 'page.png'))
             rows.append([round(T, 2), url.split('?')[1].split('&')[0] + ('&' + url.split('&')[1] if 'card' in url else ''), round(t, 3), round(d, 3)])
             print(rows[-1], flush=True)
-            T += args.step
         browser.close()
     subprocess.run(['rm', '-rf', tmp], check=True)
     worst = max(rows, key=lambda r: r[3])
