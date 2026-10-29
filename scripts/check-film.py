@@ -486,8 +486,8 @@ def f14():
 
 
 def handoff_sheet(parts):
-    """衔接.png: rows at 64 (film vs clip t=0), 103 (film vs ending) and 120 (ending vs opening t=4): reference, film, difference x 10."""
-    sheet = Image.new('RGB', (2880, 1620), 'white')
+    """衔接.png: rows at 64 (clip t=0), 86 (clip t=22), 103 (frame=ending) and 120 (opening t=4): reference, film, difference x 10."""
+    sheet = Image.new('RGB', (2880, 540 * len(parts)), 'white')
     for row, (ref, film, m) in enumerate(parts):
         y = 540 * row
         sheet.paste(ref.resize((960, 540), Image.LANCZOS), (0, y))
@@ -501,8 +501,9 @@ with sync_playwright() as pw:
     browser = pw.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
     if want('G4'):
         a, b, m, c, d, m2 = g4(browser)
-        pa = new_page(browser, 'sheet'); load(pa, f'{FILM}&t=64'); f64 = shot(pa); load(pa, f'{NEW}?frame=clip&theme=light&t=0'); c0 = shot(pa); pa.close()
-        handoff_sheet([(c0, f64, diffmax(c0, f64)), (d, c, m2), (b, a, m)])
+        pa = new_page(browser, 'sheet'); load(pa, f'{FILM}&t=64'); f64 = shot(pa); load(pa, f'{NEW}?frame=clip&theme=light&t=0'); c0 = shot(pa)
+        load(pa, f'{FILM}&t=86'); f86 = shot(pa); load(pa, f'{NEW}?frame=clip&theme=light&t=22'); c22 = shot(pa); pa.close()
+        handoff_sheet([(c0, f64, diffmax(c0, f64)), (c22, f86, diffmax(c22, f86)), (d, c, m2), (b, a, m)])
     for key, fn in CHECKS:
         if want(key):
             started = time.time(); fn(browser); print(f'  ({time.time() - started:.0f} s)', flush=True)
