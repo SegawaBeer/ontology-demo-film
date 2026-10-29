@@ -349,12 +349,12 @@ def f6x(browser):
     for t in (70.0, 80.0, 90.0, 100.0, 102.0):
         seek(page, t); rows[t] = page.evaluate(COUNT_JS)
     load(page, END + '&play=0')
-    for t in (103.0, 105.5, 108.0, 111.5, 113.0):
+    for t in (103.0, 105.5, 108.0, 111.9, 113.0):
         seek(page, t); rows[t] = page.evaluate(COUNT_JS)
     page.close()
     # 86.4-96: the 16 stopped blades have faded out and their slots are empty (red outlines); they come back from 96.0.
-    ok = all(rows[t]['drawn'] == 2027 for t in (70.0, 80.0, 100.0, 102.0, 103.0, 105.5)) and rows[90.0]['drawn'] == 2011 and rows[111.5]['drawn'] == 1 and rows[113.0]['drawn'] <= 1
-    record('F6+', ok, rows={str(k): v for k, v in rows.items()}, note='2,027 parts except while the 16 slots are empty in question four (2,011 at 90 s); the ending takes parts away from 105.6; only blade 001 at 111.5')
+    ok = all(rows[t]['drawn'] == 2027 for t in (70.0, 80.0, 100.0, 102.0, 103.0, 105.5)) and rows[90.0]['drawn'] == 2011 and rows[111.9]['drawn'] == 1 and rows[113.0]['drawn'] <= 1
+    record('F6+', ok, rows={str(k): v for k, v in rows.items()}, note='2,027 parts except while the 16 slots are empty in question four (2,011 at 90 s); the ending takes parts away from 105.6; only blade 001 from 111.8 (its neighbours go last)')
 
 
 FOLD_SPANS = ((86.0, 87.0), (98.6, 99.4))
@@ -394,7 +394,9 @@ def why9x(t):
     if 101.0 <= t <= 103.0: return 'back to the split view'
     if 103.0 <= t <= 105.0: return 'fan spins up, airflow'
     if 105.0 <= t <= 111.4: return 'parts go, farthest from blade 001 first'
-    if 112.0 <= t <= 115.0: return 'camera back to the opening shot, blade 001 swap'
+    if 109.0 <= t <= 111.4: return 'camera from the whole engine to the whole ring'
+    if 111.4 <= t <= 112.6: return 'blade 001 swap in the ring shot'
+    if 112.6 <= t <= 115.0: return 'camera from the ring to the opening shot, blade leaves the ring'
     if 115.0 <= t <= 117.4: return 'thread and subtitle'
     return 'unplanned'
 
@@ -453,7 +455,8 @@ def f11x(browser):
     """F11+: camera moves past 64 (60 fps; steps and their changes within 4x the median, ends at rest)."""
     page = new_page(browser, 'f11x')
     rows, ok = [], True
-    for url, a, b in ((FILM, 86.0, 87.0), (FILM, 101.0, 103.0), (END, 112.0, 113.3), (END, 113.3, 115.0)):
+    # 10.4: the ending's two moves, whole engine -> whole ring and ring -> the opening's t = 3 shot.
+    for url, a, b in ((FILM, 86.0, 87.0), (FILM, 101.0, 103.0), (END, 109.0, 111.4), (END, 112.6, 115.0)):
         load(page, url + '&play=0')
         pos = []
         for t in frames_of(a, b):
@@ -508,7 +511,59 @@ def handoff_sheet(parts):
     sheet.save(os.path.join(OUT, '衔接.png'))
 
 
-CHECKS = [('G1', g1), ('G2', g2), ('G3', g3), ('G5', g5), ('G6', g6), ('F2+', f2x), ('F4+', f4x), ('F6+', f6x), ('F9+', f9x), ('F10+', f10x), ('F11+', f11x), ('F15+', f15x)]
+# ---------------------------------------------------------------- 第十节 additions
+BLADE_H_JS = r"""(t) => { window.__seek(t); const { o, view, engine, THREE } = window.__filmDebug; const cam = view.camera; cam.updateMatrixWorld();
+  const box = pts => { let y0 = 1e9, y1 = -1e9; const v = new THREE.Vector3();
+    for (let i = 0; i < pts.length; i += 3) { v.set(pts[i], pts[i+1], pts[i+2]).project(cam); const y = (-v.y*0.5+0.5)*1080; y0 = Math.min(y0, y); y1 = Math.max(y1, y); } return y1 - y0; };
+  let h = 0;
+  const s1 = engine.parts.get('turbine.stage-1-blades.001');
+  if (s1.visible) h = Math.max(h, box(engine.partWorldPoints('turbine.stage-1-blades.001')));
+  if (o.open.hero.root.visible) { const pts = [], v = new THREE.Vector3(); o.open.hero.root.updateMatrixWorld(true);
+    o.open.hero.root.traverse(m => { if (!m.isMesh || m.isLineSegments2) return; for (let p = m; p; p = p.parent) if (!p.visible) return; const a = m.geometry.getAttribute('position'); for (let i = 0; i < a.count; i += 7) { v.fromBufferAttribute(a, i).applyMatrix4(m.matrixWorld); pts.push(v.x, v.y, v.z); } });
+    if (pts.length) h = Math.max(h, box(pts)); }
+  return h; }"""
+FLAG_JS = r"""() => [...document.querySelectorAll('#dialog .meta .flag')].map(f => { let o = 1; for (let e = f; e; e = e.parentElement) { const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') o = 0; o *= +s.opacity; } return [f.textContent, +o.toFixed(3), getComputedStyle(f).color]; })"""
+CHIP_COLOUR_JS = r"""() => { const t = [...document.querySelectorAll('#graph text')].find(x => x.textContent === 'YSZ-2398 · YSZ-2421');
+  const e = document.createElement('span'); e.style.color = 'var(--green)'; document.body.append(e); const g = getComputedStyle(e).color; e.remove();
+  return t ? [getComputedStyle(t).fill, g] : null; }"""
+
+
+def x10(browser):
+    """10.1 flag, 10.2 chip colour, 10.3 airflow against its parts, 10.4 blade 001 height."""
+    page = new_page(browser, 'x10')
+    load(page, FILM + '&play=0')
+    flags, bad = [], []
+    for t in frames_of(98.5, 99.1):
+        seek(page, t); f = page.evaluate(FLAG_JS)
+        vis = [x for x in f if x[1] > 0.05]
+        flags.append([round(t, 3)] + f)
+        if len(vis) > 1: bad.append(['two flags', round(t, 3)])
+    seek(page, 85.0); before = page.evaluate(FLAG_JS)
+    seek(page, 100.0); after = page.evaluate(FLAG_JS)
+    flag_ok = not bad and before[0][0] == '自动更新 · 02:17' and after[0][0] == '自动更新 · 02:24' and after[0][1] > 0.99
+    seek(page, 93.2); chip = page.evaluate(CHIP_COLOUR_JS)
+    chip_ok = chip is not None and chip[0] == chip[1]
+    load(page, END + '&play=0')
+    flow_bad, flow = [], []
+    for i in range(41):
+        t = round(105.6 + i * 0.1, 2); seek(page, t)
+        pr = probe(page)
+        flow.append([t, pr['flow']])
+    hs = []
+    for t in frames_of(110.5, 115.0)[::3]:
+        hs.append((round(page.evaluate(BLADE_H_JS, t), 1), round(t, 3)))
+    page.close()
+    # Airflow: once the part next to a piece has gone (its own fade done), that piece is gone too.
+    for t, f in flow:
+        if t >= 107.0 and (f['intake'] > 0 or f['bypass'] > 0): flow_bad.append([t, f])
+    low = min(hs)
+    record('X10', flag_ok and chip_ok and not flow_bad and low[0] >= 50, flag_before=before, flag_after=after, flag_two_at_once=bad, flag_frames=flags[::4],
+           chip_fill=chip, airflow=flow[::5], airflow_left_after_parts=flow_bad, blade_001_min_height_px=low,
+           note='第十节: 10.1 one flag at a time, 02:17 -> green 02:24; 10.2 the good-batch chip in status green; 10.3 each airflow piece times its part; 10.4 blade 001 >= 50 px from 110.5 s')
+
+
+
+CHECKS = [('X10', x10), ('G1', g1), ('G2', g2), ('G3', g3), ('G5', g5), ('G6', g6), ('F2+', f2x), ('F4+', f4x), ('F6+', f6x), ('F9+', f9x), ('F10+', f10x), ('F11+', f11x), ('F15+', f15x)]
 with sync_playwright() as pw:
     browser = pw.chromium.launch(channel='chrome', headless=True, args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
     if want('G4'):
