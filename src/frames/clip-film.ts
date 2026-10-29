@@ -70,7 +70,7 @@ export async function mountFilm(theme: Theme) {
     clip.e3.root.visible = false;
     clip.e3.root.scale.setScalar(E3_SCALE);
     // clip-q3 places its 16 blades as separate meshes; part one has them in the ring.
-    if (clip.hit7.some(id => e7.parts.get(id)!.promoted)) e7.setOpacity(ringParts, 1);
+    q4.putBack(clip.hit7);
     e7.setVisible(clip.hit7, true);
     view.cutLayers(e7, 0);
     q4.apply(CLIP_AT);

@@ -110,6 +110,11 @@ export function createQ4Model(c: Ctx) {
     if (st.promoted) { st.visible = on; st.promoted.visible = on; return; }
     e7.setVisible(id, on);
   }
+  // Only the 16 go back into the ring's instanced mesh. setOpacity on the whole ring would
+  // also rebuild part one's own lifted-out blades (the pulled one and its neighbours), and a
+  // rebuilt mesh can sort differently against equal-depth surfaces.
+  const unpromote = (e7 as unknown as { unpromote(id: string): void }).unpromote.bind(e7);
+  const putBack = (ids: string[]) => { for (const id of ids) if (e7.parts.get(id)!.promoted) unpromote(id); };
   const green = new THREE.Color(c.green);
   let seatedAll = false;
   /** Engine state for any t ≥ 64; below 86 it only puts back what question four changes. */
@@ -122,7 +127,7 @@ export function createQ4Model(c: Ctx) {
     // Seated blades go back into the ring's own instanced mesh: from the first landing on,
     // the whole ring is put back every frame and only the blades still in the air are lifted out.
     if (t >= landAt(0)) {
-      e7.setOpacity(ringParts, 1);
+      putBack(c.hit7);
       e7.setVisible(c.hit7, true);
       // A part put back keeps whatever instance colour it had before it was lifted out;
       // write the ring grey again so the picture does not depend on what was shown before.
@@ -156,5 +161,5 @@ export function createQ4Model(c: Ctx) {
     const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
     return { x: xs.reduce((a, b) => a + b, 0) / pts.length, y: ys.reduce((a, b) => a + b, 0) / pts.length, x1: Math.max(...xs), y0: Math.min(...ys) };
   };
-  return { apply, cameraAt, order, home, plant, groupScreen, frames, seated: () => seatedAll, offsetAt };
+  return { putBack, apply, cameraAt, order, home, plant, groupScreen, frames, seated: () => seatedAll, offsetAt };
 }

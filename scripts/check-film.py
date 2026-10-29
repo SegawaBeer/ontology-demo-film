@@ -249,7 +249,7 @@ def g5(browser):
 EVT_JS = r"""() => { const p = window.__filmProbe();
   const asks = [...document.querySelectorAll('#dialog .turn .ask')].map(a => [...a.textContent].length);
   return { asks: asks.reduce((a, b) => a + b, 0), steps: document.querySelectorAll('#dialog .turn:not(.past) .step').length,
-    plans: [...document.querySelectorAll('#dialog .plan')].filter(x => getComputedStyle(x).visibility !== 'hidden' && +getComputedStyle(x).opacity > 0.001).length,
+    plans: [...document.querySelectorAll('#dialog .plan')].filter(x => getComputedStyle(x).visibility !== 'hidden').length,   // like steps: in the DOM from its start time
     draws: [...document.querySelectorAll('#graph [data-draw]')].map(x => x.getAttribute('data-draw')),
     green: (document.querySelector('#dialog .answer .now.green')?.textContent ?? '').length }; }"""
 
@@ -340,8 +340,9 @@ def f6x(browser):
     for t in (103.0, 105.5, 108.0, 111.5, 113.0):
         seek(page, t); rows[t] = page.evaluate(COUNT_JS)
     page.close()
-    ok = all(rows[t]['drawn'] == 2027 for t in (70.0, 80.0, 90.0, 100.0, 102.0, 103.0, 105.5)) and rows[111.5]['drawn'] == 1 and rows[113.0]['drawn'] <= 1
-    record('F6+', ok, rows={str(k): v for k, v in rows.items()}, note='2,027 parts until the ending starts taking them away at 105.6; only blade 001 at 111.5')
+    # 86.4-96: the 16 stopped blades have faded out and their slots are empty (red outlines); they come back from 96.0.
+    ok = all(rows[t]['drawn'] == 2027 for t in (70.0, 80.0, 100.0, 102.0, 103.0, 105.5)) and rows[90.0]['drawn'] == 2011 and rows[111.5]['drawn'] == 1 and rows[113.0]['drawn'] <= 1
+    record('F6+', ok, rows={str(k): v for k, v in rows.items()}, note='2,027 parts except while the 16 slots are empty in question four (2,011 at 90 s); the ending takes parts away from 105.6; only blade 001 at 111.5')
 
 
 FOLD_SPANS = ((86.0, 87.0), (98.6, 99.4))
