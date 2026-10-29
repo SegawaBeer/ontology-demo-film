@@ -184,8 +184,10 @@ export function q4GraphAt(t: number, at22: GraphState): GraphState {
   else if (redOut < 1) chipAmount.e7 = redOut;
   // From the first arrival the blade chip counts the seated blades up.
   const seated = Array.from({ length: 16 }, (_, k) => landAt(k)).filter(at => t >= at).length;
-  if (t >= FLY_AT) chip.blade = { text: `到位 ${seated} / 16`, tone: seated < 16 ? 'red' : 'green' };
-  else if (t >= 90.9) chip.blade = { text: '缺 16 枚', tone: 'red' };
+  // Left of the node's ×100, clear of it and of the links that leave the node downwards.
+  const bladeChip = { dx: -40, anchor: 'end' as const };
+  if (t >= FLY_AT) chip.blade = { text: `到位 ${seated} / 16`, tone: seated < 16 ? 'red' : 'green', ...bladeChip };
+  else if (t >= 90.9) chip.blade = { text: '缺 16 枚', tone: 'red', ...bladeChip };
   if (t >= STEP1) chip.stock = { text: '本厂成品库 · 6 枚\n二号厂区 · 10 枚' };
   // Left of its node: on the right the stock and disposal links run past.
   if (t >= 92.35) chip.insp = { text: '16 枚 · 全部合格', tone: 'green', dx: -32, anchor: 'end' };

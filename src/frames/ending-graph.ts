@@ -22,7 +22,9 @@ export function graphBack(t: number, q4End: GraphState): GraphState {
   const k = ease(seg(t, BACK[0], BACK[1]));
   if (k >= 1) return REST;
   const chipAmount: Record<string, number> = {}, statusAmount: Record<string, number> = {};
-  for (const id of Object.keys(q4End.chip)) chipAmount[id] = 1 - k;
+  // Chips go first, before the resting links under them brighten past 0.3 (as chipFade in clip-q12).
+  const chipK = 1 - ease(seg(t, BACK[0], BACK[0] + 0.4));
+  for (const id of Object.keys(q4End.chip)) chipAmount[id] = chipK;
   for (const id of Object.keys(q4End.status)) statusAmount[id] = 1 - k;
   return {
     ...q4End, relStyle: 'strong', relMix: 1 - k, release: k, dimLevel: 0.22 + 0.78 * k, chipAmount, statusAmount,

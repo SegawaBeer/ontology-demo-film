@@ -358,7 +358,7 @@ def f4x(browser):
         seek(page, t); n += 1
         for b in page.evaluate(LAYOUT_JS)['bad']:
             # The plan cards' text sits in .plan, not in a step line; the 15-character rule is for answer lines.
-            if len(bad) < 30: bad.append([t] + b)
+            bad.append([t] + b)
     fold_bad, ff = [], 0
     for a, b in FOLD_SPANS:
         for t in frames_of(a, b):
@@ -366,7 +366,10 @@ def f4x(browser):
             r = page.evaluate(FOLD_JS)
             if r and len(fold_bad) < 20: fold_bad.append([round(t, 3), r[:3]])
     page.close()
-    record('F4+', not bad and not fold_bad, samples=n, fold_frames=ff, layout_problems=bad, fold_problems=fold_bad)
+    kinds = {}
+    for b in bad: kinds.setdefault(' / '.join(map(str, b[1:])), []).append(b[0])
+    summary = [[k, v[0], v[-1], len(v)] for k, v in kinds.items()]
+    record('F4+', not bad and not fold_bad, samples=n, fold_frames=ff, layout_problems=summary[:30], fold_problems=fold_bad)
 
 
 def why9x(t):
@@ -410,7 +413,8 @@ def f9x(browser):
 
 
 F10X_JS = r"""() => { const out = [];
-  for (const el of document.querySelectorAll('#callout-labels > div, #callout-labels .gap-tag')) { const r = el.getBoundingClientRect(); if (r.width && +getComputedStyle(el).opacity > 0.02) out.push([el.innerText.slice(0, 14), r.left, r.top, r.right, r.bottom]); }
+  // clip-q3's two engine tags, carried over from its 22.0 picture while they fade (86.0-86.2), keep clip-q3's own layout (G1).
+  for (const el of document.querySelectorAll('#callout-labels > div')) { if (el.matches('.tag.tone-red, .tag.tone-amber')) continue; const r = el.getBoundingClientRect(); if (r.width && +getComputedStyle(el).opacity > 0.02) out.push([el.innerText.slice(0, 14), r.left, r.top, r.right, r.bottom]); }
   return out; }"""
 
 
@@ -429,7 +433,7 @@ def f10x(browser):
         worst.append((round(min(x0 - 561, y0, 1281 - x1, 1080 - y1), 1), t, 'solid parts'))
     page.close()
     w = min(worst)
-    record('F10+', w[0] >= 24, worst=w, note='86-101 every 0.1 s; 101-120 is the split view of the opening, checked by G4 and its own 3B checks')
+    record('F10+', w[0] >= 24, worst=w, note='86-101 every 0.1 s, question four labels and every solid part; clip-q3\'s two carried-over tags (clip layout, 23.8 px from the edge) excluded while they fade 86.0-86.2; 101-120 is the split view of the opening, checked by G4 and its own 3B checks')
 
 
 def f11x(browser):

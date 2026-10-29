@@ -112,7 +112,8 @@ export async function mountFilm(theme: Theme) {
     // clip-q3's two engine tags fade out; the gap tags come in above the empty slots.
     const k = 1 - ease(seg(t, TAGS_OUT[0], TAGS_OUT[1]));
     let svg = k > 0 ? `<g opacity="${k.toFixed(3)}">${oldSvg}</g>` : '';
-    let html = k > 0 ? `<div style="opacity:${k.toFixed(3)}">${oldHtml}</div>` : '';
+    let html = k > 0 ? oldHtml : '';
+    const oldCount = k > 0 ? (() => { const tpl = document.createElement('template'); tpl.innerHTML = oldHtml; return tpl.content.children.length; })() : 0;
     const g = ease(seg(t, GAP_TAGS, GAP_TAGS + 0.3)) * (1 - ease(seg(t, GAP_TAGS_OUT[0], GAP_TAGS_OUT[1])));
     if (g > 0) {
       // Stacked above the right end of the empty slots, each with a leader to its own group.
@@ -127,6 +128,8 @@ export async function mountFilm(theme: Theme) {
     }
     f.overlay.innerHTML = svg;
     f.labels.innerHTML = html;
+    // clip-q3's own tags fade by their own opacity (no wrapper box around them).
+    for (const el of [...f.labels.children].slice(0, oldCount) as HTMLElement[]) el.style.opacity = ((+el.style.opacity || 1) * k).toFixed(3);
     f.dialogRoot.innerHTML = q4DialogHTML(t, clipEnd);
     renderGraph(f.graphRoot, q4GraphAt(t, graphEnd));
   }
