@@ -355,6 +355,23 @@ async function ending() {
   requestAnimationFrame(loop);
 }
 
-const frames: Record<string, () => Promise<void>> = { film, ending, 'film-a': filmA, q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: async () => { await mountOpening(theme); } };
+// Title cards (card.ts): `?frame=card&id=N&bg=<png>`, driven like the film pages.
+async function card() {
+  const { mountCard } = await import('./card');
+  await mountCard();
+}
+
+const frames: Record<string, () => Promise<void>> = { film, ending, card, 'film-a': filmA, q3: questionThree, stale: staleAnswer, net: treeToNet, 'net-end': netEnd, clip, open: () => mountOpen(theme), opening: async () => { await mountOpening(theme); } };
 await (frames[frameName] ?? questionThree)();
+
+// Narration subtitles on the three film pages, only with &narration=1: every seek draws them too.
+if (params.get('narration') === '1' && ['opening', 'film', 'ending'].includes(frameName)) {
+  const { mountNarration } = await import('./narration');
+  const draw = mountNarration(document.querySelector<HTMLElement>('#frame')!);
+  const w = window as unknown as { __seek: (t: number) => void; __start?: number };
+  const seekPage = w.__seek;
+  w.__seek = (t: number) => { seekPage(t); draw(t); };
+  const hold = params.get('t');
+  draw(hold !== null ? Number(hold) : (w.__start ?? 0));
+}
 document.documentElement.dataset.ready = '1';

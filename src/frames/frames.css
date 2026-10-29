@@ -258,3 +258,33 @@ html.fit .frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .answer.reanswer .old { display: flex; flex-wrap: wrap; gap: 10px; row-gap: 6px; align-items: baseline; }
 .gap-tag { position: absolute; transform: translate(-100%, -50%); white-space: nowrap; font-size: 13px; color: var(--ink-2); }
 .gap-tag b { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--green); }
+
+/* Narration subtitles (narration.ts), only with &narration=1: centred on the whole frame,
+   the text block's middle at y = 964, like the ending's closing line. */
+.narration {
+  position: absolute; left: 960px; top: 964px; z-index: 6; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 16px; border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  font-family: var(--sans); font-size: 26px; font-weight: 400; line-height: 1.45;
+  color: var(--ink-2); white-space: nowrap; text-align: center;
+}
+.narration > span { display: block; }
+
+/* Title cards (card.ts, frame=card): a held film frame, a light scrim, three centred layers. */
+.card { position: absolute; inset: 0; z-index: 10; overflow: hidden; background: var(--bg); }
+.card-bg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+.card-scrim { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
+.card-stack {
+  position: absolute; left: 0; right: 0; top: 540px; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; text-align: center; white-space: nowrap;
+}
+.card-label {
+  font-family: var(--mono); font-size: 20px; font-weight: 400; letter-spacing: 0.2em;
+  padding-left: 0.2em;   /* the trailing letter spacing, so the label stays optically centred */
+  color: var(--ink-2); line-height: 1.3;
+}
+.card-label .alert { color: var(--red); }
+.card-rule { width: 100px; height: 1.5px; background: #1c5fb8; margin: 22px 0 28px; transform-origin: 50% 50%; }
+.card-title { font-family: var(--sans); font-size: 64px; font-weight: 500; line-height: 1.3; color: var(--ink); }
+.card-sub { font-family: var(--sans); font-size: 24px; font-weight: 400; line-height: 1.45; color: var(--ink-3); margin-top: 22px; }

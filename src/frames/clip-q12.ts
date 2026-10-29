@@ -152,7 +152,9 @@ function pullAt(t: number): [number, number] {
 }
 // Overlay layout in model-column pixels (720 wide); see the report for how it was measured.
 const INSET = { x: 380, y: 138, w: 280, h: 400 };
-const TAG_X = 380, TAG_Y = [744, 824, 904];
+// With &narration=1 the subtitle box (y 918–1010) sits under the lowest tag; the stack moves up 20 px to clear it.
+const TAG_LIFT = new URLSearchParams(location.search).get('narration') === '1' ? 20 : 0;
+const TAG_X = 380, TAG_Y = [744, 824, 904].map(y => y - TAG_LIFT);
 
 /** 0 = assembled, 1 = fully exploded. */
 export function explodeAt(t: number) {
