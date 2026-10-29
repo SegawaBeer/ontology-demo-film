@@ -124,13 +124,15 @@ def edge_mask(page):
 # labels from 36.8 s, the question-one fold; the moved ZP-0707 chip and the question-two fold.
 FILM_A_EXCEPTIONS = [(36.8, 48.4), (57.5, 61.8)]
 # frame=clip from 11.55 s: chips moved off lit links (主时间轴二 9.3); only the graph column may differ.
+# frame=opening 3.1-7.1 s: the blade name drawn above the thread (主时间轴二 10.5); only inside its box.
+OPENING_NAME_SPAN, OPENING_NAME_BOX = (3.05, 7.15), (1440, 395, 1575, 425)
 CLIP_EXCEPTION_FROM, CLIP_EXCEPTION_X = 11.55, 1281
 
 
 def f1(browser):
     cases = [('open', ''), ('q3', ''), ('stale', ''), ('net', ''), ('net-end', '')]
     cases += [('clip', f'&t={t}') for t in (0, 6, 12, 18, 21.9)]
-    cases += [('opening', f'&t={t}') for t in (3, 8, 12, 15, 17, 23, 28, 29.5)]
+    cases += [('opening', f'&t={t}') for t in (3, 3.2, 4, 6, 8, 12, 15, 17, 23, 28, 29.5)]
     pa, pb = new_page(browser, 'f1-new'), new_page(browser, 'f1-base')
     rows, ok = [], True
     for frame, extra in cases:
@@ -141,6 +143,8 @@ def f1(browser):
         n = over(m, 1)
         box = m.point(lambda v: 255 if v > 1 else 0).getbbox()
         excepted = frame == 'clip' and float(extra.split('=')[1]) >= CLIP_EXCEPTION_FROM and box is not None and box[0] >= CLIP_EXCEPTION_X
+        if frame == 'opening' and box is not None and OPENING_NAME_SPAN[0] <= float(extra.split('=')[1]) <= OPENING_NAME_SPAN[1]:
+            b0 = OPENING_NAME_BOX; excepted = box[0] >= b0[0] and box[1] >= b0[1] and box[2] <= b0[2] and box[3] <= b0[3]
         good = n == 0 or excepted
         ok &= good
         rows.append({'exception': excepted, 'frame': frame + extra, 'against': '89aca04' if frame == 'opening' else '1dc6a6c', 'diff>1': n, 'bbox': m.point(lambda v: 255 if v > 1 else 0).getbbox(), 'pass': good})
@@ -817,11 +821,23 @@ def f12_f13(browser):
 
 
 # ---------------------------------------------------------------- F15
-def f15_scan(page, times):
+# 主时间轴二 10.5: the opening's thread (its own full-frame SVG) against the graph's visible names.
+THREAD_JS = r"""() => { const th = document.querySelector('#thread'); if (!th || getComputedStyle(th).display === 'none') return [];
+  const vis = el => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity <= 0.05) return false; } return true; };
+  const names = [...document.querySelectorAll('#graph g[data-node] text')].filter(t => t.textContent.trim() && vis(t)).map(t => { const r = t.getBoundingClientRect(); return { t: t.textContent, x0: r.left - 3, y0: r.top - 3, x1: r.right + 3, y1: r.bottom + 3 }; });
+  const out = []; const m = th.getScreenCTM();
+  for (const p of th.querySelectorAll('path')) { if (!p.getAttribute('d') || +(getComputedStyle(p).opacity) <= 0.3) continue;
+    const L = p.getTotalLength(), off = parseFloat(p.style.strokeDashoffset || '0'), upto = Math.max(0, L - off);
+    for (const n of names) { let k = 0; for (let s = 0; s <= upto; s += 2) { const q = new DOMPoint(p.getPointAtLength(s).x, p.getPointAtLength(s).y).matrixTransform(m); if (q.x >= n.x0 && q.x <= n.x1 && q.y >= n.y0 && q.y <= n.y1) k++; }
+      if (k) out.push({ line: 'thread', lit: true, text: n.t, kind: 'name', points: k }); } }
+  return out; }"""
+
+
+def f15_scan(page, times, thread=False):
     hits = {}
     for t in times:
         seek(page, t)
-        for h in page.evaluate(F15_JS):
+        for h in page.evaluate(F15_JS) + (page.evaluate(THREAD_JS) if thread else []):
             key = (h['kind'], h['lit'], h['line'], h['text'])
             r = hits.setdefault(key, [t, t, 0]); r[1] = t; r[2] += 1
     rows = [{'kind': k[0], 'lit_line': k[1], 'line': k[2], 'text': k[3], 'from': v[0], 'to': v[1], 'samples': v[2]} for k, v in sorted(hits.items(), key=lambda kv: kv[1][0])]
@@ -834,12 +850,13 @@ def f15(browser):
     fine = lambda a, b: [f / FPS for f in range(int(round(a * FPS)), int(round(b * FPS)) + 1)]
     plans = {
         'film-a': (FILM + '&play=0', sorted({round(30 + i / 10, 4) for i in range(341)} | {round(t, 4) for a, b in ((47.6, 48.4), (57.0, 58.0), (60.0, 61.8)) for t in fine(a, b)})),
-        'opening': (f'{NEW}?frame=opening&theme=light&play=0', [round(23 + i / 10, 2) for i in range(71)]),
+        # 0-30 s (主时间轴二 10.5: also 0-23), with the thread that crosses the divider.
+        'opening': (f'{NEW}?frame=opening&theme=light&play=0', [round(i / 10, 2) for i in range(301)]),
         'clip': (f'{NEW}?frame=clip&theme=light&play=0', [round(i / 10, 2) for i in range(221)]),
     }
     for name, (url, times) in plans.items():
         load(page, url)
-        fails, names = f15_scan(page, times)
+        fails, names = f15_scan(page, times, thread=name == 'opening')
         out[name] = {'samples': len(times), 'labels_crossed': fails, 'node_names_under_lit_lines': names}
         # clip-q3's crossings are left for the main timeline part two (主时间轴一 12.3).
         if name != 'clip' and fails: ok = False
