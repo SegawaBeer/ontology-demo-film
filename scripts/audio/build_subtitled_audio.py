@@ -137,7 +137,11 @@ def build(pages, out, target=None):
     checks['page_events'] = True
     moved_tables = [(opening, 'opening'), (film, 'film'), (ending, 'ending'), (spins, 'rotor')]
     table = [dict(e, t=to_new(e['t']), t_original=e['t'], **{'from': name}) for evs, name in moved_tables for e in evs]
-    table += [dict(e, **{'from': 'card'}) for e in cards]
+    # to_new is strictly increasing, so this order is the 120 s table's order (stable sort, same
+    # part order as build_film_audio); each moved event keeps that index as its noise draw.
+    table.sort(key=lambda e: e['t'])
+    table = [dict(e, rng=i) for i, e in enumerate(table)]
+    table += [dict(e, rng=10000 + e['card'], **{'from': 'card'}) for e in cards]
     table.sort(key=lambda e: e['t'])
     late = [(e['t'], e['kind']) for e in table if not 0.0 <= e['t'] < LENGTH]
     if late:

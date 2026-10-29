@@ -91,8 +91,10 @@ def voice_of(e, idx, seed, gain=1.0, spin=None, cat_db=None):
     """The dry stereo voice of event number idx (events in load_events order).
     Each event draws from its own generator, so check_audio can rebuild it.
     cat_db: per-category level in dB (声音任务说明 8, balance.py), on top of
-    the page's gain."""
-    rng = np.random.default_rng([seed, idx])
+    the page's gain.  An event may carry its own "rng" number to use instead
+    of idx (build_subtitled_audio: a moved event keeps the draw it had in the
+    120 s table, so it is the same sound)."""
+    rng = np.random.default_rng([seed, int(e.get('rng', idx))])
     g, pan = e['gain'] * gain, pan_of(e)
     if cat_db:
         g *= synth.db(cat_db.get(balance.category(e['kind']), 0.0))
