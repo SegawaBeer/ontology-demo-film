@@ -51,10 +51,21 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch(channel='chrome', headless=True,
                                      args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
-        page = browser.new_page(viewport={'width': 1920, 'height': 1080},
-                                device_scale_factor=args.scale)
-        page.goto(url)
-        page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=180000)
+        # A headless load now and then stops before the model files are requested and never
+        # gets ready; such a load is thrown away and the page opened again (up to 4 tries).
+        for attempt in range(4):
+            page = browser.new_page(viewport={'width': 1920, 'height': 1080},
+                                    device_scale_factor=args.scale)
+            page.goto(url)
+            try:
+                page.wait_for_function("document.documentElement.dataset.ready === '1'", timeout=60000)
+                break
+            except Exception:
+                page.close()
+                if attempt == 3:
+                    ffmpeg.kill()
+                    raise SystemExit(f'the page never got ready: {url}')
+                print(f'page not ready after 60 s, opening it again ({attempt + 2}/4)', flush=True)
         page.evaluate("document.fonts.ready")
         # Seek once to the first frame so the page is driven before the steadiness test.
         page.evaluate(f'window.__seek({args.start})')
