@@ -20,3 +20,4 @@ __pycache__/
 /成片/
 /样片/
 .venv-audio/
+.claude/
