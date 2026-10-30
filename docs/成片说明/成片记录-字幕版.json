@@ -1,0 +1,438 @@
+{
+ "pieces": [
+  {
+   "source": "card0",
+   "frames": [
+    0,
+    144
+   ],
+   "original": [
+    0.0,
+    null
+   ],
+   "film": [
+    0.0,
+    2.4
+   ]
+  },
+  {
+   "source": "opening",
+   "frames": [
+    0,
+    1800
+   ],
+   "original": [
+    0.0,
+    30.0
+   ],
+   "film": [
+    2.4,
+    32.4
+   ]
+  },
+  {
+   "source": "card1",
+   "frames": [
+    0,
+    144
+   ],
+   "original": [
+    30.0,
+    null
+   ],
+   "film": [
+    32.4,
+    34.8
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    0,
+    180
+   ],
+   "original": [
+    30.0,
+    33.0
+   ],
+   "film": [
+    34.8,
+    37.8
+   ]
+  },
+  {
+   "source": "card2",
+   "frames": [
+    0,
+    120
+   ],
+   "original": [
+    33.0,
+    null
+   ],
+   "film": [
+    37.8,
+    39.8
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    180,
+    1140
+   ],
+   "original": [
+    33.0,
+    49.0
+   ],
+   "film": [
+    39.8,
+    55.8
+   ]
+  },
+  {
+   "source": "card3",
+   "frames": [
+    0,
+    120
+   ],
+   "original": [
+    49.0,
+    null
+   ],
+   "film": [
+    55.8,
+    57.8
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    1140,
+    2040
+   ],
+   "original": [
+    49.0,
+    64.0
+   ],
+   "film": [
+    57.8,
+    72.8
+   ]
+  },
+  {
+   "source": "card4",
+   "frames": [
+    0,
+    120
+   ],
+   "original": [
+    64.0,
+    null
+   ],
+   "film": [
+    72.8,
+    74.8
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    2040,
+    3360
+   ],
+   "original": [
+    64.0,
+    86.0
+   ],
+   "film": [
+    74.8,
+    96.8
+   ]
+  },
+  {
+   "source": "card5",
+   "frames": [
+    0,
+    120
+   ],
+   "original": [
+    86.0,
+    null
+   ],
+   "film": [
+    96.8,
+    98.8
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    3360,
+    4260
+   ],
+   "original": [
+    86.0,
+    101.0
+   ],
+   "film": [
+    98.8,
+    113.8
+   ]
+  },
+  {
+   "source": "card6",
+   "frames": [
+    0,
+    144
+   ],
+   "original": [
+    101.0,
+    null
+   ],
+   "film": [
+    113.8,
+    116.2
+   ]
+  },
+  {
+   "source": "film",
+   "frames": [
+    4260,
+    4380
+   ],
+   "original": [
+    101.0,
+    103.0
+   ],
+   "film": [
+    116.2,
+    118.2
+   ]
+  },
+  {
+   "source": "ending",
+   "frames": [
+    0,
+    1020
+   ],
+   "original": [
+    103.0,
+    120.0
+   ],
+   "film": [
+    118.2,
+    135.2
+   ]
+  }
+ ],
+ "steps": {
+  "frame check": 1130.2,
+  "encode 4K and 1080p": 1255.2,
+  "total": 2415.0
+ },
+ "seams": [
+  {
+   "frame": 144,
+   "t": 2.4,
+   "after": "card0",
+   "same_as_source": [
+    142,
+    143,
+    144,
+    145
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 1944,
+   "t": 32.4,
+   "after": "opening",
+   "same_as_source": [
+    1942,
+    1943,
+    1944,
+    1945
+   ],
+   "step_diff": 0.001
+  },
+  {
+   "frame": 2088,
+   "t": 34.8,
+   "after": "card1",
+   "same_as_source": [
+    2086,
+    2087,
+    2088,
+    2089
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 2268,
+   "t": 37.8,
+   "after": "film",
+   "same_as_source": [
+    2266,
+    2267,
+    2268,
+    2269
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 2388,
+   "t": 39.8,
+   "after": "card2",
+   "same_as_source": [
+    2386,
+    2387,
+    2388,
+    2389
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 3348,
+   "t": 55.8,
+   "after": "film",
+   "same_as_source": [
+    3346,
+    3347,
+    3348,
+    3349
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 3468,
+   "t": 57.8,
+   "after": "card3",
+   "same_as_source": [
+    3466,
+    3467,
+    3468,
+    3469
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 4368,
+   "t": 72.8,
+   "after": "film",
+   "same_as_source": [
+    4366,
+    4367,
+    4368,
+    4369
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 4488,
+   "t": 74.8,
+   "after": "card4",
+   "same_as_source": [
+    4486,
+    4487,
+    4488,
+    4489
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 5808,
+   "t": 96.8,
+   "after": "film",
+   "same_as_source": [
+    5806,
+    5807,
+    5808,
+    5809
+   ],
+   "step_diff": 0.032
+  },
+  {
+   "frame": 5928,
+   "t": 98.8,
+   "after": "card5",
+   "same_as_source": [
+    5926,
+    5927,
+    5928,
+    5929
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 6828,
+   "t": 113.8,
+   "after": "film",
+   "same_as_source": [
+    6826,
+    6827,
+    6828,
+    6829
+   ],
+   "step_diff": 0.001
+  },
+  {
+   "frame": 6972,
+   "t": 116.2,
+   "after": "card6",
+   "same_as_source": [
+    6970,
+    6971,
+    6972,
+    6973
+   ],
+   "step_diff": 0.0
+  },
+  {
+   "frame": 7092,
+   "t": 118.2,
+   "after": "film",
+   "same_as_source": [
+    7090,
+    7091,
+    7092,
+    7093
+   ],
+   "step_diff": 0.019
+  }
+ ],
+ "outputs": [
+  {
+   "file": "成片/本体能力演示-字幕版-4K60.mp4",
+   "duration": 135.2,
+   "frames": 8112,
+   "size": [
+    3840,
+    2160
+   ],
+   "fps": 60.0,
+   "audio": 135.2,
+   "ok": true
+  },
+  {
+   "file": "成片/本体能力演示-字幕版-1080p.mp4",
+   "duration": 135.2,
+   "frames": 8112,
+   "size": [
+    1920,
+    1080
+   ],
+   "fps": 60.0,
+   "audio": 135.2,
+   "ok": true
+  }
+ ],
+ "sheets": {
+  "拼版-字幕版-每0.5秒.jpg": 2.22,
+  "拼版-字幕版-每3秒.jpg": 0.37
+ },
+ "srt": {
+  "file": "成片/本体能力演示-字幕版.srt",
+  "cues": 23
+ }
+}

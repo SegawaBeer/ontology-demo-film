@@ -1,0 +1,590 @@
+{
+ "out": "<项目目录>/音频/全片音效-字幕版.wav",
+ "end": 135.2,
+ "samples": 6489600,
+ "passed": 16,
+ "total": 18,
+ "checks": {
+  "rotor_opening": true,
+  "rotor_ending_360": true,
+  "opening_table": true,
+  "page_events": true,
+  "format": true,
+  "samples": true,
+  "onsets": false,
+  "found": true,
+  "loudness": true,
+  "true_peak": true,
+  "balance": true,
+  "mix_peak": true,
+  "limiter": true,
+  "small_speaker": true,
+  "clipping": true,
+  "dc": true,
+  "head": false,
+  "tail": true
+ },
+ "rotor": {
+  "opening_err_deg": 1.2721500297629973e-08,
+  "ending_deg": 359.99999988520506,
+  "ending_err_deg": 1.1479494332888862e-07,
+  "outside_max_rps": 0.0,
+  "moved": {
+   "opening_deg": 360.0,
+   "opening_deg_original": 360.0,
+   "ending_deg": 359.9999999999998,
+   "ending_deg_original": 359.9999999999998,
+   "card_max_rps": 0.0,
+   "ok": true
+  }
+ },
+ "pages": [
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=film&theme=light&play=0",
+   "frame": "film",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/film.json",
+   "start": 30,
+   "duration": 103,
+   "count": 251,
+   "by_kind": {
+    "alert": 3,
+    "line": 31,
+    "part": 40,
+    "path": 39,
+    "slide": 7,
+    "tick-num": 18,
+    "type": 113
+   },
+   "page_by_kind": {
+    "alert": 3,
+    "line": 31,
+    "part": 40,
+    "path": 39,
+    "slide": 7,
+    "tick": 18,
+    "type": 113
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 18
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=ending&theme=light&play=0",
+   "frame": "ending",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/ending.json",
+   "start": 103,
+   "duration": 120,
+   "count": 7,
+   "by_kind": {
+    "path": 4,
+    "swap": 1,
+    "tone": 2
+   },
+   "page_by_kind": {
+    "path": 4,
+    "swap": 1,
+    "tone": 2
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=0&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card0.json",
+   "start": 0,
+   "duration": 2.4,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=1&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card1.json",
+   "start": 0,
+   "duration": 2.4,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=2&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card2.json",
+   "start": 0,
+   "duration": 2,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=3&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card3.json",
+   "start": 0,
+   "duration": 2,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=4&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card4.json",
+   "start": 0,
+   "duration": 2,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=5&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card5.json",
+   "start": 0,
+   "duration": 2,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  },
+  {
+   "url": "http://127.0.0.1:5198/frames.html?frame=card&id=6&theme=light&play=0",
+   "frame": "card",
+   "events": "/var/folders/fl/b3pc_qcn6clfp0vdd9d3hnqm0000gn/T/sub-audio-ezfqkkza/card6.json",
+   "start": 0,
+   "duration": 2.4,
+   "count": 1,
+   "by_kind": {
+    "tone": 1
+   },
+   "page_by_kind": {
+    "tone": 1
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  }
+ ],
+ "dropped_repeats": [
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ]
+ ],
+ "cards": [
+  {
+   "card": 0,
+   "start": 0.0,
+   "end": 2.4,
+   "at_original": 0.0
+  },
+  {
+   "card": 1,
+   "start": 32.4,
+   "end": 34.8,
+   "at_original": 30.0
+  },
+  {
+   "card": 2,
+   "start": 37.8,
+   "end": 39.8,
+   "at_original": 33.0
+  },
+  {
+   "card": 3,
+   "start": 55.8,
+   "end": 57.8,
+   "at_original": 49.0
+  },
+  {
+   "card": 4,
+   "start": 72.8,
+   "end": 74.8,
+   "at_original": 64.0
+  },
+  {
+   "card": 5,
+   "start": 96.8,
+   "end": 98.8,
+   "at_original": 86.0
+  },
+  {
+   "card": 6,
+   "start": 113.8,
+   "end": 116.2,
+   "at_original": 101.0
+  }
+ ],
+ "table": {
+  "events": "<项目目录>/音频/全片音效-字幕版.events.json",
+  "count": 425,
+  "by_kind": {
+   "alert": 3,
+   "line": 44,
+   "part": 56,
+   "path": 54,
+   "slide": 7,
+   "spin": 2,
+   "swap": 1,
+   "thud": 1,
+   "tick": 115,
+   "tick-num": 19,
+   "tone": 10,
+   "type": 113
+  },
+  "by_part": {
+   "opening": 163,
+   "film": 251,
+   "ending": 3,
+   "rotor": 1,
+   "card": 7
+  }
+ },
+ "balance_fit": {
+  "evaluations": 1,
+  "max_error_lu": 0.0,
+  "capped": true,
+  "gain_db": 22.78354452740901,
+  "lufs": -22.99,
+  "max_limit_db": 3.0,
+  "limiter_on_loudest_peak_db": 3.0,
+  "offsets": {
+   "thud": 0.0,
+   "alert": -2.3,
+   "tone": -3.3,
+   "line": -7.7,
+   "part": -6.3,
+   "slide": -8.3,
+   "path": -8.3,
+   "spin": -10.3,
+   "type": -12.3
+  },
+  "trail": [
+   [
+    22.784,
+    -22.995,
+    0.0
+   ]
+  ],
+  "category_db": {
+   "thud": 0.0,
+   "alert": -13.7336,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.5545,
+   "path": -14.7293,
+   "spin": -9.4419,
+   "type": 4.6253
+  },
+  "target_lufs": null
+ },
+ "mix": {
+  "spin": "build_subtitled_audio:rotor_rps",
+  "seed": 0,
+  "start": 0.0,
+  "end": 135.2,
+  "samples": 6489600,
+  "count": 425,
+  "category_db": {
+   "thud": 0.0,
+   "alert": -13.7336,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.5545,
+   "path": -14.7293,
+   "spin": -9.4419,
+   "type": 4.6253
+  },
+  "by_kind": {
+   "tone": 10,
+   "tick": 115,
+   "thud": 1,
+   "spin": 2,
+   "type": 113,
+   "line": 44,
+   "tick-num": 19,
+   "path": 54,
+   "slide": 7,
+   "part": 56,
+   "swap": 1,
+   "alert": 3
+  },
+  "thinned": 82,
+  "skipped": [],
+  "cut": [],
+  "gain_db": 22.78,
+  "gain_db_exact": 22.783506729394496,
+  "limiter_max_db": 3.0,
+  "limiter_seconds": 0.083,
+  "target_lufs": null,
+  "max_limit_db": 3.0,
+  "capped": true,
+  "lufs_float": -23.0,
+  "dbtp_float": -1.4,
+  "lufs": -23.0,
+  "dbtp": -1.4
+ },
+ "check": {
+  "format": "48000 Hz, 24-bit, 2 ch, 135.200 s",
+  "samples": {
+   "samples": 6489600,
+   "expected": 6489600
+  },
+  "onsets": {
+   "events": 425,
+   "max_locate_ms": 9.62,
+   "max_motion_lag_ms": 0.08,
+   "detected": 219,
+   "isolated": 222,
+   "max_detect_ms": 2.81,
+   "undetected_isolated": [
+    [
+     44.4,
+     "part"
+    ],
+    [
+     54.4,
+     "line"
+    ],
+    [
+     69.8,
+     "line"
+    ]
+   ],
+   "over_5ms": [
+    [
+     92.06723955327965,
+     "part",
+     9.62,
+     null
+    ]
+   ]
+  },
+  "found": {
+   "events": 425,
+   "in_table": 425,
+   "level_min": 0.851,
+   "level_max": 1.435,
+   "not_found": [],
+   "outside_file": []
+  },
+  "loudness": {
+   "ebur128_lufs": -23.0,
+   "loudnorm_lufs": -23.03,
+   "range": [
+    -23.0,
+    -15.0
+   ]
+  },
+  "true_peak": {
+   "ebur128_dbtp": -1.4,
+   "loudnorm_dbtp": -1.41
+  },
+  "balance": {
+   "T": -11.1,
+   "stems_rebuild_error": 1.3e-07,
+   "rows": [
+    {
+     "category": "thud",
+     "M": -11.1,
+     "at": 24.7,
+     "offset": 0.0,
+     "range": [
+      0.0,
+      0.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "alert",
+     "M": -13.4,
+     "at": 94.2,
+     "offset": -2.3,
+     "range": [
+      -4.0,
+      -2.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "tone",
+     "M": -14.4,
+     "at": 3.1,
+     "offset": -3.3,
+     "range": [
+      -6.0,
+      -3.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "line",
+     "M": -18.8,
+     "at": 63.0,
+     "offset": -7.7,
+     "range": [
+      -8.0,
+      -5.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "part",
+     "M": -17.4,
+     "at": 10.6,
+     "offset": -6.3,
+     "range": [
+      -9.0,
+      -6.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "slide",
+     "M": -19.4,
+     "at": 36.4,
+     "offset": -8.3,
+     "range": [
+      -11.0,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "path",
+     "M": -19.4,
+     "at": 118.5,
+     "offset": -8.3,
+     "range": [
+      null,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "spin",
+     "M": -21.4,
+     "at": 121.0,
+     "offset": -10.3,
+     "range": [
+      -13.0,
+      -10.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "type",
+     "M": -23.4,
+     "at": 91.2,
+     "offset": -12.3,
+     "range": [
+      -15.0,
+      -12.0
+     ],
+     "ok": true
+    }
+   ]
+  },
+  "mix_peak": {
+   "max_M": -11.1,
+   "max_at": 24.7,
+   "max_away_from_thud_M": -13.4,
+   "away_at": 94.2,
+   "T": -11.1,
+   "ok": true
+  },
+  "limiter": {
+   "max_reduction_db": 3.0,
+   "at_s": 24.315,
+   "seconds_reduced": 0.083,
+   "limit_db": 3.0
+  },
+  "small_speaker": {
+   "highpass_hz": 250.0,
+   "thud_M": -17.7,
+   "line_M": -18.8,
+   "mix_at_thud_M": -17.7,
+   "mix_away_M": -13.4,
+   "margin_lu": 1.1,
+   "ok": true
+  },
+  "clipping": {
+   "clipped_samples": 0,
+   "sample_peak_dbfs": -1.4
+  },
+  "dc": {
+   "abs_mean": [
+    3.37e-05,
+    1.48e-05
+   ]
+  },
+  "head": {
+   "peak_0_0.3s_dbfs": -17.1
+  },
+  "tail": {
+   "peak_last_0.5s_dbfs": -240.0,
+   "silent": true,
+   "falling": true,
+   "last_sample_dbfs": -240.0,
+   "cut_off_voices": []
+  }
+ }
+}

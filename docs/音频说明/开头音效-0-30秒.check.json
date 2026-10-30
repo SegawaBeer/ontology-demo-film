@@ -1,0 +1,1681 @@
+{
+ "file": "<项目目录>/音频/开头音效-0-30秒.wav",
+ "pass": true,
+ "ok": {
+  "format": true,
+  "onsets": true,
+  "loudness": true,
+  "true_peak": true,
+  "clipping": true,
+  "dc": true,
+  "head": true,
+  "tail": true
+ },
+ "results": {
+  "format": "48000 Hz, 24-bit, 2 ch, 30.000 s",
+  "onsets": {
+   "events": 162,
+   "max_locate_ms": 3.12,
+   "max_motion_lag_ms": 0.06,
+   "detected": 43,
+   "isolated": 43,
+   "max_detect_ms": 2.79,
+   "undetected_isolated": [],
+   "over_5ms": []
+  },
+  "loudness": {
+   "ebur128_lufs": -16.0,
+   "loudnorm_lufs": -15.81
+  },
+  "true_peak": {
+   "ebur128_dbtp": -2.1,
+   "loudnorm_dbtp": -2.06
+  },
+  "clipping": {
+   "clipped_samples": 0,
+   "sample_peak_dbfs": -2.1
+  },
+  "dc": {
+   "abs_mean": [
+    7.17e-05,
+    3.17e-05
+   ]
+  },
+  "head": {
+   "peak_0_0.3s_dbfs": -240.0
+  },
+  "tail": {
+   "peak_last_0.5s_dbfs": -240.0,
+   "last_sample_dbfs": -240.0,
+   "cut_off_voices": [],
+   "outside_file": [
+    [
+     30.3,
+     "slide"
+    ]
+   ]
+  }
+ },
+ "rows": [
+  {
+   "t": 0.3,
+   "kind": "tone",
+   "what": "first blade",
+   "locate_ms": 1.71,
+   "lag_ms": -0.02,
+   "detect_ms": 2.79,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 7.65,
+   "kind": "tick",
+   "what": "ring blade 2",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 7.745964,
+   "kind": "tick",
+   "what": "ring blade 3",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.785714,
+   "kind": "tick",
+   "what": "ring blade 4",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.816215,
+   "kind": "tick",
+   "what": "ring blade 5",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.841929,
+   "kind": "tick",
+   "what": "ring blade 6",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.864583,
+   "kind": "tick",
+   "what": "ring blade 7",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.885064,
+   "kind": "tick",
+   "what": "ring blade 8",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.903898,
+   "kind": "tick",
+   "what": "ring blade 9",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.921429,
+   "kind": "tick",
+   "what": "ring blade 10",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.937893,
+   "kind": "tick",
+   "what": "ring blade 11",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.953466,
+   "kind": "tick",
+   "what": "ring blade 12",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.968278,
+   "kind": "tick",
+   "what": "ring blade 13",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.982431,
+   "kind": "tick",
+   "what": "ring blade 14",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 7.996005,
+   "kind": "tick",
+   "what": "ring blade 15",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.009066,
+   "kind": "tick",
+   "what": "ring blade 16",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.021669,
+   "kind": "tick",
+   "what": "ring blade 17",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.033858,
+   "kind": "tick",
+   "what": "ring blade 18",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.045672,
+   "kind": "tick",
+   "what": "ring blade 19",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.057143,
+   "kind": "tick",
+   "what": "ring blade 20",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.0683,
+   "kind": "tick",
+   "what": "ring blade 21",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.079166,
+   "kind": "tick",
+   "what": "ring blade 22",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.089765,
+   "kind": "tick",
+   "what": "ring blade 23",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.100113,
+   "kind": "tick",
+   "what": "ring blade 24",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.11023,
+   "kind": "tick",
+   "what": "ring blade 25",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.120128,
+   "kind": "tick",
+   "what": "ring blade 26",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.129822,
+   "kind": "tick",
+   "what": "ring blade 27",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.139325,
+   "kind": "tick",
+   "what": "ring blade 28",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.148646,
+   "kind": "tick",
+   "what": "ring blade 29",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.157796,
+   "kind": "tick",
+   "what": "ring blade 30",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.166785,
+   "kind": "tick",
+   "what": "ring blade 31",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.175619,
+   "kind": "tick",
+   "what": "ring blade 32",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.184308,
+   "kind": "tick",
+   "what": "ring blade 33",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.192857,
+   "kind": "tick",
+   "what": "ring blade 34",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.201274,
+   "kind": "tick",
+   "what": "ring blade 35",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.209564,
+   "kind": "tick",
+   "what": "ring blade 36",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.217734,
+   "kind": "tick",
+   "what": "ring blade 37",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.225787,
+   "kind": "tick",
+   "what": "ring blade 38",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.233729,
+   "kind": "tick",
+   "what": "ring blade 39",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.241565,
+   "kind": "tick",
+   "what": "ring blade 40",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.249298,
+   "kind": "tick",
+   "what": "ring blade 41",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.256933,
+   "kind": "tick",
+   "what": "ring blade 42",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.264473,
+   "kind": "tick",
+   "what": "ring blade 43",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.271921,
+   "kind": "tick",
+   "what": "ring blade 44",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.279281,
+   "kind": "tick",
+   "what": "ring blade 45",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.286556,
+   "kind": "tick",
+   "what": "ring blade 46",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.293749,
+   "kind": "tick",
+   "what": "ring blade 47",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.300863,
+   "kind": "tick",
+   "what": "ring blade 48",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.307899,
+   "kind": "tick",
+   "what": "ring blade 49",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.314862,
+   "kind": "tick",
+   "what": "ring blade 50",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.321751,
+   "kind": "tick",
+   "what": "ring blade 51",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.328571,
+   "kind": "tick",
+   "what": "ring blade 52",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.335324,
+   "kind": "tick",
+   "what": "ring blade 53",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.34201,
+   "kind": "tick",
+   "what": "ring blade 54",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.348632,
+   "kind": "tick",
+   "what": "ring blade 55",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.355192,
+   "kind": "tick",
+   "what": "ring blade 56",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.361692,
+   "kind": "tick",
+   "what": "ring blade 57",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.368132,
+   "kind": "tick",
+   "what": "ring blade 58",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.374516,
+   "kind": "tick",
+   "what": "ring blade 59",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.380844,
+   "kind": "tick",
+   "what": "ring blade 60",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.387117,
+   "kind": "tick",
+   "what": "ring blade 61",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.393338,
+   "kind": "tick",
+   "what": "ring blade 62",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.399507,
+   "kind": "tick",
+   "what": "ring blade 63",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.405625,
+   "kind": "tick",
+   "what": "ring blade 64",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.411695,
+   "kind": "tick",
+   "what": "ring blade 65",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.417716,
+   "kind": "tick",
+   "what": "ring blade 66",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.42369,
+   "kind": "tick",
+   "what": "ring blade 67",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.429619,
+   "kind": "tick",
+   "what": "ring blade 68",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.435503,
+   "kind": "tick",
+   "what": "ring blade 69",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.441343,
+   "kind": "tick",
+   "what": "ring blade 70",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.447141,
+   "kind": "tick",
+   "what": "ring blade 71",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.452897,
+   "kind": "tick",
+   "what": "ring blade 72",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.458611,
+   "kind": "tick",
+   "what": "ring blade 73",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.464286,
+   "kind": "tick",
+   "what": "ring blade 74",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.469921,
+   "kind": "tick",
+   "what": "ring blade 75",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.475518,
+   "kind": "tick",
+   "what": "ring blade 76",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.481077,
+   "kind": "tick",
+   "what": "ring blade 77",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.486599,
+   "kind": "tick",
+   "what": "ring blade 78",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.492085,
+   "kind": "tick",
+   "what": "ring blade 79",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.497535,
+   "kind": "tick",
+   "what": "ring blade 80",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.502951,
+   "kind": "tick",
+   "what": "ring blade 81",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.508333,
+   "kind": "tick",
+   "what": "ring blade 82",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.51368,
+   "kind": "tick",
+   "what": "ring blade 83",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.518995,
+   "kind": "tick",
+   "what": "ring blade 84",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.524278,
+   "kind": "tick",
+   "what": "ring blade 85",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.529529,
+   "kind": "tick",
+   "what": "ring blade 86",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.534749,
+   "kind": "tick",
+   "what": "ring blade 87",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.539938,
+   "kind": "tick",
+   "what": "ring blade 88",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.545097,
+   "kind": "tick",
+   "what": "ring blade 89",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.550227,
+   "kind": "tick",
+   "what": "ring blade 90",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.555327,
+   "kind": "tick",
+   "what": "ring blade 91",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.560399,
+   "kind": "tick",
+   "what": "ring blade 92",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.565443,
+   "kind": "tick",
+   "what": "ring blade 93",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.570459,
+   "kind": "tick",
+   "what": "ring blade 94",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.575448,
+   "kind": "tick",
+   "what": "ring blade 95",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.58041,
+   "kind": "tick",
+   "what": "ring blade 96",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.585346,
+   "kind": "tick",
+   "what": "ring blade 97",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.590256,
+   "kind": "tick",
+   "what": "ring blade 98",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.595141,
+   "kind": "tick",
+   "what": "ring blade 99",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 8.6,
+   "kind": "tick",
+   "what": "ring blade 100",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 10.1,
+   "kind": "part",
+   "what": "turbine stage 2",
+   "locate_ms": 0.4,
+   "lag_ms": 0.0,
+   "detect_ms": 0.44,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 10.7,
+   "kind": "part",
+   "what": "turbine stage 3",
+   "locate_ms": 0.38,
+   "lag_ms": 0.0,
+   "detect_ms": 0.42,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 11.3,
+   "kind": "part",
+   "what": "turbine stage 4",
+   "locate_ms": 0.29,
+   "lag_ms": 0.0,
+   "detect_ms": 0.38,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 11.9,
+   "kind": "part",
+   "what": "turbine stage 5",
+   "locate_ms": 0.31,
+   "lag_ms": 0.0,
+   "detect_ms": 0.42,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 12.7,
+   "kind": "part",
+   "what": "shaft",
+   "locate_ms": 0.31,
+   "lag_ms": 0.0,
+   "detect_ms": 0.46,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 13.5,
+   "kind": "part",
+   "what": "compressor stage 4",
+   "locate_ms": 0.21,
+   "lag_ms": 0.0,
+   "detect_ms": 0.38,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 14.498536,
+   "kind": "part",
+   "what": "compressor stage 3",
+   "locate_ms": 0.33,
+   "lag_ms": 0.0,
+   "detect_ms": 0.58,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 15.122126,
+   "kind": "part",
+   "what": "compressor stage 2",
+   "locate_ms": 0.33,
+   "lag_ms": 0.0,
+   "detect_ms": 0.35,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 15.396364,
+   "kind": "part",
+   "what": "compressor stage 1",
+   "locate_ms": 0.44,
+   "lag_ms": 0.0,
+   "detect_ms": 0.44,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 17.0,
+   "kind": "part",
+   "what": "combustor",
+   "locate_ms": 0.33,
+   "lag_ms": 0.0,
+   "detect_ms": 0.35,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 17.8,
+   "kind": "part",
+   "what": "core-casing",
+   "locate_ms": 0.23,
+   "lag_ms": 0.0,
+   "detect_ms": 0.33,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 18.7,
+   "kind": "part",
+   "what": "fan-hub",
+   "locate_ms": 0.29,
+   "lag_ms": 0.0,
+   "detect_ms": 0.5,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.1,
+   "kind": "tick",
+   "what": "fan blade 1",
+   "locate_ms": 0.06,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.15,
+   "kind": "tick",
+   "what": "fan blade 2",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.2,
+   "kind": "tick",
+   "what": "fan blade 3",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.25,
+   "kind": "tick",
+   "what": "fan blade 4",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.3,
+   "kind": "tick",
+   "what": "fan blade 5",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.35,
+   "kind": "tick",
+   "what": "fan blade 6",
+   "locate_ms": 0.04,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.4,
+   "kind": "tick",
+   "what": "fan blade 7",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.45,
+   "kind": "tick",
+   "what": "fan blade 8",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.5,
+   "kind": "tick",
+   "what": "fan blade 9",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.55,
+   "kind": "tick",
+   "what": "fan blade 10",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.6,
+   "kind": "tick",
+   "what": "fan blade 11",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": 0.0,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.65,
+   "kind": "tick",
+   "what": "fan blade 12",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.7,
+   "kind": "tick",
+   "what": "fan blade 13",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.06,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.75,
+   "kind": "tick",
+   "what": "fan blade 14",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.8,
+   "kind": "tick",
+   "what": "fan blade 15",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.02,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 19.85,
+   "kind": "tick",
+   "what": "fan blade 16",
+   "locate_ms": 0.02,
+   "lag_ms": 0.0,
+   "detect_ms": -0.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 20.2,
+   "kind": "part",
+   "what": "fan-cowl",
+   "locate_ms": 0.23,
+   "lag_ms": 0.0,
+   "detect_ms": 0.46,
+   "dense": false,
+   "same_instant": 2
+  },
+  {
+   "t": 20.2,
+   "kind": "part",
+   "what": "nacelle",
+   "locate_ms": 0.23,
+   "lag_ms": 0.0,
+   "detect_ms": 0.46,
+   "dense": false,
+   "same_instant": 2
+  },
+  {
+   "t": 21.3,
+   "kind": "part",
+   "what": "exhaust",
+   "locate_ms": 0.21,
+   "lag_ms": 0.0,
+   "detect_ms": 0.56,
+   "dense": false,
+   "same_instant": 2
+  },
+  {
+   "t": 21.3,
+   "kind": "part",
+   "what": "spinner",
+   "locate_ms": 0.21,
+   "lag_ms": 0.0,
+   "detect_ms": 0.56,
+   "dense": false,
+   "same_instant": 2
+  },
+  {
+   "t": 21.9,
+   "kind": "thud",
+   "what": "engine complete",
+   "locate_ms": 1.4,
+   "lag_ms": 0.17,
+   "detect_ms": 0.73,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 22.0,
+   "kind": "spin",
+   "what": "rotor",
+   "locate_ms": 0.06,
+   "lag_ms": 0.06,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 23.0,
+   "kind": "line",
+   "what": "node e3",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": 1.15,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 23.4,
+   "kind": "line",
+   "what": "node design",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": 1.19,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 23.48,
+   "kind": "line",
+   "what": "node drill",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 23.56,
+   "kind": "line",
+   "what": "node std",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 23.8,
+   "kind": "line",
+   "what": "node mwo",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": 1.04,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 23.88,
+   "kind": "line",
+   "what": "node spray",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 23.96,
+   "kind": "line",
+   "what": "node awo",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 24.2,
+   "kind": "line",
+   "what": "node insp",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": 1.19,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 24.28,
+   "kind": "line",
+   "what": "node coat",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 24.6,
+   "kind": "line",
+   "what": "node po",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": 1.31,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 24.68,
+   "kind": "line",
+   "what": "node powder",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 24.76,
+   "kind": "line",
+   "what": "node supplier",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 24.84,
+   "kind": "line",
+   "what": "node stock",
+   "locate_ms": 0.73,
+   "lag_ms": 0.0,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 25.0,
+   "kind": "path",
+   "what": "relation design-blade",
+   "locate_ms": 1.17,
+   "lag_ms": 0.0,
+   "detect_ms": 1.38,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 25.2,
+   "kind": "path",
+   "what": "relation drill-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 25.4,
+   "kind": "path",
+   "what": "relation std-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 25.6,
+   "kind": "path",
+   "what": "relation mwo-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 25.8,
+   "kind": "path",
+   "what": "relation spray-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 26.0,
+   "kind": "path",
+   "what": "relation awo-e7",
+   "locate_ms": 1.08,
+   "lag_ms": -0.08,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 26.2,
+   "kind": "path",
+   "what": "relation insp-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 26.4,
+   "kind": "path",
+   "what": "relation coat-powder",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 26.6,
+   "kind": "path",
+   "what": "relation powder-spray",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 26.8,
+   "kind": "path",
+   "what": "relation powder-supplier",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 27.0,
+   "kind": "path",
+   "what": "relation po-blade",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 27.2,
+   "kind": "path",
+   "what": "relation blade-e3",
+   "locate_ms": 1.06,
+   "lag_ms": -0.1,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 27.3,
+   "kind": "path",
+   "what": "relation po-m-comb",
+   "locate_ms": 3.12,
+   "lag_ms": 1.96,
+   "detect_ms": null,
+   "dense": true,
+   "same_instant": 1
+  },
+  {
+   "t": 27.6,
+   "kind": "path",
+   "what": "relation stock-blade",
+   "locate_ms": 1.17,
+   "lag_ms": 0.0,
+   "detect_ms": 1.31,
+   "dense": false,
+   "same_instant": 1
+  },
+  {
+   "t": 28.0,
+   "kind": "path",
+   "what": "relation po-supplier",
+   "locate_ms": 1.17,
+   "lag_ms": 0.0,
+   "detect_ms": 1.25,
+   "dense": false,
+   "same_instant": 1
+  }
+ ]
+}

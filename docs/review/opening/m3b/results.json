@@ -1,0 +1,74 @@
+[
+  {
+    "check": "40 28.0 = frame=net",
+    "ok": true,
+    "value": "28.0s left 0.0008% right 0.0000% cam 0.00000 0.00000deg",
+    "expect": "left and right < 0.01% over 8, camera within 0.002 and 0.01deg"
+  },
+  {
+    "check": "41 29.5-30.0 = frame=net-end",
+    "ok": true,
+    "value": "29.5s left 0.0008% right 0.0000% cam 0.00000 0.00000deg; 29.75s left 0.0008% right 0.0000% cam 0.00000 0.00000deg; 30.0s left 0.0008% right 0.0000% cam 0.00000 0.00000deg",
+    "expect": "each < 0.01% over 8, camera within 0.002 and 0.01deg"
+  },
+  {
+    "check": "42 pure of t",
+    "ok": true,
+    "value": "all six identical",
+    "expect": "seek 29.9 and back = direct open: same canvas pixels and markup, screenshot 0 px over 1 level"
+  },
+  {
+    "check": "43 graph timetable",
+    "ok": true,
+    "value": "0 off the table [], wrong direction [], 28.0: 33 done, stock 0.4200, '34 个节点 · 33 / 35 条关系'; 30.0: 35 done, '34 个节点 · 35 条关系'",
+    "expect": "every fade-in, start and end within a frame; 33 done and stock 0.42 at 28.0; 35 at 30.0"
+  },
+  {
+    "check": "44 flashes",
+    "ok": true,
+    "value": "design>blade ring +28; drill>blade ring +28; std>blade ring +28; mwo>blade ring +28; spray>blade ring +28; insp>blade ring +28; po>blade ring +28; stock>blade ring +28; awo>e7 engine +11; po>m-comb highlight +123",
+    "expect": "each landing >= +10 blue-red (ring 25 %, engine 15 %, combustor highlight)"
+  },
+  {
+    "check": "45 steady",
+    "ok": true,
+    "value": "worst mean 0.133 at 23.8s, worst >60 8px at 23.3s; switch frames [(23.8, 2), (23.9, 18)] vs median 12px over 30",
+    "expect": "mean <= 4, < 3,000 px over 60 per 0.05 s; no jump at the 0.5 and 0.6 switches"
+  },
+  {
+    "check": "46 parts",
+    "ok": true,
+    "value": "23s 2027, 24s 2027, 25s 2027, 26s 2027, 27s 2027, 28s 2027, 29s 2027, 30s 2027",
+    "expect": "2,027 visible parts every second 23-30"
+  },
+  {
+    "check": "47 airflow",
+    "ok": true,
+    "value": "25.0 3603px over 15 in the flow region, 28.0 0px, 27.9->25.0 state True, 0px at 1 level, 0px over 1",
+    "expect": ">= 3,000 at 25.0, 0 at 28.0, seek back identical"
+  },
+  {
+    "check": "49 flow cross-section",
+    "ok": true,
+    "value": "12567 slice pieces at 59 times, 0 inside a solid part []; duct 0.2-1.3: 11 of 55 slices have no free radius (from 0.68), so no line inside",
+    "expect": "no flow piece within 0.005 of a visible solid part in its 0.02 slice"
+  },
+  {
+    "check": "8a one pass 23-30",
+    "ok": true,
+    "value": "0 frames with two passes []",
+    "expect": "passes = 1 on every frame"
+  },
+  {
+    "check": "8b 22-23 vs two passes",
+    "ok": true,
+    "value": "worst 0.0019% at 23.0s",
+    "expect": "< 0.01% over 8 against af3ce3e"
+  },
+  {
+    "check": "48 console",
+    "ok": true,
+    "value": "none",
+    "expect": "no error / pageerror"
+  }
+]

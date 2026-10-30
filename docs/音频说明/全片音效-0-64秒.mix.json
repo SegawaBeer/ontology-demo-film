@@ -1,0 +1,49 @@
+{
+ "events": [
+  "<项目目录>/音频/全片音效-0-64秒.events.json"
+ ],
+ "spin": "rotor:rotor_rps",
+ "seed": 0,
+ "start": 0.0,
+ "end": 64.0,
+ "samples": 3072000,
+ "count": 269,
+ "category_db": {
+  "thud": 0.0,
+  "alert": -7.713,
+  "tone": -7.119,
+  "line": -4.6157,
+  "part": -4.1445,
+  "slide": -2.1061,
+  "path": -12.6666,
+  "spin": -9.3399,
+  "type": 6.4996
+ },
+ "by_kind": {
+  "tone": 1,
+  "tick": 115,
+  "thud": 1,
+  "spin": 1,
+  "type": 51,
+  "line": 27,
+  "tick-num": 11,
+  "path": 32,
+  "slide": 5,
+  "part": 24,
+  "alert": 1
+ },
+ "thinned": 82,
+ "skipped": [],
+ "cut": [],
+ "gain_db": 22.78,
+ "gain_db_exact": 22.783506729394496,
+ "limiter_max_db": 3.0,
+ "limiter_seconds": 0.083,
+ "target_lufs": null,
+ "max_limit_db": 3.0,
+ "capped": true,
+ "lufs_float": -21.8,
+ "dbtp_float": -1.4,
+ "lufs": -21.8,
+ "dbtp": -1.4
+}

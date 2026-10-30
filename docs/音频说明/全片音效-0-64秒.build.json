@@ -1,0 +1,384 @@
+{
+ "out": "<项目目录>/音频/全片音效-0-64秒.wav",
+ "end": 64.0,
+ "samples": 3072000,
+ "passed": 18,
+ "total": 18,
+ "checks": {
+  "rotor_opening": true,
+  "rotor_ending_360": true,
+  "opening_table": true,
+  "page_events": true,
+  "format": true,
+  "samples": true,
+  "onsets": true,
+  "found": true,
+  "loudness": true,
+  "true_peak": true,
+  "balance": true,
+  "mix_peak": true,
+  "limiter": true,
+  "small_speaker": true,
+  "clipping": true,
+  "dc": true,
+  "head": true,
+  "tail": true
+ },
+ "rotor": {
+  "opening_err_deg": 1.2721500297629973e-08,
+  "ending_deg": 359.99999988520506,
+  "ending_err_deg": 1.1479494332888862e-07,
+  "outside_max_rps": 0.0
+ },
+ "opening": {
+  "events": "<项目目录>/音频/events-opening.json",
+  "count": 163,
+  "by_kind": {
+   "line": 13,
+   "part": 16,
+   "path": 15,
+   "spin": 1,
+   "thud": 1,
+   "tick": 115,
+   "tick-num": 1,
+   "tone": 1
+  }
+ },
+ "pages": [
+  {
+   "url": "http://localhost:5196/frames.html?frame=film-a&theme=light&play=0",
+   "frame": "film-a",
+   "events": "<项目目录>/音频/events-film-a.json",
+   "start": 30,
+   "duration": 64,
+   "count": 106,
+   "by_kind": {
+    "alert": 1,
+    "line": 14,
+    "part": 8,
+    "path": 17,
+    "slide": 5,
+    "tick-num": 10,
+    "type": 51
+   },
+   "page_by_kind": {
+    "alert": 1,
+    "line": 14,
+    "part": 8,
+    "path": 17,
+    "slide": 5,
+    "tick": 10,
+    "type": 51
+   },
+   "filled_src": 106,
+   "filled_dur": 5,
+   "tick_to_tick_num": 10
+  }
+ ],
+ "dropped_repeats": [],
+ "table": {
+  "events": "<项目目录>/音频/全片音效-0-64秒.events.json",
+  "count": 269,
+  "by_kind": {
+   "alert": 1,
+   "line": 27,
+   "part": 24,
+   "path": 32,
+   "slide": 5,
+   "spin": 1,
+   "thud": 1,
+   "tick": 115,
+   "tick-num": 11,
+   "tone": 1,
+   "type": 51
+  },
+  "by_part": {
+   "opening": 163,
+   "film": 106,
+   "rotor": 0
+  }
+ },
+ "balance_fit": {
+  "evaluations": 1,
+  "max_error_lu": 0.0,
+  "capped": true,
+  "gain_db": 22.78354452740901,
+  "lufs": -21.74,
+  "max_limit_db": 3.0,
+  "limiter_on_loudest_peak_db": 3.0,
+  "offsets": {
+   "thud": 0.0,
+   "alert": -2.3,
+   "tone": -3.3,
+   "line": -7.7,
+   "part": -6.3,
+   "slide": -8.3,
+   "path": -8.3,
+   "spin": -10.3,
+   "type": -12.3
+  },
+  "trail": [
+   [
+    22.784,
+    -21.744,
+    0.0
+   ]
+  ],
+  "category_db": {
+   "thud": 0.0,
+   "alert": -7.713,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.1061,
+   "path": -12.6666,
+   "spin": -9.3399,
+   "type": 6.4996
+  },
+  "target_lufs": null
+ },
+ "mix": {
+  "spin": "rotor:rotor_rps",
+  "seed": 0,
+  "start": 0.0,
+  "end": 64.0,
+  "samples": 3072000,
+  "count": 269,
+  "category_db": {
+   "thud": 0.0,
+   "alert": -7.713,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.1061,
+   "path": -12.6666,
+   "spin": -9.3399,
+   "type": 6.4996
+  },
+  "by_kind": {
+   "tone": 1,
+   "tick": 115,
+   "thud": 1,
+   "spin": 1,
+   "type": 51,
+   "line": 27,
+   "tick-num": 11,
+   "path": 32,
+   "slide": 5,
+   "part": 24,
+   "alert": 1
+  },
+  "thinned": 82,
+  "skipped": [],
+  "cut": [],
+  "gain_db": 22.78,
+  "gain_db_exact": 22.783506729394496,
+  "limiter_max_db": 3.0,
+  "limiter_seconds": 0.083,
+  "target_lufs": null,
+  "max_limit_db": 3.0,
+  "capped": true,
+  "lufs_float": -21.8,
+  "dbtp_float": -1.4,
+  "lufs": -21.8,
+  "dbtp": -1.4
+ },
+ "check": {
+  "format": "48000 Hz, 24-bit, 2 ch, 64.000 s",
+  "samples": {
+   "samples": 3072000,
+   "expected": 3072000
+  },
+  "onsets": {
+   "events": 269,
+   "max_locate_ms": 1.88,
+   "max_motion_lag_ms": 0.08,
+   "detected": 123,
+   "isolated": 126,
+   "max_detect_ms": 2.79,
+   "undetected_isolated": [
+    [
+     37.6,
+     "part"
+    ],
+    [
+     47.6,
+     "line"
+    ],
+    [
+     61.0,
+     "line"
+    ]
+   ],
+   "over_5ms": []
+  },
+  "found": {
+   "events": 269,
+   "in_table": 269,
+   "level_min": 0.876,
+   "level_max": 1.31,
+   "not_found": [],
+   "outside_file": []
+  },
+  "loudness": {
+   "ebur128_lufs": -21.8,
+   "loudnorm_lufs": -21.91,
+   "range": [
+    -23.0,
+    -15.0
+   ]
+  },
+  "true_peak": {
+   "ebur128_dbtp": -1.4,
+   "loudnorm_dbtp": -1.41
+  },
+  "balance": {
+   "T": -11.1,
+   "stems_rebuild_error": 1.3e-07,
+   "rows": [
+    {
+     "category": "thud",
+     "M": -11.1,
+     "at": 22.3,
+     "offset": 0.0,
+     "range": [
+      0.0,
+      0.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "alert",
+     "M": -13.4,
+     "at": 53.0,
+     "offset": -2.3,
+     "range": [
+      -4.0,
+      -2.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "tone",
+     "M": -14.4,
+     "at": 0.7,
+     "offset": -3.3,
+     "range": [
+      -6.0,
+      -3.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "line",
+     "M": -18.8,
+     "at": 54.2,
+     "offset": -7.7,
+     "range": [
+      -8.0,
+      -5.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "part",
+     "M": -17.4,
+     "at": 8.2,
+     "offset": -6.3,
+     "range": [
+      -9.0,
+      -6.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "slide",
+     "M": -19.4,
+     "at": 31.5,
+     "offset": -8.3,
+     "range": [
+      -11.0,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "path",
+     "M": -19.4,
+     "at": 27.5,
+     "offset": -8.3,
+     "range": [
+      null,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "spin",
+     "M": -21.4,
+     "at": 25.2,
+     "offset": -10.3,
+     "range": [
+      -13.0,
+      -10.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "type",
+     "M": -23.4,
+     "at": 50.4,
+     "offset": -12.3,
+     "range": [
+      -15.0,
+      -12.0
+     ],
+     "ok": true
+    }
+   ]
+  },
+  "mix_peak": {
+   "max_M": -11.1,
+   "max_at": 22.3,
+   "max_away_from_thud_M": -12.9,
+   "away_at": 53.0,
+   "T": -11.1,
+   "ok": true
+  },
+  "limiter": {
+   "max_reduction_db": 3.0,
+   "at_s": 21.915,
+   "seconds_reduced": 0.083,
+   "limit_db": 3.0
+  },
+  "small_speaker": {
+   "highpass_hz": 250.0,
+   "thud_M": -17.7,
+   "line_M": -18.8,
+   "mix_at_thud_M": -17.7,
+   "mix_away_M": -12.9,
+   "margin_lu": 1.1,
+   "ok": true
+  },
+  "clipping": {
+   "clipped_samples": 0,
+   "sample_peak_dbfs": -1.4
+  },
+  "dc": {
+   "abs_mean": [
+    4.18e-05,
+    1.79e-05
+   ]
+  },
+  "head": {
+   "peak_0_0.3s_dbfs": -240.0
+  },
+  "tail": {
+   "peak_last_0.5s_dbfs": -240.0,
+   "silent": true,
+   "falling": true,
+   "last_sample_dbfs": -240.0,
+   "cut_off_voices": []
+  }
+ }
+}

@@ -1,0 +1,4728 @@
+{
+ "G4": {
+  "pass": true,
+  "at120": {
+   "over8_outside_subtitle": 0,
+   "pct": 0.0,
+   "subtitle_box": [
+    0,
+    947,
+    1920,
+    984
+   ],
+   "cam_pos_diff": 0.0,
+   "cam_angle_deg": 8.537736462515939e-07
+  },
+  "handoff_103": {
+   "over8": 15,
+   "pct": 0.00072,
+   "bbox": [
+    675,
+    419,
+    1896,
+    860
+   ],
+   "cam_pos_diff": 0.0,
+   "cam_angle_deg": 0.0
+  },
+  "note": "the ending page takes over at 103.0 (not 109.0): from there it runs on the opening engine and rig"
+ },
+ "G1": {
+  "pass": true,
+  "samples": 45,
+  "differing": [
+   {
+    "t": 66.0,
+    "over8": 1,
+    "pct": 5e-05,
+    "bbox": [
+     837,
+     608,
+     838,
+     609
+    ]
+   },
+   {
+    "t": 66.5,
+    "over8": 10,
+    "pct": 0.00048,
+    "bbox": [
+     777,
+     556,
+     839,
+     617
+    ]
+   },
+   {
+    "t": 67.0,
+    "over8": 9,
+    "pct": 0.00043,
+    "bbox": [
+     779,
+     560,
+     838,
+     616
+    ]
+   },
+   {
+    "t": 67.5,
+    "over8": 6,
+    "pct": 0.00029,
+    "bbox": [
+     776,
+     560,
+     838,
+     616
+    ]
+   },
+   {
+    "t": 68.0,
+    "over8": 6,
+    "pct": 0.00029,
+    "bbox": [
+     774,
+     556,
+     838,
+     609
+    ]
+   },
+   {
+    "t": 68.5,
+    "over8": 7,
+    "pct": 0.00034,
+    "bbox": [
+     775,
+     530,
+     837,
+     616
+    ]
+   },
+   {
+    "t": 69.0,
+    "over8": 7,
+    "pct": 0.00034,
+    "bbox": [
+     776,
+     559,
+     837,
+     612
+    ]
+   },
+   {
+    "t": 69.5,
+    "over8": 6,
+    "pct": 0.00029,
+    "bbox": [
+     845,
+     425,
+     948,
+     573
+    ]
+   },
+   {
+    "t": 70.0,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     849,
+     460,
+     943,
+     500
+    ]
+   },
+   {
+    "t": 70.5,
+    "over8": 3,
+    "pct": 0.00014,
+    "bbox": [
+     854,
+     460,
+     951,
+     512
+    ]
+   },
+   {
+    "t": 71.0,
+    "over8": 7,
+    "pct": 0.00034,
+    "bbox": [
+     851,
+     464,
+     967,
+     571
+    ]
+   },
+   {
+    "t": 71.5,
+    "over8": 7,
+    "pct": 0.00034,
+    "bbox": [
+     812,
+     571,
+     837,
+     598
+    ]
+   },
+   {
+    "t": 72.0,
+    "over8": 6,
+    "pct": 0.00029,
+    "bbox": [
+     778,
+     559,
+     842,
+     613
+    ]
+   },
+   {
+    "t": 72.5,
+    "over8": 6,
+    "pct": 0.00029,
+    "bbox": [
+     779,
+     557,
+     841,
+     606
+    ]
+   },
+   {
+    "t": 73.0,
+    "over8": 7,
+    "pct": 0.00034,
+    "bbox": [
+     816,
+     574,
+     848,
+     613
+    ]
+   },
+   {
+    "t": 73.5,
+    "over8": 9,
+    "pct": 0.00043,
+    "bbox": [
+     823,
+     575,
+     845,
+     610
+    ]
+   },
+   {
+    "t": 74.0,
+    "over8": 20,
+    "pct": 0.00096,
+    "bbox": [
+     821,
+     573,
+     849,
+     620
+    ]
+   },
+   {
+    "t": 74.5,
+    "over8": 31,
+    "pct": 0.00149,
+    "bbox": [
+     819,
+     551,
+     855,
+     621
+    ]
+   },
+   {
+    "t": 75.0,
+    "over8": 21,
+    "pct": 0.00101,
+    "bbox": [
+     821,
+     571,
+     851,
+     618
+    ]
+   },
+   {
+    "t": 75.5,
+    "over8": 23,
+    "pct": 0.00111,
+    "bbox": [
+     822,
+     532,
+     858,
+     581
+    ]
+   },
+   {
+    "t": 76.0,
+    "over8": 26,
+    "pct": 0.00125,
+    "bbox": [
+     796,
+     401,
+     854,
+     449
+    ]
+   },
+   {
+    "t": 76.5,
+    "over8": 23,
+    "pct": 0.00111,
+    "bbox": [
+     797,
+     382,
+     855,
+     431
+    ]
+   },
+   {
+    "t": 77.0,
+    "over8": 20,
+    "pct": 0.00096,
+    "bbox": [
+     836,
+     400,
+     856,
+     434
+    ]
+   },
+   {
+    "t": 77.5,
+    "over8": 23,
+    "pct": 0.00111,
+    "bbox": [
+     801,
+     382,
+     857,
+     434
+    ]
+   },
+   {
+    "t": 78.0,
+    "over8": 21,
+    "pct": 0.00101,
+    "bbox": [
+     796,
+     382,
+     867,
+     434
+    ]
+   },
+   {
+    "t": 78.5,
+    "over8": 34,
+    "pct": 0.00164,
+    "bbox": [
+     795,
+     382,
+     862,
+     437
+    ]
+   },
+   {
+    "t": 79.0,
+    "over8": 26,
+    "pct": 0.00125,
+    "bbox": [
+     798,
+     382,
+     857,
+     434
+    ]
+   },
+   {
+    "t": 79.5,
+    "over8": 22,
+    "pct": 0.00106,
+    "bbox": [
+     827,
+     387,
+     857,
+     437
+    ]
+   },
+   {
+    "t": 80.0,
+    "over8": 20,
+    "pct": 0.00096,
+    "bbox": [
+     827,
+     386,
+     861,
+     437
+    ]
+   },
+   {
+    "t": 80.5,
+    "over8": 25,
+    "pct": 0.00121,
+    "bbox": [
+     826,
+     386,
+     859,
+     438
+    ]
+   },
+   {
+    "t": 81.5,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     791,
+     379,
+     799,
+     385
+    ]
+   },
+   {
+    "t": 82.0,
+    "over8": 1,
+    "pct": 5e-05,
+    "bbox": [
+     1347,
+     951,
+     1348,
+     952
+    ]
+   },
+   {
+    "t": 82.5,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     790,
+     384,
+     1348,
+     952
+    ]
+   },
+   {
+    "t": 83.0,
+    "over8": 1,
+    "pct": 5e-05,
+    "bbox": [
+     787,
+     379,
+     788,
+     380
+    ]
+   },
+   {
+    "t": 83.5,
+    "over8": 1,
+    "pct": 5e-05,
+    "bbox": [
+     1347,
+     951,
+     1348,
+     952
+    ]
+   },
+   {
+    "t": 84.0,
+    "over8": 4,
+    "pct": 0.00019,
+    "bbox": [
+     787,
+     377,
+     1348,
+     952
+    ]
+   },
+   {
+    "t": 84.5,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     789,
+     378,
+     792,
+     382
+    ]
+   },
+   {
+    "t": 85.0,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     788,
+     381,
+     1348,
+     952
+    ]
+   },
+   {
+    "t": 85.5,
+    "over8": 2,
+    "pct": 0.0001,
+    "bbox": [
+     790,
+     377,
+     791,
+     384
+    ]
+   },
+   {
+    "t": 86.0,
+    "over8": 1,
+    "pct": 5e-05,
+    "bbox": [
+     1347,
+     951,
+     1348,
+     952
+    ]
+   }
+  ],
+  "note": "film at t vs frame=clip at t - 64, opened directly; channel difference > 8 under 0.01 % of the frame"
+ },
+ "G2": {
+  "pass": true,
+  "dialog_numbers": [
+   6,
+   10
+  ],
+  "gap_tags": [
+   "6 · 本厂 · 20 分钟",
+   "10 · 二号厂区 · 2.5 小时"
+  ],
+  "stock_chips": [
+   "库存",
+   "本厂成品库 · 6 枚",
+   "二号厂区 · 10 枚"
+  ],
+  "q2_before": [
+   "暂不能上试车台 · 等待 16 枚叶片",
+   "rgb(229, 72, 60)"
+  ],
+  "q2_after": [
+   "可以按时上试车台 · 09:00",
+   "rgb(63, 178, 127)"
+  ],
+  "plans": [
+   [
+    "调本库 6 枚、二号厂区 10 枚",
+    "05:10 前到齐 · 上试车台时间不变"
+   ],
+   [
+    "合格粉末重新喷涂 16 枚",
+    "推迟 6 天"
+   ]
+  ],
+  "trace": [
+   "已检索 5 类对象 · 64 条关系",
+   "0.5 秒"
+  ],
+  "blade_chip_end": [
+   "第一级涡轮叶片",
+   "×100",
+   "到位 16 / 16"
+  ],
+  "rule": "16 = 6 + 10 in the dialog, the 3D gap tags and the stock chips; question two red at 85 s, green 「可以按时上试车台 · 09:00」 at 100 s"
+ },
+ "G3": {
+  "pass": true,
+  "section": {
+   "cands": 101,
+   "blades": 16
+  },
+  "frames": 145,
+  "worst_overlap": 1.2814998626708984e-06,
+  "violations": [],
+  "seated": {
+   "98.4": {
+    "worst": 2.7021097470658617e-08,
+    "promoted": 0,
+    "shown": 100,
+    "extra": 0
+   },
+   "100.0": {
+    "worst": 2.7021097470658617e-08,
+    "promoted": 0,
+    "shown": 100,
+    "extra": 0
+   }
+  },
+  "note": "each flying blade vs every drawn ring blade and disk part, 0.02 bins, every frame 96.0-98.4; seated: instance matrix vs assembly matrix, no own meshes left for the 16, 100 ring blades drawn"
+ },
+ "G5": {
+  "pass": true,
+  "text": "同一套对象，整个工厂一起用。",
+  "ink_margins": [
+   763,
+   764
+  ],
+  "box": [
+   760.515625,
+   948,
+   1175.484375,
+   982
+  ],
+  "font": "\"Plex Mono\", \"SF Mono\", Menlo, monospace",
+  "size": "26px",
+  "overlaps": [],
+  "note": "margins measured on the drawn ink of the line (pixels > 24 levels from the background), not on the text box"
+ },
+ "G6": {
+  "pass": true,
+  "counts": {
+   "alert": 3,
+   "line": 31,
+   "part": 40,
+   "path": 39,
+   "slide": 7,
+   "swap": 1,
+   "tick": 18,
+   "tone": 2,
+   "type": 113
+  },
+  "span": [
+   30.3,
+   116.4
+  ],
+  "film_page_range": [
+   30.3,
+   103
+  ],
+  "ending_page_range": [
+   103,
+   116.4
+  ],
+  "required": {
+   "clip typing": true,
+   "clip ticks": true,
+   "clip parts": true,
+   "q4 parts": true,
+   "q4 ticks": true,
+   "slide 101": true,
+   "four paths 103": true,
+   "tone 105": true,
+   "swap": true,
+   "tone 116.4": true,
+   "each page in its own range": true
+  },
+  "fields_ok": true,
+  "problems": [],
+  "note": "every frame 64-101: type events vs characters appearing, path events vs links starting to draw, dialog line events vs lines and plan cards appearing"
+ },
+ "F2+": {
+  "pass": true,
+  "rows": [
+   {
+    "t": 70.0,
+    "via": 40.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 81.0,
+    "via": 97.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 87.5,
+    "via": 63.5,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 93.0,
+    "via": 40.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 97.3,
+    "via": 70.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 99.5,
+    "via": 40.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 102.0,
+    "via": 64.0,
+    "page": "film",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 104.0,
+    "via": 119.0,
+    "page": "ending",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 108.0,
+    "via": 119.0,
+    "page": "ending",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 112.6,
+    "via": 104.0,
+    "page": "ending",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 114.0,
+    "via": 119.0,
+    "page": "ending",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 117.0,
+    "via": 104.0,
+    "page": "ending",
+    "pixels_differing": 0,
+    "max": 0,
+    "probe_equal": true
+   }
+  ]
+ },
+ "F6+": {
+  "pass": true,
+  "rows": {
+   "70.0": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "80.0": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "90.0": {
+    "drawn": 2011,
+    "total": 2027
+   },
+   "100.0": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "102.0": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "103.0": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "105.5": {
+    "drawn": 2027,
+    "total": 2027
+   },
+   "108.0": {
+    "drawn": 919,
+    "total": 2027
+   },
+   "111.9": {
+    "drawn": 1,
+    "total": 2027
+   },
+   "113.0": {
+    "drawn": 0,
+    "total": 2027
+   }
+  },
+  "note": "2,027 parts except while the 16 slots are empty in question four (2,011 at 90 s); the ending takes parts away from 105.6; only blade 001 from 111.8 (its neighbours go last)"
+ },
+ "F11+": {
+  "pass": true,
+  "moves": [
+   {
+    "move": [
+     86.0,
+     87.0
+    ],
+    "median_step": 0.10240170808559385,
+    "max_step_ratio": 1.93,
+    "max_change_ratio": 1.83,
+    "start_ratio": 0.0039,
+    "end_ratio": 0.0017,
+    "pass": true
+   },
+   {
+    "move": [
+     101.0,
+     103.0
+    ],
+    "median_step": 0.1623737624902883,
+    "max_step_ratio": 1.85,
+    "max_change_ratio": 1.64,
+    "start_ratio": 0.0005,
+    "end_ratio": 0.0008,
+    "pass": true
+   },
+   {
+    "move": [
+     109.0,
+     111.4
+    ],
+    "median_step": 0.0668101718910953,
+    "max_step_ratio": 1.99,
+    "max_change_ratio": 2.0,
+    "start_ratio": 0.0008,
+    "end_ratio": 0.0003,
+    "pass": true
+   },
+   {
+    "move": [
+     112.6,
+     115.0
+    ],
+    "median_step": 0.020569452613825097,
+    "max_step_ratio": 2.39,
+    "max_change_ratio": 2.37,
+    "start_ratio": 0.0011,
+    "end_ratio": 0.0002,
+    "pass": true
+   }
+  ]
+ },
+ "F4+": {
+  "pass": true,
+  "samples": 391,
+  "fold_frames": 110,
+  "layout_problems": [],
+  "fold_problems": []
+ },
+ "F10+": {
+  "pass": true,
+  "worst": [
+   24.2,
+   97.7,
+   "solid parts"
+  ],
+  "note": "86-101 every 0.1 s, question four labels and every solid part; clip-q3's two carried-over tags (clip layout, 23.8 px from the edge) excluded while they fade 86.0-86.2; 101-120 is the split view of the opening, checked by G4 and its own 3B checks"
+ },
+ "F15+": {
+  "pass": true,
+  "film 64-103": {
+   "samples": 481,
+   "labels_crossed": [],
+   "node_names_under_lit_lines": [
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "coat>powder",
+     "text": "涂层检测",
+     "from": 67.9,
+     "to": 86.0,
+     "samples": 182
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t1",
+     "text": "涡轮",
+     "from": 75.3,
+     "to": 102.2,
+     "samples": 279
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 948 Q217 910.8 372 9",
+     "text": "涂层检测",
+     "from": 86.0167,
+     "to": 86.6,
+     "samples": 36
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M293.00 327.20 L293.00 3",
+     "text": "涡轮",
+     "from": 86.0167,
+     "to": 86.6,
+     "samples": 36
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "blade>insp",
+     "text": "检验标准",
+     "from": 92.2,
+     "to": 92.3,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "insp>blade",
+     "text": "检验标准",
+     "from": 92.4,
+     "to": 102.2,
+     "samples": 139
+    }
+   ]
+  },
+  "ending 103-120": {
+   "samples": 171,
+   "labels_crossed": [],
+   "node_names_under_lit_lines": [
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 664 Q147.02 509.28 2",
+     "text": "第一级涡轮叶片",
+     "from": 103.5,
+     "to": 111.3,
+     "samples": 79
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 726 Q126.94 531.04 2",
+     "text": "设计版本",
+     "from": 103.5,
+     "to": 110.6,
+     "samples": 72
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 726 Q126.94 531.04 2",
+     "text": "第一级涡轮叶片",
+     "from": 103.5,
+     "to": 110.6,
+     "samples": 72
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M251 248 Q218.9 672.1 57",
+     "text": "燃烧室",
+     "from": 103.5,
+     "to": 109.5,
+     "samples": 61
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M251 248 Q218.9 672.1 57",
+     "text": "第一级涡轮叶片",
+     "from": 103.5,
+     "to": 109.5,
+     "samples": 61
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M251 248 Q218.9 672.1 57",
+     "text": "采购订单",
+     "from": 103.5,
+     "to": 109.5,
+     "samples": 61
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M578 760 Q499.4 409.08 2",
+     "text": "加工工单",
+     "from": 103.5,
+     "to": 106.7,
+     "samples": 33
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 948 Q217 910.8 372 9",
+     "text": "涂层检测",
+     "from": 103.5,
+     "to": 108.1,
+     "samples": 47
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M320 252.5 V284 Q320 289",
+     "text": "涡轮",
+     "from": 103.5,
+     "to": 109.7,
+     "samples": 63
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M293 410 Q190.5 644.3 18",
+     "text": "检验标准",
+     "from": 103.5,
+     "to": 110.4,
+     "samples": 70
+    }
+   ]
+  }
+ },
+ "F9+": {
+  "pass": true,
+  "single_frame_jumps": [
+   [
+    86.167,
+    2316,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.183,
+    2860,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.2,
+    3511,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.217,
+    4273,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.233,
+    4778,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.25,
+    5551,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.267,
+    6309,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.283,
+    7120,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.3,
+    7851,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.317,
+    8765,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.333,
+    10579,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.35,
+    12096,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.367,
+    14033,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.383,
+    15419,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.4,
+    16830,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.417,
+    18595,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.433,
+    18520,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.45,
+    20163,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.467,
+    21200,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.483,
+    21116,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.5,
+    21845,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.517,
+    22484,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.533,
+    22477,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.55,
+    23405,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.567,
+    23661,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.583,
+    23647,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.6,
+    24093,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.617,
+    24512,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.633,
+    24270,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.65,
+    24788,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.667,
+    23987,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.683,
+    23601,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.7,
+    23353,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.717,
+    23034,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.733,
+    22490,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.75,
+    22034,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.767,
+    20940,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.783,
+    19326,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.8,
+    17281,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.817,
+    14919,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ]
+  ],
+  "mean_over_3": [
+   [
+    86.3,
+    86.35,
+    3.31,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.35,
+    86.4,
+    4.03,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.4,
+    86.45,
+    4.5,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.45,
+    86.5,
+    4.8,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.5,
+    86.55,
+    5.12,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.55,
+    86.6,
+    5.35,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.6,
+    86.65,
+    5.4,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.65,
+    86.7,
+    5.24,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.7,
+    86.75,
+    4.9,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.75,
+    86.8,
+    4.58,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.8,
+    86.85,
+    3.9,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    86.85,
+    86.9,
+    3.29,
+    "tags out, 3 号 fades, camera push-in, red blades fade"
+   ],
+   [
+    101.1,
+    101.15,
+    3.15,
+    "back to the split view"
+   ],
+   [
+    101.15,
+    101.2,
+    4.2,
+    "back to the split view"
+   ],
+   [
+    101.2,
+    101.25,
+    4.8,
+    "back to the split view"
+   ],
+   [
+    101.25,
+    101.3,
+    5.02,
+    "back to the split view"
+   ],
+   [
+    101.3,
+    101.35,
+    5.21,
+    "back to the split view"
+   ],
+   [
+    101.35,
+    101.4,
+    5.61,
+    "back to the split view"
+   ],
+   [
+    101.4,
+    101.45,
+    5.77,
+    "back to the split view"
+   ],
+   [
+    101.45,
+    101.5,
+    5.94,
+    "back to the split view"
+   ],
+   [
+    101.5,
+    101.55,
+    5.94,
+    "back to the split view"
+   ],
+   [
+    101.55,
+    101.6,
+    5.99,
+    "back to the split view"
+   ],
+   [
+    101.6,
+    101.65,
+    5.86,
+    "back to the split view"
+   ],
+   [
+    101.65,
+    101.7,
+    5.62,
+    "back to the split view"
+   ],
+   [
+    101.7,
+    101.75,
+    5.44,
+    "back to the split view"
+   ],
+   [
+    101.75,
+    101.8,
+    5.23,
+    "back to the split view"
+   ],
+   [
+    101.8,
+    101.85,
+    5.04,
+    "back to the split view"
+   ],
+   [
+    101.85,
+    101.9,
+    4.9,
+    "back to the split view"
+   ],
+   [
+    101.9,
+    101.95,
+    4.76,
+    "back to the split view"
+   ],
+   [
+    101.95,
+    102.0,
+    4.75,
+    "back to the split view"
+   ],
+   [
+    102.0,
+    102.05,
+    4.95,
+    "back to the split view"
+   ],
+   [
+    102.05,
+    102.1,
+    5.27,
+    "back to the split view"
+   ],
+   [
+    102.1,
+    102.15,
+    6.21,
+    "back to the split view"
+   ],
+   [
+    102.15,
+    102.2,
+    5.31,
+    "back to the split view"
+   ],
+   [
+    102.2,
+    102.25,
+    5.97,
+    "back to the split view"
+   ],
+   [
+    102.25,
+    102.3,
+    6.16,
+    "back to the split view"
+   ],
+   [
+    102.3,
+    102.35,
+    6.41,
+    "back to the split view"
+   ],
+   [
+    102.35,
+    102.4,
+    6.6,
+    "back to the split view"
+   ],
+   [
+    102.4,
+    102.45,
+    6.68,
+    "back to the split view"
+   ],
+   [
+    102.45,
+    102.5,
+    6.64,
+    "back to the split view"
+   ]
+  ],
+  "unplanned": [],
+  "note": "dialog and model columns (film page) or the 1280 split view (ending page), every frame; 64-86 is covered by G1"
+ },
+ "F1": {
+  "pass": true,
+  "rows": [
+   {
+    "exception": false,
+    "frame": "open",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "q3",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "stale",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "net",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "net-end",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "clip&t=0",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "clip&t=6",
+    "against": "1dc6a6c",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "clip&t=12",
+    "against": "1dc6a6c",
+    "diff>1": 357,
+    "bbox": [
+     1492,
+     166,
+     1549,
+     179
+    ],
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "clip&t=18",
+    "against": "1dc6a6c",
+    "diff>1": 1474,
+    "bbox": [
+     1492,
+     164,
+     1846,
+     185
+    ],
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "clip&t=21.9",
+    "against": "1dc6a6c",
+    "diff>1": 2292,
+    "bbox": [
+     1440,
+     164,
+     1846,
+     185
+    ],
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=3",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "opening&t=3.2",
+    "against": "89aca04",
+    "diff>1": 202,
+    "bbox": [
+     1456,
+     409,
+     1557,
+     412
+    ],
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "opening&t=4",
+    "against": "89aca04",
+    "diff>1": 202,
+    "bbox": [
+     1456,
+     409,
+     1557,
+     412
+    ],
+    "pass": true
+   },
+   {
+    "exception": true,
+    "frame": "opening&t=6",
+    "against": "89aca04",
+    "diff>1": 200,
+    "bbox": [
+     1456,
+     409,
+     1557,
+     411
+    ],
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=8",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=12",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=15",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=17",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=23",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=28",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   },
+   {
+    "exception": false,
+    "frame": "opening&t=29.5",
+    "against": "89aca04",
+    "diff>1": 0,
+    "bbox": null,
+    "pass": true
+   }
+  ],
+  "film_a_vs_1dc6a6c": [
+   {
+    "t": 37.0,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 37.5,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 38.0,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 38.5,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 39.0,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 39.5,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 40.0,
+    "diff>1": 214,
+    "diff>8": 195,
+    "max": 167,
+    "bbox": [
+     1358,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 40.5,
+    "diff>1": 236,
+    "diff>8": 220,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1394,
+     689
+    ],
+    "exception": true
+   },
+   {
+    "t": 41.0,
+    "diff>1": 766,
+    "diff>8": 685,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1537,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 41.5,
+    "diff>1": 766,
+    "diff>8": 685,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1537,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 42.0,
+    "diff>1": 766,
+    "diff>8": 685,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1537,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 42.5,
+    "diff>1": 766,
+    "diff>8": 685,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1537,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 43.0,
+    "diff>1": 766,
+    "diff>8": 685,
+    "max": 217,
+    "bbox": [
+     1357,
+     677,
+     1537,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 43.5,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 44.0,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 44.5,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 45.0,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 45.5,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 46.0,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 46.5,
+    "diff>1": 1029,
+    "diff>8": 924,
+    "max": 217,
+    "bbox": [
+     1357,
+     552,
+     1788,
+     719
+    ],
+    "exception": true
+   },
+   {
+    "t": 47.0,
+    "diff>1": 1031,
+    "diff>8": 926,
+    "max": 217,
+    "bbox": [
+     1347,
+     552,
+     1788,
+     730
+    ],
+    "exception": true
+   },
+   {
+    "t": 47.5,
+    "diff>1": 2259,
+    "diff>8": 1759,
+    "max": 84,
+    "bbox": [
+     1357,
+     552,
+     1842,
+     924
+    ],
+    "exception": true
+   },
+   {
+    "t": 48.0,
+    "diff>1": 18925,
+    "diff>8": 17055,
+    "max": 167,
+    "bbox": [
+     56,
+     131,
+     516,
+     420
+    ],
+    "exception": true
+   },
+   {
+    "t": 53.0,
+    "diff>1": 1,
+    "diff>8": 0,
+    "max": 2,
+    "bbox": [
+     1010,
+     597,
+     1011,
+     598
+    ],
+    "exception": false
+   },
+   {
+    "t": 57.5,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 58.0,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 58.5,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 59.0,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 59.5,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 60.0,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 60.5,
+    "diff>1": 1416,
+    "diff>8": 1265,
+    "max": 217,
+    "bbox": [
+     1697,
+     772,
+     1893,
+     788
+    ],
+    "exception": true
+   },
+   {
+    "t": 61.0,
+    "diff>1": 1751,
+    "diff>8": 1522,
+    "max": 137,
+    "bbox": [
+     1697,
+     772,
+     1842,
+     1024
+    ],
+    "exception": true
+   },
+   {
+    "t": 61.5,
+    "diff>1": 15485,
+    "diff>8": 12540,
+    "max": 120,
+    "bbox": [
+     56,
+     256,
+     1842,
+     1024
+    ],
+    "exception": true
+   },
+   {
+    "t": 64.0,
+    "diff>1": 2,
+    "diff>8": 0,
+    "max": 4,
+    "bbox": [
+     821,
+     571,
+     835,
+     591
+    ],
+    "exception": false
+   }
+  ],
+  "exceptions": [
+   [
+    36.8,
+    48.4
+   ],
+   [
+    57.5,
+    61.8
+   ]
+  ],
+  "note": "criterion: 0 pixels differing by more than 1 level (主时间轴二 第八节); opening against 89aca04, the rest against 1dc6a6c"
+ },
+ "F2": {
+  "pass": true,
+  "rows": [
+   {
+    "t": 31.0,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 38.6,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 44.0,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 52.0,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 56.0,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   },
+   {
+    "t": 61.0,
+    "pixels_differing": 0,
+    "by_column": {
+     "dialog": 0,
+     "model": 0,
+     "graph": 0
+    },
+    "sample": [],
+    "bbox": null,
+    "max": 0,
+    "probe_equal": true
+   }
+  ]
+ },
+ "F3": {
+  "pass": true,
+  "halves": [
+   {
+    "t": 30,
+    "against": "frame=net-end&theme=light",
+    "pixels_over8": 4,
+    "pct": 0.00019,
+    "max_channel_diff": 12,
+    "cam_pos_diff": 0.0,
+    "cam_angle_deg": 0.0,
+    "pass": true
+   },
+   {
+    "t": 64,
+    "against": "frame=clip&theme=light&t=0",
+    "pixels_over8": 0,
+    "pct": 0.0,
+    "max_channel_diff": 7,
+    "cam_pos_diff": 0.0,
+    "cam_angle_deg": 8.537736462515939e-07,
+    "pass": true
+   }
+  ]
+ },
+ "F4": {
+  "pass": true,
+  "samples": 341,
+  "fold_frames": 98,
+  "fold_problems": [],
+  "layout_problems": [],
+  "text_problems": [],
+  "line_lengths": [
+   [
+    "设计版本 v3.2 → 第一级涡轮叶片",
+    11
+   ],
+   [
+    "打孔程序 2 套 · 检验标准 1 份",
+    10
+   ],
+   [
+    "在制叶片 300 枚 · 在途铸件 200 件 ·",
+    10
+   ],
+   [
+    "涉及发动机 5 台",
+    6
+   ],
+   [
+    "past: 在制叶片 300 枚 · 在途铸件 200 件 · 涉及发动机 5 台",
+    16
+   ],
+   [
+    "past: 在制叶片 300 枚 · 在途铸件 200 件 · 涉及发动机 5 台",
+    16
+   ],
+   [
+    "核对 9 个模块：8 个到位，1 个缺件",
+    11
+   ],
+   [
+    "缺燃烧室组件 1 套，采购单在途，02:40 到厂",
+    14
+   ],
+   [
+    "可以按时上试车台",
+    8
+   ],
+   [
+    "09:00",
+    0
+   ],
+   [
+    "past: 在制叶片 300 枚 · 在途铸件 200 件 · 涉及发动机 5 台",
+    16
+   ],
+   [
+    "past: 可以按时上试车台\n09:00",
+    8
+   ]
+  ],
+  "final_q1": {
+   "meta": "研发 02:07",
+   "ask": "第一级涡轮叶片的冷却孔缩小 0.1 毫米，会影响到哪些东西？",
+   "steps": [
+    "设计版本 v3.2 → 第一级涡轮叶片",
+    "打孔程序 2 套 · 检验标准 1 份",
+    "在制叶片 300 枚 · 在途铸件 200 件 · 涉及发动机 5 台"
+   ],
+   "answer": null,
+   "past": false,
+   "ems": [
+    "2",
+    "1",
+    "300",
+    "200",
+    "5"
+   ]
+  },
+  "final_q2": {
+   "meta": "总装 02:11",
+   "ask": "7 号发动机明早 9 点能按时上试车台吗？",
+   "steps": [
+    "核对 9 个模块：8 个到位，1 个缺件",
+    "缺燃烧室组件 1 套，采购单在途，02:40 到厂",
+    "可以按时上试车台 09:00"
+   ],
+   "answer": null,
+   "past": false,
+   "ems": [
+    "9",
+    "8",
+    "1",
+    "1",
+    "02:40"
+   ]
+  }
+ },
+ "F5": {
+  "pass": true,
+  "q1_read": [
+   2,
+   1,
+   300,
+   200,
+   5
+  ],
+  "q2_read": [
+   "9",
+   "8",
+   "1",
+   "1",
+   "02:40"
+  ],
+  "graph_module_tones_58s": {
+   "green": 8,
+   "amber": 1,
+   "other": 0
+  },
+  "rule": "q1: 在制 / 100 + 在途 / 100 = 发动机台数; q2: 9 = 8 到位 + 1 缺件, the graph shows 8 green and 1 amber modules, 缺 1 套 = 1 缺件"
+ },
+ "F6": {
+  "pass": true,
+  "rows": {
+   "33.0": {
+    "drawn": 2027,
+    "shown": 2027,
+    "faded": [],
+    "total": 2027
+   },
+   "45.0": {
+    "drawn": 2027,
+    "shown": 2025,
+    "faded": [
+     "turbine.stage-1-blades.098",
+     "turbine.stage-1-blades.100"
+    ],
+    "total": 2027
+   },
+   "55.0": {
+    "drawn": 2027,
+    "shown": 2027,
+    "faded": [],
+    "total": 2027
+   },
+   "63.0": {
+    "drawn": 2027,
+    "shown": 2027,
+    "faded": [],
+    "total": 2027
+   }
+  },
+  "outline_objects_in_scene": 0,
+  "note": "2,027 = manifest = opening 23 s. At 45 s only the two solid neighbour blades are at opacity 0 (section 十一.3)"
+ },
+ "F7": {
+  "pass": true,
+  "offsets": {
+   "fan": 0.7,
+   "fan-cowl": 0.7,
+   "compressor": 0,
+   "combustor": 0,
+   "turbine": -1,
+   "exhaust": -1,
+   "core-casing": 0,
+   "nacelle": 0,
+   "shaft": 0
+  },
+  "samples": 38,
+  "worst3": [
+   {
+    "pair": [
+     "fan-cowl",
+     "nacelle"
+    ],
+    "excess": 0.00113,
+    "t": 62.2,
+    "x": 1.34
+   },
+   {
+    "pair": [
+     "turbine",
+     "shaft"
+    ],
+    "excess": 0.0,
+    "t": 51.6,
+    "x": -4.0
+   },
+   {
+    "pair": [
+     "turbine",
+     "nacelle"
+    ],
+    "excess": 0.0,
+    "t": 51.6,
+    "x": -4.0
+   }
+  ],
+  "off_axis_moves": [],
+  "combustor_pixels_shown": 19983,
+  "combustor_pixels_solo": 26025,
+  "combustor_share": 0.768,
+  "note": "excess = overlap of two modules' radius ranges in a 0.02 bin minus the same in the assembled state (tolerance 0.003), bins moving with the module of the pair that moves less; points = vertices + triangle samples every 0.006; every 0.1 s through 51.6-53.4 and 60.6-62.4. Share on the real 55.0 s picture"
+ },
+ "F8": {
+  "pass": true,
+  "pulled": "turbine.stage-1-blades.099",
+  "faded_while_out": [
+   "turbine.stage-1-blades.098",
+   "turbine.stage-1-blades.100"
+  ],
+  "bins": {
+   "0.02": {
+    "candidates": 180,
+    "frames": 679,
+    "violations": []
+   },
+   "0.005": {
+    "candidates": 180,
+    "frames": 170,
+    "violations": []
+   }
+  },
+  "note": "section 十一.3: only solid parts (ghost amount 0) with opacity > 0.02 are checked; ghosted parts may be passed through. Overlap already present with the blade in its assembled place is not counted; the disk slot overlap only while the blade slides along the slot (no radial offset)"
+ },
+ "F9": {
+  "pass": true,
+  "windows": [
+   [
+    34.0,
+    48.0
+   ],
+   [
+    52.0,
+    61.0
+   ]
+  ],
+  "single_frame_jumps": [
+   [
+    37.467,
+    2104,
+    "camera move"
+   ],
+   [
+    37.483,
+    2402,
+    "camera move"
+   ],
+   [
+    37.5,
+    2613,
+    "camera move"
+   ],
+   [
+    37.517,
+    2998,
+    "camera move"
+   ],
+   [
+    37.533,
+    3266,
+    "camera move"
+   ],
+   [
+    37.55,
+    3681,
+    "camera move"
+   ],
+   [
+    37.567,
+    4014,
+    "camera move"
+   ],
+   [
+    37.583,
+    4352,
+    "camera move"
+   ],
+   [
+    37.6,
+    4712,
+    "camera move"
+   ],
+   [
+    37.617,
+    5016,
+    "camera move"
+   ],
+   [
+    37.633,
+    5400,
+    "camera move"
+   ],
+   [
+    37.65,
+    5689,
+    "camera move"
+   ],
+   [
+    37.667,
+    5978,
+    "camera move"
+   ],
+   [
+    37.683,
+    6319,
+    "camera move"
+   ],
+   [
+    37.7,
+    6630,
+    "camera move"
+   ],
+   [
+    37.717,
+    6799,
+    "camera move"
+   ],
+   [
+    37.733,
+    7049,
+    "camera move"
+   ],
+   [
+    37.75,
+    7286,
+    "camera move"
+   ],
+   [
+    37.767,
+    7619,
+    "camera move"
+   ],
+   [
+    37.783,
+    7766,
+    "camera move"
+   ],
+   [
+    37.8,
+    7912,
+    "camera move"
+   ],
+   [
+    37.817,
+    8040,
+    "camera move"
+   ],
+   [
+    37.833,
+    8127,
+    "camera move"
+   ],
+   [
+    37.85,
+    8044,
+    "camera move"
+   ],
+   [
+    37.867,
+    8027,
+    "camera move"
+   ],
+   [
+    37.883,
+    7965,
+    "camera move"
+   ],
+   [
+    37.9,
+    7825,
+    "camera move"
+   ],
+   [
+    37.917,
+    7607,
+    "camera move"
+   ],
+   [
+    37.933,
+    7289,
+    "camera move"
+   ],
+   [
+    37.95,
+    6972,
+    "camera move"
+   ],
+   [
+    37.967,
+    6594,
+    "camera move"
+   ],
+   [
+    37.983,
+    6039,
+    "camera move"
+   ],
+   [
+    38.0,
+    5536,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.017,
+    5450,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.033,
+    4124,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.05,
+    3492,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.067,
+    2700,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.25,
+    2339,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.267,
+    3346,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.283,
+    4288,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.3,
+    4335,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.317,
+    4502,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.333,
+    3691,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.35,
+    3948,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.367,
+    3384,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.383,
+    4533,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.4,
+    4235,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.417,
+    3966,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.433,
+    3775,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.45,
+    3419,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.467,
+    3032,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.483,
+    2595,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.5,
+    2192,
+    "close-up window opens (wipe)"
+   ],
+   [
+    46.7,
+    2541,
+    "close-up window closes"
+   ],
+   [
+    46.717,
+    3445,
+    "close-up window closes"
+   ],
+   [
+    46.733,
+    3987,
+    "close-up window closes"
+   ],
+   [
+    46.75,
+    4275,
+    "close-up window closes"
+   ],
+   [
+    46.767,
+    4555,
+    "close-up window closes"
+   ],
+   [
+    46.783,
+    4992,
+    "close-up window closes"
+   ],
+   [
+    46.8,
+    4902,
+    "close-up window closes"
+   ],
+   [
+    46.817,
+    4553,
+    "close-up window closes"
+   ],
+   [
+    46.833,
+    5003,
+    "close-up window closes"
+   ],
+   [
+    46.85,
+    6075,
+    "close-up window closes"
+   ],
+   [
+    46.867,
+    6032,
+    "close-up window closes"
+   ],
+   [
+    46.883,
+    6041,
+    "close-up window closes"
+   ],
+   [
+    46.9,
+    5140,
+    "close-up window closes"
+   ],
+   [
+    46.917,
+    4997,
+    "close-up window closes"
+   ],
+   [
+    46.933,
+    4981,
+    "close-up window closes"
+   ],
+   [
+    46.95,
+    4490,
+    "close-up window closes"
+   ],
+   [
+    46.967,
+    4187,
+    "close-up window closes"
+   ],
+   [
+    46.983,
+    3780,
+    "close-up window closes"
+   ],
+   [
+    47.0,
+    4006,
+    "close-up window closes"
+   ],
+   [
+    47.017,
+    4306,
+    "close-up window closes"
+   ],
+   [
+    47.033,
+    4212,
+    "close-up window closes"
+   ],
+   [
+    47.05,
+    4451,
+    "close-up window closes"
+   ],
+   [
+    47.067,
+    4891,
+    "close-up window closes"
+   ],
+   [
+    47.083,
+    5017,
+    "close-up window closes"
+   ],
+   [
+    47.1,
+    5242,
+    "close-up window closes"
+   ],
+   [
+    47.117,
+    5087,
+    "camera move"
+   ],
+   [
+    47.133,
+    5173,
+    "camera move"
+   ],
+   [
+    47.15,
+    5267,
+    "camera move"
+   ],
+   [
+    47.167,
+    5296,
+    "camera move"
+   ],
+   [
+    47.183,
+    5351,
+    "camera move"
+   ],
+   [
+    47.2,
+    5351,
+    "camera move"
+   ],
+   [
+    47.217,
+    5331,
+    "camera move"
+   ],
+   [
+    47.233,
+    5310,
+    "camera move"
+   ],
+   [
+    47.25,
+    5266,
+    "camera move"
+   ],
+   [
+    47.267,
+    5219,
+    "camera move"
+   ],
+   [
+    47.283,
+    5214,
+    "camera move"
+   ],
+   [
+    47.3,
+    5135,
+    "camera move"
+   ],
+   [
+    47.317,
+    5049,
+    "camera move"
+   ],
+   [
+    47.333,
+    4994,
+    "camera move"
+   ],
+   [
+    47.35,
+    4760,
+    "camera move"
+   ],
+   [
+    47.367,
+    4718,
+    "camera move"
+   ],
+   [
+    47.383,
+    4678,
+    "camera move"
+   ],
+   [
+    47.4,
+    4461,
+    "camera move"
+   ],
+   [
+    47.417,
+    4393,
+    "camera move"
+   ],
+   [
+    47.433,
+    4228,
+    "camera move"
+   ],
+   [
+    47.45,
+    4097,
+    "camera move"
+   ],
+   [
+    47.467,
+    4004,
+    "camera move"
+   ],
+   [
+    47.483,
+    3837,
+    "camera move"
+   ],
+   [
+    47.5,
+    3723,
+    "camera move"
+   ],
+   [
+    47.517,
+    3527,
+    "camera move"
+   ],
+   [
+    47.533,
+    3369,
+    "camera move"
+   ],
+   [
+    47.55,
+    3165,
+    "camera move"
+   ],
+   [
+    47.567,
+    2979,
+    "camera move"
+   ],
+   [
+    47.583,
+    2793,
+    "camera move"
+   ],
+   [
+    47.6,
+    2577,
+    "camera move"
+   ],
+   [
+    47.617,
+    2394,
+    "camera move"
+   ],
+   [
+    47.633,
+    2182,
+    "camera move"
+   ],
+   [
+    47.65,
+    2051,
+    "camera move"
+   ],
+   [
+    47.867,
+    2020,
+    "camera move"
+   ],
+   [
+    47.883,
+    2448,
+    "camera move"
+   ],
+   [
+    47.9,
+    3052,
+    "camera move"
+   ],
+   [
+    47.917,
+    3993,
+    "camera move"
+   ],
+   [
+    47.933,
+    4144,
+    "camera move"
+   ],
+   [
+    47.95,
+    4735,
+    "camera move"
+   ],
+   [
+    47.967,
+    5081,
+    "camera move"
+   ],
+   [
+    47.983,
+    5554,
+    "camera move"
+   ],
+   [
+    48.0,
+    6231,
+    "camera move"
+   ],
+   [
+    52.017,
+    2469,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.033,
+    2664,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.05,
+    3004,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.067,
+    3300,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.083,
+    3716,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.1,
+    4018,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.117,
+    4294,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.133,
+    4535,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.15,
+    4832,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.167,
+    5161,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.183,
+    5532,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.2,
+    5700,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.217,
+    6016,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.233,
+    6286,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.25,
+    6919,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.267,
+    6751,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.283,
+    6946,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.3,
+    6975,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.317,
+    7155,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.333,
+    7417,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.35,
+    7474,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.367,
+    7575,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.383,
+    7556,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.4,
+    7619,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.417,
+    7772,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.433,
+    7826,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.45,
+    7831,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.467,
+    7824,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.483,
+    7875,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.5,
+    7841,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.517,
+    7684,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.533,
+    7601,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.55,
+    7611,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.567,
+    7434,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.583,
+    7363,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.6,
+    3574,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.617,
+    3463,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.633,
+    3358,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.65,
+    3258,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.667,
+    3201,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.683,
+    3021,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.7,
+    2950,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.717,
+    2850,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.733,
+    2707,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.75,
+    2593,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.767,
+    2525,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.783,
+    2365,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.8,
+    2197,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.817,
+    2013,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    60.483,
+    2017,
+    "engine closes, camera returns"
+   ],
+   [
+    60.5,
+    2262,
+    "engine closes, camera returns"
+   ],
+   [
+    60.517,
+    2418,
+    "engine closes, camera returns"
+   ],
+   [
+    60.533,
+    2809,
+    "engine closes, camera returns"
+   ],
+   [
+    60.55,
+    2959,
+    "engine closes, camera returns"
+   ],
+   [
+    60.567,
+    3306,
+    "engine closes, camera returns"
+   ],
+   [
+    60.583,
+    3586,
+    "engine closes, camera returns"
+   ],
+   [
+    60.6,
+    3807,
+    "engine closes, camera returns"
+   ],
+   [
+    60.617,
+    4112,
+    "engine closes, camera returns"
+   ],
+   [
+    60.633,
+    4343,
+    "engine closes, camera returns"
+   ],
+   [
+    60.65,
+    4467,
+    "engine closes, camera returns"
+   ],
+   [
+    60.667,
+    4676,
+    "engine closes, camera returns"
+   ],
+   [
+    60.683,
+    4735,
+    "engine closes, camera returns"
+   ],
+   [
+    60.7,
+    4832,
+    "engine closes, camera returns"
+   ],
+   [
+    60.717,
+    4837,
+    "engine closes, camera returns"
+   ],
+   [
+    60.733,
+    4900,
+    "engine closes, camera returns"
+   ],
+   [
+    60.75,
+    4814,
+    "engine closes, camera returns"
+   ],
+   [
+    60.767,
+    4775,
+    "engine closes, camera returns"
+   ],
+   [
+    60.783,
+    4684,
+    "engine closes, camera returns"
+   ],
+   [
+    60.8,
+    4527,
+    "engine closes, camera returns"
+   ],
+   [
+    60.817,
+    4388,
+    "engine closes, camera returns"
+   ],
+   [
+    60.833,
+    4311,
+    "engine closes, camera returns"
+   ],
+   [
+    60.85,
+    4178,
+    "engine closes, camera returns"
+   ],
+   [
+    60.867,
+    3981,
+    "engine closes, camera returns"
+   ],
+   [
+    60.883,
+    3865,
+    "engine closes, camera returns"
+   ],
+   [
+    60.9,
+    3624,
+    "engine closes, camera returns"
+   ],
+   [
+    60.917,
+    3450,
+    "engine closes, camera returns"
+   ],
+   [
+    60.933,
+    3151,
+    "engine closes, camera returns"
+   ],
+   [
+    60.95,
+    3003,
+    "engine closes, camera returns"
+   ],
+   [
+    60.967,
+    2811,
+    "engine closes, camera returns"
+   ],
+   [
+    60.983,
+    2599,
+    "engine closes, camera returns"
+   ],
+   [
+    61.0,
+    2468,
+    "engine closes, camera returns"
+   ]
+  ],
+  "mean_over_3": [
+   [
+    37.3,
+    37.35,
+    3.0,
+    "camera move"
+   ],
+   [
+    37.35,
+    37.4,
+    3.53,
+    "camera move"
+   ],
+   [
+    37.4,
+    37.45,
+    4.05,
+    "camera move"
+   ],
+   [
+    37.45,
+    37.5,
+    4.54,
+    "camera move"
+   ],
+   [
+    37.5,
+    37.55,
+    5.02,
+    "camera move"
+   ],
+   [
+    37.55,
+    37.6,
+    5.57,
+    "camera move"
+   ],
+   [
+    37.6,
+    37.65,
+    5.98,
+    "camera move"
+   ],
+   [
+    37.65,
+    37.7,
+    6.31,
+    "camera move"
+   ],
+   [
+    37.7,
+    37.75,
+    6.59,
+    "camera move"
+   ],
+   [
+    37.75,
+    37.8,
+    6.73,
+    "camera move"
+   ],
+   [
+    37.8,
+    37.85,
+    6.71,
+    "camera move"
+   ],
+   [
+    37.85,
+    37.9,
+    6.52,
+    "camera move"
+   ],
+   [
+    37.9,
+    37.95,
+    6.36,
+    "camera move"
+   ],
+   [
+    37.95,
+    38.0,
+    6.15,
+    "camera move"
+   ],
+   [
+    38.0,
+    38.05,
+    5.5,
+    "close-up window opens (wipe)"
+   ],
+   [
+    38.05,
+    38.1,
+    4.28,
+    "close-up window opens (wipe)"
+   ],
+   [
+    46.75,
+    46.8,
+    3.87,
+    "close-up window closes"
+   ],
+   [
+    46.8,
+    46.85,
+    4.7,
+    "close-up window closes"
+   ],
+   [
+    46.85,
+    46.9,
+    5.3,
+    "close-up window closes"
+   ],
+   [
+    46.9,
+    46.95,
+    5.52,
+    "close-up window closes"
+   ],
+   [
+    46.95,
+    47.0,
+    5.34,
+    "close-up window closes"
+   ],
+   [
+    47.0,
+    47.05,
+    5.5,
+    "close-up window closes"
+   ],
+   [
+    47.05,
+    47.1,
+    5.67,
+    "close-up window closes"
+   ],
+   [
+    47.1,
+    47.15,
+    5.73,
+    "close-up window closes"
+   ],
+   [
+    47.15,
+    47.2,
+    5.77,
+    "camera move"
+   ],
+   [
+    47.2,
+    47.25,
+    5.75,
+    "camera move"
+   ],
+   [
+    47.25,
+    47.3,
+    5.69,
+    "camera move"
+   ],
+   [
+    47.3,
+    47.35,
+    5.61,
+    "camera move"
+   ],
+   [
+    47.35,
+    47.4,
+    5.51,
+    "camera move"
+   ],
+   [
+    47.4,
+    47.45,
+    5.39,
+    "camera move"
+   ],
+   [
+    47.45,
+    47.5,
+    5.26,
+    "camera move"
+   ],
+   [
+    47.5,
+    47.55,
+    5.06,
+    "camera move"
+   ],
+   [
+    47.55,
+    47.6,
+    4.87,
+    "camera move"
+   ],
+   [
+    47.6,
+    47.65,
+    4.74,
+    "camera move"
+   ],
+   [
+    47.65,
+    47.7,
+    4.63,
+    "camera move"
+   ],
+   [
+    47.7,
+    47.75,
+    4.58,
+    "camera move"
+   ],
+   [
+    47.75,
+    47.8,
+    4.57,
+    "camera move"
+   ],
+   [
+    47.8,
+    47.85,
+    4.59,
+    "camera move"
+   ],
+   [
+    47.85,
+    47.9,
+    4.61,
+    "camera move"
+   ],
+   [
+    47.9,
+    47.95,
+    5.66,
+    "camera move"
+   ],
+   [
+    47.95,
+    48.0,
+    5.08,
+    "camera move"
+   ],
+   [
+    52.0,
+    52.05,
+    3.37,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.05,
+    52.1,
+    3.71,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.1,
+    52.15,
+    3.94,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.15,
+    52.2,
+    4.15,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.2,
+    52.25,
+    4.37,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.25,
+    52.3,
+    4.46,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.3,
+    52.35,
+    4.56,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.35,
+    52.4,
+    4.58,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.4,
+    52.45,
+    4.62,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.45,
+    52.5,
+    4.63,
+    "engine opens along its axis, camera backs out"
+   ],
+   [
+    52.5,
+    52.55,
+    4.6,
+    "engine opens along its axis, camera backs out"
+   ]
+  ],
+  "unplanned": [],
+  "note": "model column, every frame for jumps and every 0.05 s for means; 52.6-61.0 s the combustor screen box (+6 px) is blanked in both frames of a pair"
+ },
+ "F10": {
+  "pass": true,
+  "worst_picture_px": [
+   26,
+   31.7
+  ],
+  "worst_solid_parts_px": [
+   38.8,
+   61.3
+  ],
+  "worst_overlay_px": [
+   58.5,
+   38.1,
+   "window",
+   ""
+  ],
+  "ghosted_span": [
+   36.3,
+   62.3,
+   228
+  ],
+  "note": "section 十一.1: ghosts do not count. picture = non-background pixels of the real frame, used at 30-33 s and wherever no part is ghosted; solid_parts = every visible, unghosted part projected (33 s on); overlay = labels and close-up window"
+ },
+ "F11": {
+  "pass": true,
+  "moves": [
+   {
+    "move": [
+     30.3,
+     32.4
+    ],
+    "median_step": 0.1937857956501636,
+    "max_step_ratio": 1.78,
+    "max_change_ratio": 1.42,
+    "start_ratio": 0.0006,
+    "end_ratio": 0.0006,
+    "pass": true
+   },
+   {
+    "move": [
+     37.0,
+     38.2
+    ],
+    "median_step": 0.08782076800488442,
+    "max_step_ratio": 1.88,
+    "max_change_ratio": 1.8,
+    "start_ratio": 0.0026,
+    "end_ratio": 0.0012,
+    "pass": true
+   },
+   {
+    "move": [
+     46.6,
+     48.6
+    ],
+    "median_step": 0.0523101501291871,
+    "max_step_ratio": 1.89,
+    "max_change_ratio": 1.8,
+    "start_ratio": 0.0004,
+    "end_ratio": 0.001,
+    "pass": true
+   },
+   {
+    "move": [
+     51.6,
+     53.4
+    ],
+    "median_step": 0.024909885424503626,
+    "max_step_ratio": 1.75,
+    "max_change_ratio": 1.43,
+    "start_ratio": 0.0007,
+    "end_ratio": 0.0008,
+    "pass": true
+   },
+   {
+    "move": [
+     60.0,
+     62.6
+    ],
+    "median_step": 0.017028324373492373,
+    "max_step_ratio": 1.77,
+    "max_change_ratio": 1.43,
+    "start_ratio": 0.0004,
+    "end_ratio": 0.0004,
+    "pass": true
+   }
+  ],
+  "blade_speed_change_max_over_median": 0.173
+ },
+ "F12": {
+  "pass": true,
+  "links": [
+   {
+    "link": "design>blade",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "blade>drill",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "blade>std",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "blade>mwo",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "blade>po",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-fan",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-cowl",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-comp",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-comb",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-turb",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-exh",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-core",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-nac",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>m-shaft",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "m-comb>po",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "po>supplier",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   },
+   {
+    "link": "e7>awo",
+    "start_frame_err": 1.0,
+    "end_frame_err": 0.0,
+    "pass": true
+   }
+  ],
+  "dom_64s": {
+   "nodes": [
+    34,
+    34
+   ],
+   "links": [
+    35,
+    35
+   ],
+   "counter": [
+    "34 个节点 · 35 条关系",
+    "34 个节点 · 35 条关系"
+   ],
+   "node_differences": [],
+   "svg_identical": true
+  }
+ },
+ "F13": {
+  "pass": true,
+  "counts": {
+   "slide": 5,
+   "line": 14,
+   "type": 51,
+   "path": 17,
+   "part": 8,
+   "tick": 10,
+   "alert": 1
+  },
+  "problems": [],
+  "number_settle_s": [
+   40.917,
+   40.967,
+   44.25,
+   44.383,
+   44.367,
+   54.033,
+   54.083,
+   54.083,
+   55.867,
+   56.3
+  ],
+  "note": "a value or motion that starts at an event time shows up on the first frame at or after it"
+ },
+ "F15": {
+  "pass": true,
+  "film-a": {
+   "samples": 521,
+   "labels_crossed": [],
+   "node_names_under_lit_lines": [
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "design>blade",
+     "text": "第一级涡轮叶片",
+     "from": 36.7,
+     "to": 47.6,
+     "samples": 116
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "blade>drill",
+     "text": "第一级涡轮叶片",
+     "from": 40.3,
+     "to": 40.5,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "blade>drill",
+     "text": "设计版本",
+     "from": 40.5,
+     "to": 40.5,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "drill>blade",
+     "text": "设计版本",
+     "from": 40.6,
+     "to": 47.6,
+     "samples": 77
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "drill>blade",
+     "text": "第一级涡轮叶片",
+     "from": 40.6,
+     "to": 47.6,
+     "samples": 77
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comb>po",
+     "text": "燃烧室",
+     "from": 54.7,
+     "to": 55.0,
+     "samples": 4
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comb>po",
+     "text": "第一级涡轮叶片",
+     "from": 54.8,
+     "to": 55.0,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "采购订单",
+     "from": 55.1,
+     "to": 61.3167,
+     "samples": 222
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "第一级涡轮叶片",
+     "from": 55.1,
+     "to": 61.3167,
+     "samples": 179
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "燃烧室",
+     "from": 55.1,
+     "to": 61.3167,
+     "samples": 222
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "e7>awo",
+     "text": "加工工单",
+     "from": 57.3667,
+     "to": 57.4833,
+     "samples": 8
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "awo>e7",
+     "text": "加工工单",
+     "from": 57.5,
+     "to": 61.3167,
+     "samples": 130
+    }
+   ]
+  },
+  "opening": {
+   "samples": 301,
+   "labels_crossed": [],
+   "node_names_under_lit_lines": [
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t1",
+     "text": "涡轮",
+     "from": 12.9,
+     "to": 23.0,
+     "samples": 102
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-t2>m-turb",
+     "text": "涡轮",
+     "from": 12.9,
+     "to": 12.9,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-t3>m-turb",
+     "text": "涡轮",
+     "from": 12.9,
+     "to": 12.9,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t2",
+     "text": "涡轮",
+     "from": 13.0,
+     "to": 23.0,
+     "samples": 101
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t3",
+     "text": "涡轮",
+     "from": 13.0,
+     "to": 23.0,
+     "samples": 101
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-t4>m-turb",
+     "text": "涡轮",
+     "from": 13.0,
+     "to": 13.0,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t4",
+     "text": "涡轮",
+     "from": 13.1,
+     "to": 23.0,
+     "samples": 100
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t5",
+     "text": "涡轮",
+     "from": 13.1,
+     "to": 23.0,
+     "samples": 100
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comp>c-comp1",
+     "text": "压气机",
+     "from": 16.6,
+     "to": 23.0,
+     "samples": 65
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-comp2>m-comp",
+     "text": "压气机",
+     "from": 16.6,
+     "to": 16.6,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comp>c-comp2",
+     "text": "压气机",
+     "from": 16.7,
+     "to": 23.0,
+     "samples": 64
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-comp3>m-comp",
+     "text": "压气机",
+     "from": 16.7,
+     "to": 16.7,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-comp4>m-comp",
+     "text": "压气机",
+     "from": 16.7,
+     "to": 16.7,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comp>c-comp3",
+     "text": "压气机",
+     "from": 16.8,
+     "to": 23.0,
+     "samples": 63
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-comp>c-comp4",
+     "text": "压气机",
+     "from": 16.8,
+     "to": 23.0,
+     "samples": 63
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "c-fan>m-fan",
+     "text": "风扇",
+     "from": 19.3,
+     "to": 19.3,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-fan>c-fan",
+     "text": "风扇",
+     "from": 19.4,
+     "to": 23.0,
+     "samples": 37
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M44 252.5 V327.2",
+     "text": "风扇",
+     "from": 23.1,
+     "to": 23.3,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M182 252.5 V284 Q182 289",
+     "text": "压气机",
+     "from": 23.1,
+     "to": 23.3,
+     "samples": 9
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M182 252.5 V286.5 Q182 2",
+     "text": "压气机",
+     "from": 23.1,
+     "to": 23.3,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M320 252.5 V284 Q320 289",
+     "text": "涡轮",
+     "from": 23.1,
+     "to": 23.3,
+     "samples": 12
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M320 252.5 V286.5 Q320 2",
+     "text": "涡轮",
+     "from": 23.1,
+     "to": 23.3,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "design>blade",
+     "text": "第一级涡轮叶片",
+     "from": 25.3,
+     "to": 25.3,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "coat>powder",
+     "text": "涂层检测",
+     "from": 25.3,
+     "to": 25.5,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 664 Q147.02 509.28 2",
+     "text": "第一级涡轮叶片",
+     "from": 25.4,
+     "to": 25.5,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "drill>blade",
+     "text": "设计版本",
+     "from": 25.5,
+     "to": 25.7,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 948 Q217 910.8 372 9",
+     "text": "涂层检测",
+     "from": 25.6,
+     "to": 25.7,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "drill>blade",
+     "text": "第一级涡轮叶片",
+     "from": 25.7,
+     "to": 25.7,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 726 Q126.94 531.04 2",
+     "text": "设计版本",
+     "from": 25.8,
+     "to": 25.9,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M62 726 Q126.94 531.04 2",
+     "text": "第一级涡轮叶片",
+     "from": 25.8,
+     "to": 25.9,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "awo>e7",
+     "text": "加工工单",
+     "from": 26.1,
+     "to": 26.3,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M578 760 Q499.4 409.08 2",
+     "text": "加工工单",
+     "from": 26.4,
+     "to": 26.5,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "powder>supplier",
+     "text": "粉末批次",
+     "from": 26.5,
+     "to": 26.7,
+     "samples": 3
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "powder>supplier",
+     "text": "供应商",
+     "from": 26.7,
+     "to": 26.7,
+     "samples": 1
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M372 948 Q480.2 953.4 57",
+     "text": "粉末批次",
+     "from": 26.8,
+     "to": 26.9,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M372 948 Q480.2 953.4 57",
+     "text": "供应商",
+     "from": 26.8,
+     "to": 26.9,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "insp>blade",
+     "text": "检验标准",
+     "from": 27.0,
+     "to": 27.1,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M186 900 Q190.5 644.3 29",
+     "text": "检验标准",
+     "from": 27.2,
+     "to": 27.3,
+     "samples": 2
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "采购订单",
+     "from": 27.4,
+     "to": 28.7,
+     "samples": 14
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "第一级涡轮叶片",
+     "from": 27.6,
+     "to": 28.7,
+     "samples": 12
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "po>m-comb",
+     "text": "燃烧室",
+     "from": 27.6,
+     "to": 28.7,
+     "samples": 12
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M578 900 Q218.9 672.1 25",
+     "text": "采购订单",
+     "from": 28.8,
+     "to": 29.1,
+     "samples": 4
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M578 900 Q218.9 672.1 25",
+     "text": "第一级涡轮叶片",
+     "from": 28.8,
+     "to": 29.1,
+     "samples": 4
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "M578 900 Q218.9 672.1 25",
+     "text": "燃烧室",
+     "from": 28.8,
+     "to": 29.1,
+     "samples": 4
+    }
+   ]
+  },
+  "clip": {
+   "samples": 221,
+   "labels_crossed": [],
+   "node_names_under_lit_lines": [
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "coat>powder",
+     "text": "涂层检测",
+     "from": 3.9,
+     "to": 22.0,
+     "samples": 182
+    },
+    {
+     "kind": "name",
+     "lit_line": true,
+     "line": "m-turb>c-t1",
+     "text": "涡轮",
+     "from": 11.3,
+     "to": 22.0,
+     "samples": 108
+    }
+   ]
+  },
+  "note": "chips and timing labels: no line with opacity > 0.3 through their box (+3 px); node names: only lit lines listed, not failed (主时间轴一 12.2). clip 0-22 s is listed, not failed (left for 主时间轴二)"
+ },
+ "F14": {
+  "pass": true,
+  "messages": []
+ },
+ "F14+": {
+  "pass": true,
+  "messages": [],
+  "part_a": true
+ },
+ "X10": {
+  "pass": true,
+  "flag_before": [
+   [
+    "自动更新 · 02:17",
+    1,
+    "rgb(229, 72, 60)"
+   ]
+  ],
+  "flag_after": [
+   [
+    "自动更新 · 02:24",
+    1,
+    "rgb(63, 178, 127)"
+   ]
+  ],
+  "flag_two_at_once": [],
+  "flag_frames": [
+   [
+    98.5,
+    [
+     "自动更新 · 02:17",
+     1,
+     "rgb(229, 72, 60)"
+    ]
+   ],
+   [
+    98.567,
+    [
+     "自动更新 · 02:17",
+     1,
+     "rgb(229, 72, 60)"
+    ]
+   ],
+   [
+    98.633,
+    [
+     "自动更新 · 02:17",
+     0.965,
+     "rgb(229, 72, 60)"
+    ]
+   ],
+   [
+    98.7,
+    [
+     "自动更新 · 02:17",
+     0.5,
+     "rgb(229, 72, 60)"
+    ]
+   ],
+   [
+    98.767,
+    [
+     "自动更新 · 02:17",
+     0.035,
+     "rgb(229, 72, 60)"
+    ]
+   ],
+   [
+    98.833,
+    [
+     "自动更新 · 02:24",
+     0.035,
+     "rgb(63, 178, 127)"
+    ]
+   ],
+   [
+    98.9,
+    [
+     "自动更新 · 02:24",
+     0.5,
+     "rgb(63, 178, 127)"
+    ]
+   ],
+   [
+    98.967,
+    [
+     "自动更新 · 02:24",
+     0.965,
+     "rgb(63, 178, 127)"
+    ]
+   ],
+   [
+    99.033,
+    [
+     "自动更新 · 02:24",
+     1,
+     "rgb(63, 178, 127)"
+    ]
+   ],
+   [
+    99.1,
+    [
+     "自动更新 · 02:24",
+     1,
+     "rgb(63, 178, 127)"
+    ]
+   ]
+  ],
+  "chip_fill": [
+   "rgb(63, 178, 127)",
+   "rgb(63, 178, 127)"
+  ],
+  "airflow": [
+   [
+    105.6,
+    {
+     "intake": 0.35,
+     "bypass": 0.35,
+     "core": 0.35
+    }
+   ],
+   [
+    106.1,
+    {
+     "intake": 0.19652891481895368,
+     "bypass": 0.2620385530919341,
+     "core": 0.3493847374559142
+    }
+   ],
+   [
+    106.6,
+    {
+     "intake": 0,
+     "bypass": 0.04250192906949273,
+     "core": 0.34001543255595995
+    }
+   ],
+   [
+    107.1,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0.3137695312500002
+    }
+   ],
+   [
+    107.6,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0.2697702017005441
+    }
+   ],
+   [
+    108.1,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0.21252587847358798
+    }
+   ],
+   [
+    108.6,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0.1498590062295819
+    }
+   ],
+   [
+    109.1,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0.04541739170719808
+    }
+   ],
+   [
+    109.6,
+    {
+     "intake": 0,
+     "bypass": 0,
+     "core": 0
+    }
+   ]
+  ],
+  "airflow_left_after_parts": [],
+  "blade_001_min_height_px": [
+   81.4,
+   110.5
+  ],
+  "note": "第十节: 10.1 one flag at a time, 02:17 -> green 02:24; 10.2 the good-batch chip in status green; 10.3 each airflow piece times its part; 10.4 blade 001 >= 50 px from 110.5 s"
+ }
+}

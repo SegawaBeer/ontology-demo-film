@@ -1,0 +1,118 @@
+{
+  "segments": [
+    {
+      "file": "/tmp/final/opening.mp4",
+      "start": 0.0,
+      "end": 30.0,
+      "frames": 1800,
+      "want": 1800,
+      "duration": 29.999
+    },
+    {
+      "file": "/tmp/final/film.mp4",
+      "start": 30.0,
+      "end": 103.0,
+      "frames": 4380,
+      "want": 4380,
+      "duration": 72.999
+    },
+    {
+      "file": "/tmp/final/ending.mp4",
+      "start": 103.0,
+      "end": 120.0,
+      "frames": 1020,
+      "want": 1020,
+      "duration": 16.999
+    }
+  ],
+  "steps": {
+    "check segments": 0.14,
+    "join": {
+      "seconds": 1.53,
+      "method": "copy"
+    },
+    "seams": 172.38,
+    "encode": {
+      "4k": 188.2,
+      "1080p": 83.5
+    },
+    "ffprobe": 0.11,
+    "sheets": 6.71
+  },
+  "seams": [
+    {
+      "at": 30.0,
+      "frames": [
+        {
+          "t": 29.9667,
+          "same": true
+        },
+        {
+          "t": 29.9833,
+          "same": true
+        },
+        {
+          "t": 30.0,
+          "same": true
+        },
+        {
+          "t": 30.0167,
+          "same": true
+        }
+      ],
+      "step_diff": 0.001
+    },
+    {
+      "at": 103.0,
+      "frames": [
+        {
+          "t": 102.9667,
+          "same": true
+        },
+        {
+          "t": 102.9833,
+          "same": true
+        },
+        {
+          "t": 103.0,
+          "same": true
+        },
+        {
+          "t": 103.0167,
+          "same": true
+        }
+      ],
+      "step_diff": 0.019
+    }
+  ],
+  "outputs": [
+    {
+      "file": "成片/本体能力演示-4K60.mp4",
+      "duration": 120.0,
+      "frames": 7200,
+      "size": [
+        3840,
+        2160
+      ],
+      "fps": 60.0,
+      "audio": 120.0,
+      "ok": true
+    },
+    {
+      "file": "成片/本体能力演示-1080p.mp4",
+      "duration": 120.0,
+      "frames": 7200,
+      "size": [
+        1920,
+        1080
+      ],
+      "fps": 60.0,
+      "audio": 120.0,
+      "ok": true
+    }
+  ],
+  "sheets": {
+    "拼版-每0.5秒.jpg": 1.98,
+    "拼版-每3秒.jpg": 0.33
+  }
+}

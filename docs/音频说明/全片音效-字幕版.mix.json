@@ -1,0 +1,50 @@
+{
+ "events": [
+  "<项目目录>/音频/全片音效-字幕版.events.json"
+ ],
+ "spin": "build_subtitled_audio:rotor_rps",
+ "seed": 0,
+ "start": 0.0,
+ "end": 135.2,
+ "samples": 6489600,
+ "count": 425,
+ "category_db": {
+  "thud": 0.0,
+  "alert": -13.7336,
+  "tone": -7.119,
+  "line": -4.6157,
+  "part": -4.1445,
+  "slide": -2.5545,
+  "path": -14.7293,
+  "spin": -9.4419,
+  "type": 4.6253
+ },
+ "by_kind": {
+  "tone": 10,
+  "tick": 115,
+  "thud": 1,
+  "spin": 2,
+  "type": 113,
+  "line": 44,
+  "tick-num": 19,
+  "path": 54,
+  "slide": 7,
+  "part": 56,
+  "swap": 1,
+  "alert": 3
+ },
+ "thinned": 82,
+ "skipped": [],
+ "cut": [],
+ "gain_db": 22.78,
+ "gain_db_exact": 22.783506729394496,
+ "limiter_max_db": 3.0,
+ "limiter_seconds": 0.083,
+ "target_lufs": null,
+ "max_limit_db": 3.0,
+ "capped": true,
+ "lufs_float": -23.0,
+ "dbtp_float": -1.4,
+ "lufs": -23.0,
+ "dbtp": -1.4
+}

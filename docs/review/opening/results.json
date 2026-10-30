@@ -1,0 +1,176 @@
+[
+  {
+    "check": "2 opening matches open",
+    "ok": true,
+    "value": "worst  0.0000%, style 0.0000%",
+    "expect": "< 0.01%"
+  },
+  {
+    "check": "3 other frames unchanged",
+    "ok": true,
+    "value": "worst  0.0000%",
+    "expect": "< 0.01%"
+  },
+  {
+    "check": "4 pure function of t",
+    "ok": true,
+    "value": "t=8.2: img True, probe True; t=6.0: img True, probe True",
+    "expect": "same image and probe"
+  },
+  {
+    "check": "5 seat accuracy",
+    "ok": true,
+    "value": "pos 0.00000, rot/scale 0.00000",
+    "expect": "pos <= 0.002, orient <= 0.5deg"
+  },
+  {
+    "check": "6 motion continuity",
+    "ok": true,
+    "value": "step 7.4px jerk 0.24px w 8.00/7.93deg/s seat_in True margin 276 h 192",
+    "expect": "step<=40 jerk<=4 dw<=1 seat inside, 6.4 box in column h 120-420"
+  },
+  {
+    "check": "7 cross-fade",
+    "ok": true,
+    "value": "worst frame diff 1.63, colour [164, 151, 139] -> [164, 150, 137] drift 2.0",
+    "expect": "frame diff <= 3.0, colour drift <= 10"
+  },
+  {
+    "check": "8 ring view",
+    "ok": true,
+    "value": "h 436 cx 635 cy 536 edge 318",
+    "expect": "h 420-560, cx 560-720, cy 480-600, edge >= 40"
+  },
+  {
+    "check": "9 ring fills up",
+    "ok": true,
+    "value": "monotonic True, matches formula True, 8.6 sub ×100",
+    "expect": "monotonic, matches 4.4, ×100 at 8.6"
+  },
+  {
+    "check": "10 graph end state",
+    "ok": true,
+    "value": "nodes 2 counter 2 个节点 · 1 条关系 edges 1",
+    "expect": "2 nodes, 1 drawn edge, ×100, no groups"
+  },
+  {
+    "check": "11 threads",
+    "ok": true,
+    "value": "start1 0.5px, t7.2 gone True, start2 0.5px, end 6.0px",
+    "expect": "start<=6, first gone at 7.2, start2<=6, end<=9"
+  },
+  {
+    "check": "12 flash",
+    "ok": true,
+    "value": "-26.2 / 1.6 / -26.0, vs old 0.0000%",
+    "expect": "peak >= 15, tail ~ start, unchanged vs old build"
+  },
+  {
+    "check": "13 background clean",
+    "ok": true,
+    "value": "0.00000",
+    "expect": "all pixels within 3 of #eef0ee"
+  },
+  {
+    "check": "15 disc reveal",
+    "ok": true,
+    "value": "first frame outline-only True, monotonic True, t=7.0 S/F 1.000",
+    "expect": "first F>=2000 has S=0, non-decreasing, S/F >= 0.99 at 7.0"
+  },
+  {
+    "check": "17 disc on the real picture",
+    "ok": true,
+    "value": "worst gap 15 points",
+    "expect": "outline-only stays <= 15% metal, full reads >= 70%, gap <= 25 points"
+  },
+  {
+    "check": "16 fade is real",
+    "ok": true,
+    "value": "7.64 0.000%, 8.70 0.0000%",
+    "expect": "7.64 < 1%, 8.70 < 0.01%"
+  },
+  {
+    "check": "14 console clean",
+    "ok": true,
+    "value": "none",
+    "expect": "no error / pageerror"
+  },
+  {
+    "check": "1 typecheck and build",
+    "ok": true,
+    "value": "tsc 0, build 0",
+    "expect": "both exit 0"
+  },
+  {
+    "check": "18 join at 9.6",
+    "ok": true,
+    "value": "left 0.0000%, right outside edge box 0px, camera same True",
+    "expect": "left < 0.01%, right only around the edge, identical camera"
+  },
+  {
+    "check": "19 parts arrive",
+    "ok": true,
+    "value": "0 mismatches, visible parts 1406 (16.98s)",
+    "expect": "schedule within a frame, 1406 parts"
+  },
+  {
+    "check": "20 outline before metal",
+    "ok": true,
+    "value": "outline windows show only lines; metal rises; finishes above 60%",
+    "expect": "outline window O >= 1% and G < 5%, G non-decreasing, ends > 60%"
+  },
+  {
+    "check": "21 stays in frame",
+    "ok": true,
+    "value": "worst 143px at 13.6s",
+    "expect": ">= 24px from every edge"
+  },
+  {
+    "check": "22 camera",
+    "ok": true,
+    "value": "angle 0.00deg, step 0.0222/0.0122, jerk 0.0003/0.0001",
+    "expect": "angle <= 1deg, steps and jerks <= 4x median"
+  },
+  {
+    "check": "23 graph",
+    "ok": true,
+    "value": "13 nodes, 13 个节点 · 10 条关系, 10 edges, 0 timing, style True",
+    "expect": "13 nodes, 10 drawn edges, times within a frame, finished edges keep their look"
+  },
+  {
+    "check": "24 flash",
+    "ok": true,
+    "value": "quiet frames 0.0000%",
+    "expect": "each node: +10 blue-red, first frame < 0.5%, D step <= 0.15 x peak + 0.5, one peak, >= 1000 px, pulse"
+  },
+  {
+    "check": "25 thread fades",
+    "ok": true,
+    "value": "opacity at 9.85 0.42, line pixels after 10.1 0",
+    "expect": "0.30-0.55 at 9.85, none at 10.1 and 17.0"
+  },
+  {
+    "check": "26 part mask",
+    "ok": true,
+    "value": "s2 vs s3 differ at 27612 px, IoU min 0.904",
+    "expect": "the two masks differ, and each mask matches its solo part (IoU >= 0.85)"
+  },
+  {
+    "check": "27 instanced outlines",
+    "ok": true,
+    "value": "[['stage2-blades', 0.356, 0.0], ['stage2-outer', 0.549, 0.0], ['comp4-blades', 0.277, 0.0], ['stators', 0.492, 0.0], ['comp1', 0.145, 0.0]]",
+    "expect": "outline instant: O >= 1%, G < 5% for every instanced part"
+  },
+  {
+    "check": "28 ring outline first",
+    "ok": true,
+    "value": "solid count follows t_k + w_k, outlines visible",
+    "expect": "solid blades match the schedule, >= 1500 outline pixels at 7.90 and 8.20"
+  },
+  {
+    "check": "14b console during milestone two",
+    "ok": true,
+    "value": "none",
+    "expect": "no error / pageerror"
+  }
+]

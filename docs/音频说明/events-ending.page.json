@@ -1,0 +1,21 @@
+{
+ "url": "http://localhost:5194/frames.html?frame=ending&theme=light&play=0",
+ "frame": "ending",
+ "events": "<项目目录>/音频/events-ending.json",
+ "start": 103,
+ "duration": 120,
+ "count": 7,
+ "by_kind": {
+  "path": 4,
+  "swap": 1,
+  "tone": 2
+ },
+ "page_by_kind": {
+  "path": 4,
+  "swap": 1,
+  "tone": 2
+ },
+ "filled_src": 0,
+ "filled_dur": 0,
+ "tick_to_tick_num": 0
+}

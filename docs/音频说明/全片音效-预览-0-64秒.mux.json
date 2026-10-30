@@ -1,0 +1,40 @@
+{
+ "video": "/tmp/audio-r4/video-0-64.mp4",
+ "audio": "<项目目录>/音频/全片音效-0-64秒.wav",
+ "out": "<项目目录>/音频/全片音效-预览-0-64秒.mp4",
+ "pass": true,
+ "ok": {
+  "video_copied": true,
+  "audio_format": true,
+  "lengths": true,
+  "start": true
+ },
+ "results": {
+  "video_copied": {
+   "packets": 3840,
+   "source_packets": 3840
+  },
+  "audio_format": {
+   "codec_name": "aac",
+   "sample_rate": "48000",
+   "channels": 2,
+   "bit_rate": "320091"
+  },
+  "lengths": {
+   "video_s": 64.0,
+   "audio_s": 64.0,
+   "diff_frames": 0.0
+  },
+  "start": {
+   "audio_start_s": 0.0,
+   "video_start_s": 0.0,
+   "offset_samples": 0,
+   "declared_samples": 3072000,
+   "apple_valid_samples": 3072000,
+   "wav_samples": 3072000,
+   "decoded_past_end": 960,
+   "decoded_past_end_dbfs": -240.0,
+   "aac_snr_db": 37.0
+  }
+ }
+}

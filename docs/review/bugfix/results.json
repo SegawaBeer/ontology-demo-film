@@ -1,0 +1,171 @@
+[
+  {
+    "check": "module focus still animates and settles",
+    "ok": true,
+    "start": [
+      3.7555618883084727,
+      1.9655798930806125,
+      5.023148868970195
+    ],
+    "settled": [
+      1.27762334365551,
+      1.2498091996582845,
+      3.193956055465315
+    ],
+    "moved": 3.162033122156854
+  },
+  {
+    "check": "drag keeps its view after release (no snap back)",
+    "ok": true,
+    "before": [
+      1.27762334365551,
+      1.2498091996582845,
+      3.193956055465315
+    ],
+    "release": [
+      -4.281553684856921,
+      1.2498091996582854,
+      3.0666767493086198
+    ],
+    "after4.5s": [
+      -5.40608375623,
+      1.249809199658285,
+      1.3142623283243884
+    ],
+    "after5.5s": [
+      -5.406083758248428,
+      1.249809199658285,
+      1.3142623222184198
+    ],
+    "moved_from_before": 6.942995686655215,
+    "drift_4.5_to_5.5s": 6.430933427078191e-09
+  },
+  {
+    "check": "pointer down during auto move cancels it",
+    "ok": true,
+    "during": [
+      3.750986421626089,
+      1.9250919010855772,
+      4.9196795393223995
+    ],
+    "held_start": [
+      3.7496068589004246,
+      1.9128842448024677,
+      4.888482190430932
+    ],
+    "held_600ms": [
+      3.7496068589004246,
+      1.9128842448024677,
+      4.888482190430932
+    ],
+    "movement_while_held": 0.0
+  },
+  {
+    "check": "pick turbine blade",
+    "ok": true,
+    "title": "涡轮 · 第一级涡轮叶片 076",
+    "expect": "第一级涡轮叶片"
+  },
+  {
+    "check": "isolate only one part [turbine blade]",
+    "ok": true,
+    "title": "涡轮 · 第一级涡轮叶片 076",
+    "total": 2027,
+    "visible": 1,
+    "visibleIds": [
+      "turbine.stage-1-blades.076"
+    ],
+    "selectedVisible": true,
+    "selectedScale": 1.0000000000000004,
+    "neighbor": null,
+    "neighborScale": null,
+    "ringVisible": 1
+  },
+  {
+    "check": "restore all parts [turbine blade]",
+    "ok": true,
+    "total": 2027,
+    "visible": 2027,
+    "ringVisible": 100,
+    "zeroMatrices": 0,
+    "zeroFirst": [],
+    "partVisible": true
+  },
+  {
+    "check": "pick bolt",
+    "ok": true,
+    "title": "核心机机匣 · 核心机机匣螺栓 001",
+    "expect": "核心机机匣螺栓"
+  },
+  {
+    "check": "isolate only one part [bolt]",
+    "ok": true,
+    "title": "核心机机匣 · 核心机机匣螺栓 001",
+    "total": 2027,
+    "visible": 1,
+    "visibleIds": [
+      "core-casing.bolts.001"
+    ],
+    "selectedVisible": true,
+    "selectedScale": 3,
+    "neighbor": null,
+    "neighborScale": null,
+    "ringVisible": 0
+  },
+  {
+    "check": "restore all parts [bolt]",
+    "ok": true,
+    "total": 2027,
+    "visible": 2027,
+    "ringVisible": 100,
+    "zeroMatrices": 0,
+    "zeroFirst": [],
+    "partVisible": true
+  },
+  {
+    "check": "pick compressor blade",
+    "ok": true,
+    "title": "压气机 · 压气机第 2 级叶环 001",
+    "expect": "压气机第 2 级叶环"
+  },
+  {
+    "check": "isolate only one part [compressor blade]",
+    "ok": true,
+    "title": "压气机 · 压气机第 2 级叶环 001",
+    "total": 2027,
+    "visible": 1,
+    "visibleIds": [
+      "compressor.stage-2.001"
+    ],
+    "selectedVisible": true,
+    "selectedScale": 3,
+    "neighbor": null,
+    "neighborScale": null,
+    "ringVisible": 0
+  },
+  {
+    "check": "restore all parts [compressor blade]",
+    "ok": true,
+    "total": 2027,
+    "visible": 2027,
+    "ringVisible": 100,
+    "zeroMatrices": 0,
+    "zeroFirst": [],
+    "partVisible": true
+  },
+  {
+    "check": "module isolate still shows the whole turbine only",
+    "ok": true,
+    "visible": 889,
+    "byModule": {
+      "turbine": 889
+    },
+    "turbine": "turbine"
+  },
+  {
+    "check": "module isolate shows everything again",
+    "ok": true,
+    "visible": 2027,
+    "total": 2027
+  }
+]

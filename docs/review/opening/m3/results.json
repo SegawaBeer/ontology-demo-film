@@ -1,0 +1,80 @@
+[
+  {
+    "check": "29 join",
+    "ok": true,
+    "value": "worst s 0.0000%, camera True, rows [['12.0', 0.0, 0, 0, 0.0], ['15.0', 0.0, 0, 0, 0.0], ['16.98', 0.0, 0, 0, 0.0]]",
+    "expect": "3.0/8.0 < 0.01%, metal layer < 0.01%, line-only < 0.01%, right < 0.01%, identical camera"
+  },
+  {
+    "check": "30 parts arrive",
+    "ok": true,
+    "value": "0 mismatches, parts 2027",
+    "expect": "schedule within a frame, 2027 parts"
+  },
+  {
+    "check": "31 outline first",
+    "ok": true,
+    "value": "[['combustor', 0.405, 0.0], ['core', 0.307, 0.0], ['fanhub', 0.046, 0.0], ['cowl', 0.3, 0.0], ['nacelle', 0.502, 0.0], ['exhaust', 0.164, 0.0], ['spinner', 0.138, 0.0]]",
+    "expect": "outline instant O >= 1%, G < 5%"
+  },
+  {
+    "check": "32 instanced outlines",
+    "ok": true,
+    "value": "all five above 1%",
+    "expect": "O >= 1% at the outline instant"
+  },
+  {
+    "check": "33 both sides close",
+    "ok": true,
+    "value": "cowl None->(712, 1054) full (712, 1054); nacelle None->(548, 924) full (548, 924)",
+    "expect": "each side grows monotonically towards its end, full by 21.1"
+  },
+  {
+    "check": "34 stays in frame",
+    "ok": true,
+    "value": "worst 129px at 19.0s",
+    "expect": ">= 24px from every edge"
+  },
+  {
+    "check": "35 camera",
+    "ok": true,
+    "value": "still True, net True, position gap 0.0000, direction 0.0000deg, step 0.0262/0.0162, jerk 0.0006/0.0002",
+    "expect": "still after 21.9, within 0.002 and 0.01deg of frame=net, smooth"
+  },
+  {
+    "check": "35b engine box",
+    "ok": true,
+    "value": "(243, 330, 1051, 766) vs style (243, 330, 1051, 766)",
+    "expect": "no threshold, for the supervisor"
+  },
+  {
+    "check": "36 graph",
+    "ok": true,
+    "value": "21 nodes, 21 个节点 · 20 条关系, 20 edges, 0 timing",
+    "expect": "21 nodes, 20 edges, no forbidden names, times within a frame"
+  },
+  {
+    "check": "37 flash",
+    "ok": true,
+    "value": "e7 162729px",
+    "expect": "each piece >= +10 blue-red, e7 >= 20,000 px"
+  },
+  {
+    "check": "38 rotor",
+    "ok": true,
+    "value": "[] pure True, fan 5081, cowl 2/21118 = 0.01% (exact rotor mask 1595/30030 = 5.31%)",
+    "expect": "rotor matches the formula, pure of t, fan turns, cowl region <= 1% moved"
+  },
+  {
+    "check": "39 no metal erased",
+    "ok": true,
+    "value": "worst [[9.6, 0], [9.65, 0], [9.7, 0], [9.75, 0], [9.8, 0]]; shells only [[12.78, 6559], [13.54, 2889], [17.85, 3605], [20.3, 5637]]",
+    "expect": "every frame <= 150 pixels of metal turned into background"
+  },
+  {
+    "check": "14c console during milestone three",
+    "ok": true,
+    "value": "none",
+    "expect": "no error / pageerror"
+  }
+]

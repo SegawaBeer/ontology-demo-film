@@ -1,0 +1,9 @@
+[
+{"t": 103.0, "kind": "path", "gain": 0.5, "src": "graph"},
+{"t": 103.0, "kind": "path", "gain": 0.5, "src": "graph"},
+{"t": 103.0, "kind": "path", "gain": 0.5, "src": "graph"},
+{"t": 103.0, "kind": "path", "gain": 0.5, "src": "graph"},
+{"t": 105.0, "kind": "tone", "gain": 0.5, "src": "3d"},
+{"t": 113.0, "kind": "swap", "gain": 0.5, "src": "3d"},
+{"t": 116.4, "kind": "tone", "gain": 0.8, "src": "3d"}
+]

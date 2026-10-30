@@ -1,0 +1,432 @@
+{
+ "out": "<项目目录>/音频/全片音效.wav",
+ "end": 120.0,
+ "samples": 5760000,
+ "passed": 17,
+ "total": 18,
+ "checks": {
+  "rotor_opening": true,
+  "rotor_ending_360": true,
+  "opening_table": true,
+  "page_events": true,
+  "format": true,
+  "samples": true,
+  "onsets": false,
+  "found": true,
+  "loudness": true,
+  "true_peak": true,
+  "balance": true,
+  "mix_peak": true,
+  "limiter": true,
+  "small_speaker": true,
+  "clipping": true,
+  "dc": true,
+  "head": true,
+  "tail": true
+ },
+ "rotor": {
+  "opening_err_deg": 1.2721500297629973e-08,
+  "ending_deg": 359.99999988520506,
+  "ending_err_deg": 1.1479494332888862e-07,
+  "outside_max_rps": 0.0
+ },
+ "opening": {
+  "events": "<项目目录>/音频/events-opening.json",
+  "count": 163,
+  "by_kind": {
+   "line": 13,
+   "part": 16,
+   "path": 15,
+   "spin": 1,
+   "thud": 1,
+   "tick": 115,
+   "tick-num": 1,
+   "tone": 1
+  }
+ },
+ "pages": [
+  {
+   "url": "http://localhost:5194/frames.html?frame=film&theme=light&play=0",
+   "frame": "film",
+   "events": "<项目目录>/音频/events-film.json",
+   "start": 30,
+   "duration": 103,
+   "count": 251,
+   "by_kind": {
+    "alert": 3,
+    "line": 31,
+    "part": 40,
+    "path": 39,
+    "slide": 7,
+    "tick-num": 18,
+    "type": 113
+   },
+   "page_by_kind": {
+    "alert": 3,
+    "line": 31,
+    "part": 40,
+    "path": 39,
+    "slide": 7,
+    "tick": 18,
+    "type": 113
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 18
+  },
+  {
+   "url": "http://localhost:5194/frames.html?frame=ending&theme=light&play=0",
+   "frame": "ending",
+   "events": "<项目目录>/音频/events-ending.json",
+   "start": 103,
+   "duration": 120,
+   "count": 7,
+   "by_kind": {
+    "path": 4,
+    "swap": 1,
+    "tone": 2
+   },
+   "page_by_kind": {
+    "path": 4,
+    "swap": 1,
+    "tone": 2
+   },
+   "filled_src": 0,
+   "filled_dur": 0,
+   "tick_to_tick_num": 0
+  }
+ ],
+ "dropped_repeats": [
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ],
+  [
+   103.0,
+   "path"
+  ]
+ ],
+ "table": {
+  "events": "<项目目录>/音频/全片音效.events.json",
+  "count": 418,
+  "by_kind": {
+   "alert": 3,
+   "line": 44,
+   "part": 56,
+   "path": 54,
+   "slide": 7,
+   "spin": 2,
+   "swap": 1,
+   "thud": 1,
+   "tick": 115,
+   "tick-num": 19,
+   "tone": 3,
+   "type": 113
+  },
+  "by_part": {
+   "opening": 163,
+   "film": 251,
+   "ending": 3,
+   "rotor": 1
+  }
+ },
+ "balance_fit": {
+  "evaluations": 1,
+  "max_error_lu": 0.0,
+  "capped": true,
+  "gain_db": 22.78354452740901,
+  "lufs": -22.81,
+  "max_limit_db": 3.0,
+  "limiter_on_loudest_peak_db": 3.0,
+  "offsets": {
+   "thud": 0.0,
+   "alert": -2.3,
+   "tone": -3.3,
+   "line": -7.7,
+   "part": -6.3,
+   "slide": -8.3,
+   "path": -8.3,
+   "spin": -10.3,
+   "type": -12.3
+  },
+  "trail": [
+   [
+    22.784,
+    -22.805,
+    0.0
+   ]
+  ],
+  "category_db": {
+   "thud": 0.0,
+   "alert": -13.7336,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.5545,
+   "path": -14.7293,
+   "spin": -9.4419,
+   "type": 4.6253
+  },
+  "target_lufs": null
+ },
+ "mix": {
+  "spin": "rotor:rotor_rps",
+  "seed": 0,
+  "start": 0.0,
+  "end": 120.0,
+  "samples": 5760000,
+  "count": 418,
+  "category_db": {
+   "thud": 0.0,
+   "alert": -13.7336,
+   "tone": -7.119,
+   "line": -4.6157,
+   "part": -4.1445,
+   "slide": -2.5545,
+   "path": -14.7293,
+   "spin": -9.4419,
+   "type": 4.6253
+  },
+  "by_kind": {
+   "tone": 3,
+   "tick": 115,
+   "thud": 1,
+   "spin": 2,
+   "type": 113,
+   "line": 44,
+   "tick-num": 19,
+   "path": 54,
+   "slide": 7,
+   "part": 56,
+   "swap": 1,
+   "alert": 3
+  },
+  "thinned": 82,
+  "skipped": [],
+  "cut": [],
+  "gain_db": 22.78,
+  "gain_db_exact": 22.783506729394496,
+  "limiter_max_db": 3.0,
+  "limiter_seconds": 0.083,
+  "target_lufs": null,
+  "max_limit_db": 3.0,
+  "capped": true,
+  "lufs_float": -22.8,
+  "dbtp_float": -1.4,
+  "lufs": -22.8,
+  "dbtp": -1.4
+ },
+ "check": {
+  "format": "48000 Hz, 24-bit, 2 ch, 120.000 s",
+  "samples": {
+   "samples": 5760000,
+   "expected": 5760000
+  },
+  "onsets": {
+   "events": 418,
+   "max_locate_ms": 9.62,
+   "max_motion_lag_ms": 0.08,
+   "detected": 212,
+   "isolated": 215,
+   "max_detect_ms": 2.81,
+   "undetected_isolated": [
+    [
+     37.6,
+     "part"
+    ],
+    [
+     47.6,
+     "line"
+    ],
+    [
+     61.0,
+     "line"
+    ]
+   ],
+   "over_5ms": [
+    [
+     81.26723955327965,
+     "part",
+     9.62,
+     null
+    ]
+   ]
+  },
+  "found": {
+   "events": 418,
+   "in_table": 418,
+   "level_min": 0.851,
+   "level_max": 1.435,
+   "not_found": [],
+   "outside_file": []
+  },
+  "loudness": {
+   "ebur128_lufs": -22.8,
+   "loudnorm_lufs": -22.84,
+   "range": [
+    -23.0,
+    -15.0
+   ]
+  },
+  "true_peak": {
+   "ebur128_dbtp": -1.4,
+   "loudnorm_dbtp": -1.41
+  },
+  "balance": {
+   "T": -11.1,
+   "stems_rebuild_error": 1.3e-07,
+   "rows": [
+    {
+     "category": "thud",
+     "M": -11.1,
+     "at": 22.3,
+     "offset": 0.0,
+     "range": [
+      0.0,
+      0.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "alert",
+     "M": -13.4,
+     "at": 83.4,
+     "offset": -2.3,
+     "range": [
+      -4.0,
+      -2.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "tone",
+     "M": -14.4,
+     "at": 0.7,
+     "offset": -3.3,
+     "range": [
+      -6.0,
+      -3.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "line",
+     "M": -18.8,
+     "at": 54.2,
+     "offset": -7.7,
+     "range": [
+      -8.0,
+      -5.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "part",
+     "M": -17.4,
+     "at": 8.2,
+     "offset": -6.3,
+     "range": [
+      -9.0,
+      -6.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "slide",
+     "M": -19.4,
+     "at": 31.6,
+     "offset": -8.3,
+     "range": [
+      -11.0,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "path",
+     "M": -19.4,
+     "at": 103.3,
+     "offset": -8.3,
+     "range": [
+      null,
+      -8.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "spin",
+     "M": -21.4,
+     "at": 105.8,
+     "offset": -10.3,
+     "range": [
+      -13.0,
+      -10.0
+     ],
+     "ok": true
+    },
+    {
+     "category": "type",
+     "M": -23.4,
+     "at": 80.4,
+     "offset": -12.3,
+     "range": [
+      -15.0,
+      -12.0
+     ],
+     "ok": true
+    }
+   ]
+  },
+  "mix_peak": {
+   "max_M": -11.1,
+   "max_at": 22.3,
+   "max_away_from_thud_M": -13.4,
+   "away_at": 83.4,
+   "T": -11.1,
+   "ok": true
+  },
+  "limiter": {
+   "max_reduction_db": 3.0,
+   "at_s": 21.915,
+   "seconds_reduced": 0.083,
+   "limit_db": 3.0
+  },
+  "small_speaker": {
+   "highpass_hz": 250.0,
+   "thud_M": -17.7,
+   "line_M": -18.8,
+   "mix_at_thud_M": -17.7,
+   "mix_away_M": -13.4,
+   "margin_lu": 1.1,
+   "ok": true
+  },
+  "clipping": {
+   "clipped_samples": 0,
+   "sample_peak_dbfs": -1.4
+  },
+  "dc": {
+   "abs_mean": [
+    3.8e-05,
+    1.67e-05
+   ]
+  },
+  "head": {
+   "peak_0_0.3s_dbfs": -240.0
+  },
+  "tail": {
+   "peak_last_0.5s_dbfs": -240.0,
+   "silent": true,
+   "falling": true,
+   "last_sample_dbfs": -240.0,
+   "cut_off_voices": []
+  }
+ }
+}

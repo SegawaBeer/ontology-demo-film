@@ -1,0 +1,33 @@
+{
+ "out": "/tmp/audio-r4/video-0-64.mp4",
+ "inputs": [
+  "<项目目录>/样片/开头-0-30秒-1080p.mp4",
+  "<项目目录>/样片/主时间轴一-30-64秒-1080p.mp4"
+ ],
+ "method": "concat demuxer, -c copy",
+ "input_frames": [
+  1800,
+  2040
+ ],
+ "pass": true,
+ "ok": {
+  "frames": true,
+  "identical": true,
+  "times": true,
+  "apple_decoder": true
+ },
+ "results": {
+  "frames": 3840,
+  "expected_frames": 3840,
+  "first_different_frame": null,
+  "splice_frames": [
+   1800
+  ],
+  "splice_times": [
+   30.0
+  ],
+  "time_gaps_at": [],
+  "duration_s": 64.0,
+  "apple_decoder_min_psnr_db": 44.77
+ }
+}

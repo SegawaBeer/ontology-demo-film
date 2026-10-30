@@ -1,0 +1,29 @@
+{
+ "url": "http://localhost:5194/frames.html?frame=film&theme=light&play=0",
+ "frame": "film",
+ "events": "<项目目录>/音频/events-film.json",
+ "start": 30,
+ "duration": 103,
+ "count": 251,
+ "by_kind": {
+  "alert": 3,
+  "line": 31,
+  "part": 40,
+  "path": 39,
+  "slide": 7,
+  "tick-num": 18,
+  "type": 113
+ },
+ "page_by_kind": {
+  "alert": 3,
+  "line": 31,
+  "part": 40,
+  "path": 39,
+  "slide": 7,
+  "tick": 18,
+  "type": 113
+ },
+ "filled_src": 0,
+ "filled_dur": 0,
+ "tick_to_tick_num": 18
+}

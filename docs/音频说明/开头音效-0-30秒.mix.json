@@ -1,0 +1,35 @@
+{
+ "events": [
+  "<项目目录>/音频/events-opening.json"
+ ],
+ "spin": "opening_events:rotor_rps",
+ "seed": 0,
+ "start": 0.0,
+ "end": 30.0,
+ "count": 163,
+ "by_kind": {
+  "tone": 1,
+  "tick": 115,
+  "thud": 1,
+  "spin": 1,
+  "line": 13,
+  "path": 15,
+  "slide": 1,
+  "part": 16
+ },
+ "thinned": 82,
+ "skipped": [
+  [
+   30.3,
+   "slide"
+  ]
+ ],
+ "cut": [],
+ "gain_db": 18.5,
+ "limiter_max_db": -0.0,
+ "limiter_seconds": 0.0,
+ "lufs_float": -16.0,
+ "dbtp_float": -2.1,
+ "lufs": -16.0,
+ "dbtp": -2.1
+}

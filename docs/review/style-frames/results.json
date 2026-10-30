@@ -1,0 +1,82 @@
+[
+  {
+    "check": "1 frame size",
+    "ok": true,
+    "value": "1920x1080",
+    "expect": "1920x1080"
+  },
+  {
+    "check": "2 mask components",
+    "ok": true,
+    "value": [
+      109627
+    ],
+    "expect": "exactly 1 block > 50 px"
+  },
+  {
+    "check": "3 mask bbox",
+    "ok": true,
+    "value": "h=610 cx=520 cy=544 R=0.475",
+    "expect": "h 560-660, cx 460-580, cy 505-585, R 0.30-0.48"
+  },
+  {
+    "check": "4 left background",
+    "ok": true,
+    "value": "0.00000 / 0.00000",
+    "expect": "no pixel differs by more than 3"
+  },
+  {
+    "check": "5 graph single node",
+    "ok": true,
+    "value": "nodes=1 counter=1 个节点 · 0 条关系",
+    "expect": "1 node, counter 1/0, no group names, ×1"
+  },
+  {
+    "check": "6 thread",
+    "ok": true,
+    "value": "start->mask 2.034088134765625px, end gap 9.0px, head x 1431",
+    "expect": "start on blade, end at node, head 1330-1480"
+  },
+  {
+    "check": "7 timeline",
+    "ok": true,
+    "value": "t0 empty=0.00000 counter=0 个节点 · 0 条关系 off=915/915 t5 off=0.0 comps=[100300]",
+    "expect": "t0 blank + 0 nodes + no line, t5 line drawn, 1 block"
+  },
+  {
+    "check": "8 console clean",
+    "ok": true,
+    "value": "none",
+    "expect": "no error / pageerror"
+  },
+  {
+    "check": "9 other frames unchanged",
+    "ok": true,
+    "value": "worst  0.0000%",
+    "expect": "< 0.01% of pixels differ by > 8"
+  },
+  {
+    "check": "11 sweep direction",
+    "ok": true,
+    "value": "top 34.5% bottom 99.5%",
+    "expect": "top < 35%, bottom > 90%"
+  },
+  {
+    "check": "12 blade contrast",
+    "ok": true,
+    "value": "72.0",
+    "expect": "mean channel diff >= 18"
+  },
+  {
+    "check": "13 mid-blade solid",
+    "ok": true,
+    "value": "coverage 100.0%, std c/l/r 27.85/26.43/40.14",
+    "expect": "coverage 100%, centre std <= max(left, right) + 3"
+  },
+  {
+    "check": "10 typecheck and build",
+    "ok": true,
+    "value": "tsc 0, build 0",
+    "expect": "both exit 0"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "base": {
+    "combustor": -7.5,
+    "core": -45.1,
+    "fanhub": -7.7,
+    "cowl": -26.6,
+    "nacelle": -7.0,
+    "exhaust": -11.3,
+    "spinner": -17.2
+  },
+  "theory_peak": {
+    "combustor": 40.9,
+    "core": 50.3,
+    "fanhub": 40.9,
+    "cowl": 45.6,
+    "nacelle": 40.8,
+    "exhaust": 41.8,
+    "spinner": 43.3
+  }
+}
