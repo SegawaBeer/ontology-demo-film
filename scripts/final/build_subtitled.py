@@ -25,8 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from assemble import probe, run  # noqa: E402
 
 FPS = 60
-ROOT = '<项目目录>'
-PLAN_MD = f'{ROOT}/脚本/字幕方案-v1.1.md'
+ROOT = os.environ.get('FILM_ROOT') or os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+PLAN_MD = f'{ROOT}/docs/脚本/字幕方案-v1.1.md'
 CARD_AT = (0.0, 30.0, 33.0, 49.0, 64.0, 86.0, 101.0)
 CARD_DUR = (2.4, 2.4, 2.0, 2.0, 2.0, 2.0, 2.4)
 SEGS = {'opening': (0.0, 30.0), 'film': (30.0, 103.0), 'ending': (103.0, 120.0)}

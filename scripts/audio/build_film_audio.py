@@ -43,7 +43,7 @@ import rotor  # noqa: E402
 
 ROOT = opening_events.ROOT
 DEFAULT_OUT = f'{ROOT}/音频/全片音效.wav'
-SYSTEM_PY = '/opt/homebrew/bin/python3'          # has Playwright, no numpy
+SYSTEM_PY = os.environ.get('SYSTEM_PY', '/opt/homebrew/bin/python3')          # has Playwright, no numpy
 FILM_LENGTH = 120.0
 SAME_MS = 1.0
 

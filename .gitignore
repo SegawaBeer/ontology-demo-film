@@ -14,3 +14,9 @@ sources/
 
 __pycache__/
 *.pyc
+
+# outputs of the film pipeline (shipped in the Release, not in git)
+/音频/
+/成片/
+/样片/
+.venv-audio/

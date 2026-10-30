@@ -21,7 +21,7 @@ from PIL import Image, ImageChops
 from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = '<项目目录>'
+ROOT = os.environ.get('FILM_ROOT') or os.path.abspath(os.path.join(HERE, '..'))
 args = sys.argv[1:]
 opt = lambda k, d=None: args[args.index(k) + 1] if k in args else d
 NEW, BASE = opt('--new'), opt('--base')
@@ -46,7 +46,7 @@ def want(key):
 
 def table():
     """22 lines of 3.2 (the closing line is the ending's own) and the 7 cards of 2.1, from the plan itself."""
-    md = open(f'{ROOT}/脚本/字幕方案-v1.1.md', encoding='utf-8').read()
+    md = open(f'{ROOT}/docs/脚本/字幕方案-v1.1.md', encoding='utf-8').read()
     sec = md[md.index('### 3.2'):md.index('### 3.3')]
     lines = [(float(a), float(b), text.split('<br>')) for n, a, b, text in
              re.findall(r'^\| (\d+) \| ([\d.]+)–([\d.]+) \| (.*?) \|', sec, re.M)]

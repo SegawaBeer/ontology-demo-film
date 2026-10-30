@@ -25,7 +25,7 @@ import os
 import sys
 from urllib.parse import parse_qs, urlparse
 
-ROOT = '<项目目录>'
+ROOT = os.environ.get('FILM_ROOT') or os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 OUT_DIR = f'{ROOT}/音频'
 
 # Every voice of synth.VOICES except spin: the rotor hum is computed from

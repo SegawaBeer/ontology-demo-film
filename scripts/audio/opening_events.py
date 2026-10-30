@@ -22,8 +22,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import rotor  # noqa: E402
 from rotor import FULL_RPS, OMEGA, rotor_rps  # noqa: E402,F401
 
-ROOT = '<项目目录>'
-FRAMES = f'{ROOT}/.claude/worktrees/style-frames/src/frames'
+ROOT = os.environ.get('FILM_ROOT') or os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+FRAMES = f'{ROOT}/src/frames'
 CLIP_OPEN = f'{FRAMES}/clip-open.ts'
 OPENING_NET = f'{FRAMES}/opening-net.ts'
 DATA_TS = f'{FRAMES}/data.ts'
