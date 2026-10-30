@@ -30,11 +30,13 @@ import numpy as np
 from scipy import ndimage, signal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import balance  # noqa: E402
 import synth  # noqa: E402
 
 FFMPEG = '/opt/homebrew/bin/ffmpeg'
 SR = synth.SR
-TARGET_LUFS = -16.0
+TARGET_LUFS = -16.0                 # make_audio.py on its own (no balance)
+LUFS_RANGE = (-23.0, -15.0)         # 声音任务说明 九.2: the film's integrated loudness
 MAX_DBTP = -1.0
 CEILING_DBTP = -1.4                 # limiter ceiling, margin under -1 dBTP
 PAN = {'3d': 0.0, 'graph': 0.35, 'dialog': -0.35}
@@ -85,11 +87,17 @@ def load_spin(spec):
     return getattr(m, func), getattr(m, 'FULL_RPS', None)
 
 
-def voice_of(e, idx, seed, gain=1.0, spin=None):
+def voice_of(e, idx, seed, gain=1.0, spin=None, cat_db=None):
     """The dry stereo voice of event number idx (events in load_events order).
-    Each event draws from its own generator, so check_audio can rebuild it."""
-    rng = np.random.default_rng([seed, idx])
+    Each event draws from its own generator, so check_audio can rebuild it.
+    cat_db: per-category level in dB (声音任务说明 8, balance.py), on top of
+    the page's gain.  An event may carry its own "rng" number to use instead
+    of idx (build_subtitled_audio: a moved event keeps the draw it had in the
+    120 s table, so it is the same sound)."""
+    rng = np.random.default_rng([seed, int(e.get('rng', idx))])
     g, pan = e['gain'] * gain, pan_of(e)
+    if cat_db:
+        g *= synth.db(cat_db.get(balance.category(e['kind']), 0.0))
     if e['kind'] == 'spin':
         if spin is None:
             raise SystemExit('spin events need --spin')
@@ -110,17 +118,22 @@ def event_gains(events):
     return gains, int((counts > DENSITY_MAX).sum())
 
 
-def render(events, start, end, spin=None, seed=0):
+def render(events, start, end, spin=None, seed=0, cat_db=None, only=None):
+    """Dry mix of the events over [start, end).  only: a set of categories
+    (balance.py) to render alone, for a solo stem; the density gains are
+    still those of the whole table."""
     n = int(round((end - start) * SR))
     out = np.zeros((n, 2))
     gains, thinned = event_gains(events)
     skipped, cut = [], []
     for idx, e in enumerate(events):
+        if only is not None and balance.category(e['kind']) not in only:
+            continue
         i0 = int(round((e['t'] - start) * SR))
         if i0 < 0 or i0 >= n:
             skipped.append(e)
             continue
-        x = voice_of(e, idx, seed, gains[idx], spin)
+        x = voice_of(e, idx, seed, gains[idx], spin, cat_db)
         m = min(len(x), n - i0)
         if m < len(x) and np.abs(x[m:]).max() > synth.db(-80.0):
             cut.append(e)
@@ -203,11 +216,11 @@ def true_peak_env(x):
     return np.maximum(up.reshape(n, 4).max(axis=1), np.abs(x).max(axis=1))
 
 
-def limit(x, ceiling_db=CEILING_DBTP, window=0.010):
-    """Look-ahead true-peak limiter.  The gain dips smoothly over `window`
-    on each side of any sample whose oversampled peak is above the ceiling
-    and is never above ceiling / peak at that sample.  Returns (y, max gain
-    reduction dB, seconds with any reduction)."""
+def limit_gain(x, ceiling_db=CEILING_DBTP, window=0.010):
+    """Per-sample gain of the look-ahead true-peak limiter (1 where it does
+    nothing).  The gain dips smoothly over `window` on each side of any
+    sample whose oversampled peak is above the ceiling and is never above
+    ceiling / peak at that sample."""
     c = synth.db(ceiling_db)
     w = int(round(window * SR))
     total = np.ones(len(x))
@@ -221,25 +234,90 @@ def limit(x, ceiling_db=CEILING_DBTP, window=0.010):
         g = np.minimum(g, r)
         total *= g
         y = x * total[:, None]
-    return y, -20 * np.log10(total.min()), float((total < 0.9999).sum()) / SR
+    return total
 
 
-def normalise(x, target=TARGET_LUFS):
-    """Gain to the target integrated loudness, limiting true peaks; repeat
-    until the measured loudness is within 0.05 LU."""
-    lufs, _ = measure(x)
-    gain_db = target - lufs
+def limit(x, ceiling_db=CEILING_DBTP, window=0.010):
+    """Look-ahead true-peak limiter.  Returns (y, max gain reduction dB,
+    seconds with any reduction)."""
+    total = limit_gain(x, ceiling_db, window)
+    return x * total[:, None], -20 * np.log10(total.min()), float((total < 0.9999).sum()) / SR
+
+
+def normalise_gain(x, target=TARGET_LUFS, max_limit_db=None, start_gain_db=None):
+    """Output gain per sample: the gain to the target integrated loudness
+    times the true-peak limiter's gain; repeated until the measured loudness
+    is within 0.05 LU.  With max_limit_db, the gain is capped where the
+    limiter would have to take more than that off any sample (声音任务说明 8:
+    the thud must stay clean); the result is then quieter than the target.
+    start_gain_db: balance.fit_mix's gain, used as it is (one pass, no
+    re-iteration).  Under heavy limiting the loudness hardly moves with the
+    gain, so re-iterating on a second meter's 0.05 LU difference would move
+    the gain by several dB and the balance with it.
+    Returns (envelope (n,), output, info)."""
+    if start_gain_db is None:
+        lufs, _ = measure(x)
+        gain_db = target - lufs
+    else:
+        gain_db = start_gain_db
+    cap = None
+    if max_limit_db is not None:
+        cap = CEILING_DBTP + max_limit_db - 20 * np.log10(max(float(true_peak_env(x).max()), 1e-12))
+    capped = False
     for _ in range(8):
-        y, gr, gr_s = limit(x * synth.db(gain_db))
+        if cap is not None and gain_db >= cap:
+            gain_db, capped = cap, True
+        used = gain_db
+        lim = limit_gain(x * synth.db(used))
+        env = synth.db(used) * lim
+        y = x * env[:, None]
         lufs, peak = measure(y)
-        if abs(lufs - target) < 0.05:
+        if capped or start_gain_db is not None or abs(lufs - target) < 0.05:
             break
         gain_db += target - lufs
-    return y, {'gain_db': round(gain_db, 2), 'limiter_max_db': round(gr, 2),
-               'limiter_seconds': round(gr_s, 3), 'lufs_float': lufs, 'dbtp_float': peak}
+    info = {'gain_db': round(used, 2), 'gain_db_exact': used,
+            'limiter_max_db': round(-20 * np.log10(lim.min()), 2),
+            'limiter_seconds': round(float((lim < 0.9999).sum()) / SR, 3),
+            'target_lufs': target, 'max_limit_db': max_limit_db, 'capped': capped,
+            'lufs_float': lufs, 'dbtp_float': peak}
+    return env, y, info
+
+
+def normalise(x, target=TARGET_LUFS, max_limit_db=None, start_gain_db=None):
+    """normalise_gain's output and info."""
+    _, y, info = normalise_gain(x, target, max_limit_db, start_gain_db)
+    return y, info
 
 
 # ---- main ----------------------------------------------------------------------
+
+def mix(event_paths, out, spin_spec=None, start=0.0, end=None, seed=0, cat_db=None, target=TARGET_LUFS,
+        max_limit_db=None, start_gain_db=None):
+    """Render, reverb, normalise to `target` LUFS and write `out` (48 kHz
+    24-bit stereo) plus OUT.mix.json, the record check_audio.py reads.
+    cat_db: per-category levels (balance.fit_mix); max_limit_db: see
+    normalise_gain.  Returns the record."""
+    events = load_events(event_paths)
+    spin = load_spin(spin_spec)
+    end = end if end is not None else max(e['t'] for e in events) + 2.0
+    dry, info = render(events, start, end, spin, seed, cat_db)
+    y, norm = normalise(reverb(dry), target, max_limit_db, start_gain_db)
+    write_wav(out, y)
+    lufs, peak = ebur128(out)
+    report = {
+        'events': [os.path.abspath(p) for p in event_paths], 'spin': spin_spec, 'seed': seed,
+        'start': start, 'end': end, 'samples': len(y), 'count': len(events),
+        'category_db': cat_db or {},
+        'by_kind': {k: sum(e['kind'] == k for e in events) for k in synth.VOICES if any(e['kind'] == k for e in events)},
+        'thinned': info['thinned'],
+        'skipped': [(e['t'], e['kind']) for e in info['skipped']],
+        'cut': [(e['t'], e['kind']) for e in info['cut']],
+        **norm, 'lufs': lufs, 'dbtp': peak,
+    }
+    with open(os.path.splitext(out)[0] + '.mix.json', 'w', encoding='utf-8') as f:
+        json.dump(report, f, ensure_ascii=False, indent=1)
+    return report
+
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
@@ -249,29 +327,13 @@ def main(argv=None):
     ap.add_argument('--start', type=float, default=0.0)
     ap.add_argument('--end', type=float)
     ap.add_argument('--seed', type=int, default=0)
+    ap.add_argument('--lufs', type=float, default=TARGET_LUFS, help='integrated loudness target')
     a = ap.parse_args(argv)
 
-    events = load_events(a.events)
-    spin = load_spin(a.spin)
-    end = a.end if a.end is not None else max(e['t'] for e in events) + 2.0
-    dry, info = render(events, a.start, end, spin, a.seed)
-    y, norm = normalise(reverb(dry))
-    write_wav(a.out, y)
-    lufs, peak = ebur128(a.out)
-
-    report = {
-        'events': [os.path.abspath(p) for p in a.events], 'spin': a.spin, 'seed': a.seed,
-        'start': a.start, 'end': end, 'count': len(events),
-        'by_kind': {k: sum(e['kind'] == k for e in events) for k in synth.VOICES if any(e['kind'] == k for e in events)},
-        'thinned': info['thinned'],
-        'skipped': [(e['t'], e['kind']) for e in info['skipped']],
-        'cut': [(e['t'], e['kind']) for e in info['cut']],
-        **norm, 'lufs': lufs, 'dbtp': peak,
-    }
-    with open(os.path.splitext(a.out)[0] + '.mix.json', 'w', encoding='utf-8') as f:
-        json.dump(report, f, ensure_ascii=False, indent=1)
+    report = mix(a.events, a.out, a.spin, a.start, a.end, a.seed, target=a.lufs)
+    lufs, peak = report['lufs'], report['dbtp']
     print(json.dumps({k: v for k, v in report.items() if k != 'events'}, ensure_ascii=False))
-    if peak > MAX_DBTP or abs(lufs - TARGET_LUFS) > 0.5:
+    if peak > MAX_DBTP or abs(lufs - a.lufs) > 0.5:
         raise SystemExit(f'loudness off target: {lufs} LUFS, {peak} dBTP')
 
 
