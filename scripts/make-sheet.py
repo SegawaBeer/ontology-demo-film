@@ -1,7 +1,9 @@
 """Tile the four light style frames into one 1920x1080 review sheet."""
+import os
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = '<项目目录>'
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT', os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
+ROOT = PROJECT_ROOT
 OUT = f'{ROOT}/review/style-frames/四张拼版.png'
 TILES = [
     (f'{ROOT}/样式图/开头0-03一枚叶片-浅色.png', '开头0-03一枚叶片', 0, 0),

@@ -8,7 +8,8 @@ from collections import deque
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
-ROOT = '<项目目录>'
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT', os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
+ROOT = PROJECT_ROOT
 WORK = f'{ROOT}/.claude/worktrees/style-frames'
 OUT = f'{ROOT}/review/style-frames'
 STYLE = f'{ROOT}/样式图/开头0-03一枚叶片-浅色.png'

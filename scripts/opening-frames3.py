@@ -3,7 +3,8 @@ import json, os, time
 from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
-ROOT = '<项目目录>'
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT', os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
+ROOT = PROJECT_ROOT
 OUT = f'{ROOT}/review/opening/m3'
 URL = 'http://127.0.0.1:5192/frames.html'
 BG = (238, 240, 238)

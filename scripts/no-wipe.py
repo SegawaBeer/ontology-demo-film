@@ -3,13 +3,15 @@
 Rows are the four moments the supervisor named, left is the commit before the
 fix (1e5dc12), right is the current build. Both are the left column at 1:2.
 """
+import os
 import time
 from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
 NOW = 'http://127.0.0.1:5192/frames.html'
 BEFORE = 'http://127.0.0.1:5291/frames.html'
-OUT = '<项目目录>/review/opening/m3'
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT', os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')))
+OUT = os.path.join(PROJECT_ROOT, 'review/opening/m3')
 TIMES = ['17.85', '20.30', '12.78', '13.54']
 W, H = 640, 540
 

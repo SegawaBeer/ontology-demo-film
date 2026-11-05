@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from glb_pieces import load, pieces_of
 
-SRC = '<下载目录>/turbine__turbofan_engine__jet_engine.glb'
+SRC = os.environ.get('SOURCE_GLB', os.path.expanduser('~/Downloads/turbine__turbofan_engine__jet_engine.glb'))
 
 
 def angular_gap(a, b):

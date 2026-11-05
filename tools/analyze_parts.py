@@ -3,11 +3,12 @@
 Read-only analysis helper: prints axial/radial bins, repeated-shape groups and
 the pieces that no rule recognises yet.
 """
+import os
 import sys, math, collections, json
 sys.path.insert(0, 'tools')
 from glb_pieces import load, pieces_of
 
-SRC = '<下载目录>/turbine__turbofan_engine__jet_engine.glb'
+SRC = os.environ.get('SOURCE_GLB', os.path.expanduser('~/Downloads/turbine__turbofan_engine__jet_engine.glb'))
 
 
 def main():
